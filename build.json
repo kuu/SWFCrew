@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "docsDir": "docs",
+    "vendorDir": "vendor",
+    "binDir": "bin",
+    "closure-compiler-jar": "${vendorDir}/google-closure-compiler/compiler.jar"
+  },
+
+  "resources": {
+    "TheatreScript": {
+      "type": "package",
+      "location": "git",
+      "url": "git@github.com:Moncader/TheatreScript.git",
+      "branch": "master",
+      "targets": ["all"]
+    },
+    
+    "QuickSWF": {
+      "type": "package",
+      "location": "git",
+      "url": "git@git.gree-dev.net:JavaScript-Clan/QuickSWF.git",
+      "branch": "master",
+      "target": "quicktheatre"
+    }
+  },
+
+  "targets": {
+    "swfcrew": {
+      "builder": "closure-compiler",
+      "compilationLevel": "WHITESPACE_ONLY",
+      "outputs": "${binDir}/swfcrew.js",
+      "resources": [
+        {
+          "type": "reference",
+          "name": "TheatreScript"
+        },
+
+        {
+          "type": "reference",
+          "name": "QuickSWF"
+        },
+
+        {
+          "type": "files",
+          "root": "src",
+          "files": [
+            "swfcrew.js"
+          ]
+        }
+      ]
+    }
+  }
+}
