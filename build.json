@@ -20,7 +20,7 @@
       "location": "git",
       "url": "git@git.gree-dev.net:JavaScript-Clan/QuickSWF.git",
       "branch": "master",
-      "target": "quicktheatre"
+      "target": "quickswf"
     }
   },
 
@@ -43,9 +43,7 @@
         {
           "type": "files",
           "root": "src",
-          "files": [
-            "swfcrew.js"
-          ]
+          "include": "\\.js$"
         }
       ]
     }

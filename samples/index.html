@@ -14,6 +14,7 @@
     <script type="text/javascript">
 
       var parser = null;
+      var stage = null;
 
       function onGo(e) {
         var container = document.getElementById("container"),
@@ -26,10 +27,22 @@
           var file = document.getElementById("file").files[0];
           fr.onload = function(e) {
             var tData = new Uint8Array(e.target.result);
-            parser = new quicktheatre.Parser(tData);
+            parser = new quickswf.Parser(tData);
             console.time('Parse');
-            parser.parse();
-            console.timeEnd('Parse');
+            parser.parse(
+              function(pSWF) {
+                console.timeEnd('Parse');
+                console.time('Convert');
+                var tStage = stage = theatre.crews.swf.create(pSWF, container, {
+                  spriteType: "dom"                 
+                });
+                console.timeEnd('Convert');
+                tStage.open();
+              },
+              function(pError) {
+                console.error(pError);
+              }
+            );
           };
           fr.readAsArrayBuffer(file);
         } else {
