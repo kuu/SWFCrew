@@ -34,7 +34,7 @@
                 console.timeEnd('Parse');
                 console.time('Convert');
                 var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                  spriteType: "dom"                 
+                  spriteType: "canvas" 
                 });
                 console.timeEnd('Convert');
                 tStage.open();

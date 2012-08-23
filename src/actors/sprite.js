@@ -20,7 +20,23 @@
       }
     }
 
+    if (this.spriteType === 'dom') {
+      this.listen('enter', onDOMEnter);
+    }
+
     this.listen('sceneloop', onSceneLooped);
+  }
+
+  /**
+   * @private
+   */
+  function onDOMEnter() {
+    this.ignore('enter', onDOMEnter);
+    var tStyle = this.element.style;
+    tStyle.position = 'absolute';
+    tStyle.top = '0';
+    tStyle.left = '0';
+    tStyle.webkitTransformOrigin = '0 0';
   }
 
   /**
@@ -32,6 +48,38 @@
     for (var i = 0, il = tChildren.length; i < il; i++) {
       tChildren[i].leave();
     }
+  }
+
+  /**
+   * @private
+   */
+  function canvasDraw(pContext) {
+    if (this.parent.dispatchDraw === void 0) {
+      pContext.clearRect(0, 0, pContext.canvas.width * 20, pContext.canvas.height * 20);
+    }
+  }
+
+  var mGetDrawingCacheBackup = theatre.crews.canvas.CanvasActor.prototype.getDrawingCache;
+
+  /**
+   * @private
+   */
+  function getDrawingCacheOverload() {
+    var tCache = mGetDrawingCacheBackup.call(this);
+    if (tCache._swfAjusted !== true) {
+      tCache.scale(1 / 20, 1 / 20);
+      tCache._swfAjusted = true;
+    }
+    return tCache;
+  }
+
+  var mDOMActBackup = theatre.crews.dom.DOMActor.prototype.act;
+
+  /**
+   * @private
+   */
+  function domActOverload() {
+    
   }
 
   /**
@@ -69,6 +117,14 @@
     );
     
     var tProto = tSpriteActor.prototype;
+
+    var tSpriteType = tProto.spriteType = pOptions.spriteType || 'canvas';
+
+    if (tSpriteType === 'canvas') {
+      tProto.draw = canvasDraw;
+      tProto.getDrawingCache = getDrawingCacheOverload;
+    }
+
     var tStepData = tProto.stepData = new Array();
 
     for (var i = 0, il = pSprite.frames.length; i < il; i++) {
