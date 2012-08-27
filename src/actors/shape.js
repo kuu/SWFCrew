@@ -22,18 +22,19 @@
    */
   function generateDrawFunction(pSWF, pShape) {
     var tBounds = pShape.bounds;
-    var tWidth = (tBounds.right - tBounds.left) / 20;
-    var tHeight = (tBounds.bottom - tBounds.top) / 20;
+    var tWidth = (tBounds.right - tBounds.left) / 20 + 1;
+    var tHeight = (tBounds.bottom - tBounds.top) / 20 + 1;
     // TODO: Account for the very small offset created by this scale.
 
     var tCode = [
-      //'pContext.translate(' + (tBounds.left) + ',' + (tBounds.top) + ');',
       'var tTempCanvas = document.createElement(\'canvas\');',
       'tTempCanvas.width = ' + tWidth + ';',
       'tTempCanvas.height = ' + tHeight + ';',
       'var tTempContext = tTempCanvas.getContext(\'2d\');',
-      'tTempContext.globalCompositeOperation = \'xor\';',
-      'tTempContext.scale(.05, .05);'
+      'tTempContext.lineCap = \'round\';',
+      'tTempContext.lineJoin = \'round\';',
+      'tTempContext.scale(.05, .05);',
+      'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');'
     ];
 
     var i, il, k, kl;
@@ -46,19 +47,19 @@
     function populateFillBuffers() {
       tFillEdges = new Array(tFillStyles.length + 1);
       for (var i = 0, il = tFillEdges.length; i < il; i++) {
-        tFillEdges[i + 1] = new Array();
+        tFillEdges[i + 1] = new Object();
       }
     }
 
     function populateLineBuffers() {
       tLineEdges = new Array(tLineStyles.length + 1);
       for (var i = 0, il = tLineEdges.length; i < il; i++) {
-        tLineEdges[i + 1] = new Array();
+        tLineEdges[i + 1] = new Object();
       }
     }
 
-    var tCurrentFillEdges0, tCurrentFillEdges1;
-
+    var tCurrentFillEdges0;
+    var tCurrentFillEdges1;
     var tCurrentLineEdges;
 
     populateFillBuffers();
@@ -68,109 +69,344 @@
     var tCurrentFillStyle1 = null;
     var tCurrentLineStyle = null;
 
-    function flush(pType, pAllEdges, pStyles, pX, pY) {
-      for (var i = 1, il = pAllEdges.length; i < il; i++) {
-        var tEdges = pAllEdges[i];
-        if (tEdges.length === 0) continue;
-        tCode.push(
-          'tTempContext.clearRect(0, 0, ' + tWidth + ', ' + tHeight + ');',
-          'tTempContext.' + pType + 'Style = "' + pStyles[i - 1].color.toString() + '";',
-          'tTempContext.beginPath();',
-          'tTempContext.moveTo(' + pX + ', ' + pY + ');'
-        );
-    
-        var tFinalPointX = pX;
-        var tFinalPointY = pY;
-        var tNeedsReset = (pX === 0 && pY === 0) ? true : false;
+    function flush(pType, pAllPoints, pStyles) {
+      var tFinalPointX = 0;
+      var tFinalPointY = 0;
+      var tPoints;
+      var tPoint;
 
-        for (var k = 0, kl = tEdges.length; k < kl; k++) {
-          var tEdge = tEdges[k];
-          var tStartX = pX;
-          var tStartY = pY;
-          var tEndX;
-          var tEndY;
-          var tEdgeType = tEdge.type;
+      /**
+       * Finds the next edge to connect to for this shape.
+       * @param {Object} pEdge The edge to search from.
+       * @param {Boolean} pAIfTrue Which side of the edge to search from.
+       *  Sorry, needs to be a bool for performance.
+       * @private
+       */
+      function findNext(pEdge, pAIfTrue) {
+        var tAorB = pAIfTrue === true ? 'a' : 'b';
 
-          if (tEdgeType === 2) { // Curve
-            tEndX = tStartX + tEdge.deltaControlX + tEdge.deltaX;
-            tEndY = tStartY + tEdge.deltaControlY + tEdge.deltaY;
-            tCode.push('tTempContext.quadraticCurveTo(' + (tStartX + tEdge.deltaControlX) + ', ' + (tStartY + tEdge.deltaControlY) + ', ' + tEndX + ', ' + tEndY + ');');
-          } else if (tEdgeType === 3) { // Straight
-            tEndX = tStartX + tEdge.deltaX;
-            tEndY = tStartY + tEdge.deltaY;
+        var tEdgeCompareX;
+        var tEdgeCompareY;
 
-            tCode.push('tTempContext.lineTo(' + tEndX + ', ' + tEndY + ');');
-          } else if (tEdgeType === 1) { // Move
-            tEndX = tStartX + tEdge.deltaX;
-            tEndY = tStartY + tEdge.deltaY;
+        if (pAIfTrue === true) {
+          tEdgeCompareX = pEdge.px;
+          tEdgeCompareY = pEdge.py;
+        } else {
+          tEdgeCompareX = pEdge.x;
+          tEdgeCompareY = pEdge.y;
+        }
 
-            if (tNeedsReset === true) {
-              tCode.push(
-                'tTempContext.beginPath();'
-              );
-              tFinalPointX = tEndX;
-              tFinalPointY = tEndY;
-              tNeedsReset = false;
+        var tNextPoint = tPoints[pEdge[tAorB]];
+        var tNextPointEdgesLength;
+
+        if (tNextPoint === void 0 || (tNextPointEdgesLength = tNextPoint.length) === 1) {
+          if (pType === 'line') {
+            tCode.push('tTempContext.stroke();');
+          } else {
+            console.warn('Encountered an unclosed shape! Forcing it closed!');
+            tCode.push(
+              'tTempContext.closePath();',
+              'tTempContext.fill();'
+            );
+          }
+          if (tNextPoint !== void 0) {
+            // Remove the base edge as we already used it.
+            var tIndex = tNextPoint.indexOf(pEdge);
+            if (tIndex !== -1) {
+              tNextPoint.splice(tIndex, 1);
+              delete tPoints[pEdge[tAorB]];
+            }
+          }
+          return;
+        }
+
+        // Remove the base edge as we already used it.
+        var tIndex = tNextPoint.indexOf(pEdge);
+        if (tIndex === -1) console.error('Could not find edge that has to be there. Error with algorithm!');
+        tNextPoint.splice(tIndex, 1);
+
+        for (var i = 0; i < tNextPointEdgesLength; i++) {
+          var tNextEdge = tNextPoint[i];
+          var tEdgeType = tNextEdge.type;
+
+          // We used this edge, remove it.
+          tNextPoint.splice(i, 1);
+
+          if (tNextPointEdgesLength === 2) {
+            // We use 2 because we calculated this before.
+            // If there are not more edges on this point
+            // there would have been 2 edges when we started
+            // this function. Meaning we now have 0.
+            delete tPoints[pEdge[pAIfTrue === true ? 'a' : 'b']];
+          }
+
+          // Next we try to figure out which data (a or b) to use.
+          if (tEdgeCompareX === tNextEdge.x && tEdgeCompareY === tNextEdge.y) {
+            // We use a.
+
+            // Draw the current edge.
+            if (tEdgeType === 2) { // Curve
+              tCode.push('tTempContext.quadraticCurveTo(' + tNextEdge.controlX + ', ' + tNextEdge.controlY + ', ' + tNextEdge.px + ', ' + tNextEdge.py + ');');
+            } else if (tEdgeType === 3) { // Straight
+              tCode.push('tTempContext.lineTo(' + tNextEdge.px + ', ' + tNextEdge.py + ');');
             }
 
-            tCode.push('tTempContext.moveTo(' + tEndX + ', ' + tEndY + ');');
+            // Check if have completed a shape.
+            if (tFinalPointX === tNextEdge.px && tFinalPointY === tNextEdge.py) {
+              // We have completed a shape!
+              if (pType === 'line') {
+                tCode.push('tTempContext.stroke();');
+              } else {
+                tCode.push(
+                  'tTempContext.fill();'
+                );
+              }
+
+              // Clean things up as we have now used this edge.
+              var tIndex = tPoint.indexOf(tNextEdge);
+              if (tIndex === -1) {
+                console.error('Major error in shape algorithm. Last edge is not in first point array.');
+              }
+              tPoint.splice(tIndex, 1);
+
+              if (tPoint.length === 0) {
+                delete tPoints[tNextEdge.a];
+              }
+              return;
+            } else {
+              findNext(tNextEdge, true);
+            }
+          } else {
+            // We use b.
+            
+            // Draw the current edge.
+            if (tEdgeType === 2) { // Curve
+              tCode.push('tTempContext.quadraticCurveTo(' + tNextEdge.controlX + ', ' + tNextEdge.controlY + ', ' + tNextEdge.x + ', ' + tNextEdge.y + ');');
+            } else if (tEdgeType === 3) { // Straight
+              tCode.push('tTempContext.lineTo(' + tNextEdge.x + ', ' + tNextEdge.y + ');');
+            }
+
+            // Check if have completed a shape.
+            if (tFinalPointX === tNextEdge.x && tFinalPointY === tNextEdge.y) {
+              // We have completed a shape!
+              if (pType === 'line') {
+                tCode.push('tTempContext.stroke();');
+              } else {
+                tCode.push(
+                  'tTempContext.fill();'
+                );
+              }
+
+              // Clean things up as we have now used this edge.
+              var tIndex = tPoint.indexOf(tNextEdge);
+              if (tIndex === -1) {
+                console.error('Major error in shape algorithm. Last edge is not in first point array.');
+              }
+              tPoint.splice(tIndex, 1);
+
+              if (tPoint.length === 0) {
+                delete tPoints[tNextEdge.b];
+              }
+              return;
+            } else {
+              findNext(tNextEdge, false);
+            }
+
           }
 
-          pX = tEndX;
-          pY = tEndY;
+          break; // TODO: Need to choose which edge is the CORRECT one. Right now we just choose the first.
+        }
+      }
 
 
-          if (tNeedsReset === false && tEdgeType !== 1 && pX === tFinalPointX && pY === tFinalPointY) {
-            tCode.push('tTempContext.' + (pType === 'line' ? 'stroke' : pType) + '();');
-            tNeedsReset = true;
-          }
+      for (var i = 1, il = pAllPoints.length; i < il; i++) {
+        tPoints = pAllPoints[i];
+
+        if (Object.keys(tPoints).length === 0) continue;
+
+        var tStyle = 'rgba(255,0,0,1)';
+        var tStyleData = pStyles[i - 1];
+        if (tStyleData.color) {
+          tStyle = tStyleData.color.toString();
         }
 
         tCode.push(
-          'pContext.scale(20, 20);',
-          'pContext.drawImage(tTempContext.canvas, 0, 0);',
-          'pContext.scale(.05, .05);'
+          pType !== 'line' ? 'tTempContext.globalCompositeOperation = \'xor\';' : '',
+          'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');',
+          'tTempContext.' + (pType === 'line' ? 'stroke' : pType) + 'Style = "' + tStyle + '";',
+          pType === 'line' ? 'tTempContext.lineWidth = ' + tStyleData.width + ';' : ''
         );
-      }
+    
+        tFinalPointX = 0;
+        tFinalPointY = 0;
 
-      return [pX, pY];
+        // Go through all the points (each key is a string point of (x,y)).
+        while (Object.keys(tPoints).length > 0) {
+          for (var k in tPoints) {
+            var tEdgeMain;
+            var tEdgeType;
+
+            tPoint = tPoints[k];
+            // Every point needs at least 2 edges attached to it.
+            if (tPoint.length === 1) {
+              tEdgeMain = tPoint[0];
+
+              if (pType === 'line') {
+                tEdgeType = tEdgeMain.type;
+
+                tCode.push(
+                  'tTempContext.beginPath();',
+                  'tTempContext.moveTo(' + tEdgeMain.px + ', ' + tEdgeMain.py + ');'
+                );
+
+                if (tEdgeType === 2) { // Curve
+                  tCode.push('tTempContext.quadraticCurveTo(' + tEdgeMain.controlX + ', ' + tEdgeMain.controlY + ', ' + tEdgeMain.x + ', ' + tEdgeMain.y + ');');
+                } else if (tEdgeType === 3) { // Straight
+                  tCode.push('tTempContext.lineTo(' + tEdgeMain.x + ', ' + tEdgeMain.y + ');');
+                }
+
+                tCode.push('tTempContext.stroke();');
+              } else {
+                console.warn(k + ' does not have anything connecting to it!');
+              }
+
+              tPoint = tPoints[tEdgeMain.a];
+              if (tPoint !== void 0) {
+                tPoint.splice(tPoint.indexOf(tEdgeMain), 1);
+                if (tPoint.length === 0) {
+                  delete tPoints[tEdgeMain.a];
+                }
+              }
+              tPoint = tPoints[tEdgeMain.b];
+              if (tPoint !== void 0) {
+                tPoint.splice(tPoint.indexOf(tEdgeMain), 1);
+                if (tPoint.length === 0) {
+                  delete tPoints[tEdgeMain.b];
+                }
+              }
+
+              continue;
+            }
+
+            // Grab the first edge of this point. We use it as our starting edge.
+            // Also remove it as have used it now.
+            tEdgeMain = tPoint.shift();
+
+            // These are the actual numerical points we are searching for.
+            // Once another edge comes up that has these points, it means
+            // we have found a full shape, and we close that shape and draw it.
+            tFinalPointX = tEdgeMain.px;
+            tFinalPointY = tEdgeMain.py;
+
+            tEdgeType = tEdgeMain.type;
+
+            tCode.push(
+              'tTempContext.beginPath();',
+              'tTempContext.moveTo(' + tEdgeMain.px + ', ' + tEdgeMain.py + ');'
+            );
+
+            if (tEdgeType === 2) { // Curve
+              tCode.push('tTempContext.quadraticCurveTo(' + tEdgeMain.controlX + ', ' + tEdgeMain.controlY + ', ' + tEdgeMain.x + ', ' + tEdgeMain.y + ');');
+            } else if (tEdgeType === 3) { // Straight
+              tCode.push('tTempContext.lineTo(' + tEdgeMain.x + ', ' + tEdgeMain.y + ');');
+            }
+
+            // Start searching from the b point of the edge.
+            findNext(tEdgeMain, false);
+          }
+
+          tCode.push(
+            'pContext.scale(20, 20);',
+            'pContext.drawImage(tTempContext.canvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');',
+            'pContext.scale(.05, .05);'
+          );
+        }
+      }
     }
 
     var tRecords = pShape.records;
 
     var tX = 0;
     var tY = 0;
+    var tPreviousX = 0;
+    var tPreviousY = 0;
+
+    function add(pEdge, pArray) {
+      if (pArray[pEdge.a] === void 0) {
+        pArray[pEdge.a] = [pEdge];
+      } else {
+        pArray[pEdge.a].push(pEdge);
+      }
+
+      if (pArray[pEdge.b] === void 0) {
+        pArray[pEdge.b] = [pEdge];
+      } else {
+        pArray[pEdge.b].push(pEdge);
+      }
+    }
 
     for (i = 0, il = tRecords.length; i < il; i++) {
       var tRecord = tRecords[i];
       var tType = tRecord.type;
+      tPreviousX = tX;
+      tPreviousY = tY;
+      var tNewData;
+
       if (tType === 2) { // Curve
-          if (tCurrentFillStyle0 > 0) {
-            tCurrentFillEdges0.push(tRecord);
-          }
-          if (tCurrentFillStyle1 > 0) {
-            tCurrentFillEdges1.push(tRecord);
-          }
+        tNewData = {
+          type: tType,
+          controlX: tX += tRecord.deltaControlX,
+          controlY: tY += tRecord.deltaControlY,
+          x: tX += tRecord.deltaX,
+          y: tY += tRecord.deltaY,
+          px: tPreviousX,
+          py: tPreviousY,
+          a: tPreviousX + ',' + tPreviousY,
+          b: tX + ',' + tY
+        };
+
+        if (tCurrentFillStyle0 > 0) {
+          add(tNewData, tCurrentFillEdges0);
+        }
+
+        if (tCurrentFillStyle1 > 0) {
+          add(tNewData, tCurrentFillEdges1);
+        }
+
+        if (tCurrentLineStyle > 0) {
+          add(tNewData, tCurrentLineEdges);
+        }
       } else if (tType === 3) { // Straight
-          if (tCurrentFillStyle0 > 0) {
-            tCurrentFillEdges0.push(tRecord);
-          }
-          if (tCurrentFillStyle1 > 0) {
-            tCurrentFillEdges1.push(tRecord);
-          }
+        tNewData = {
+          type: tType,
+          x: tX += tRecord.deltaX,
+          y: tY += tRecord.deltaY,
+          px: tPreviousX,
+          py: tPreviousY,
+          a: tPreviousX + ',' + tPreviousY,
+          b: tX + ',' + tY
+        };
+
+        if (tCurrentFillStyle0 > 0) {
+          add(tNewData, tCurrentFillEdges0);
+        }
+
+        if (tCurrentFillStyle1 > 0) {
+          add(tNewData, tCurrentFillEdges1);
+        }
+
+        if (tCurrentLineStyle > 0) {
+          add(tNewData, tCurrentLineEdges);
+        }
       } else if (tType === 1) { // Change
         if (tRecord.fillStyles !== null) {
-          var tNewPoints = flush('fill', tFillEdges, tFillStyles, tX, tY);
-          tX = tNewPoints[0];
-          tY = tNewPoints[1];
+          flush('fill', tFillEdges, tFillStyles);
           tFillStyles = tRecord.fillStyles;
           populateFillBuffers();
         }
 
         if (tRecord.lineStyles !== null) {
-          var tNewPoints = flush('line', tLineEdges, tLineStyles, tX, tY);
-          tX = tNewPoints[0];
-          tY = tNewPoints[1];
+          flush('line', tLineEdges, tLineStyles);
           tLineStyles = tRecord.lineStyles;
           populateLineBuffers();
         }
@@ -190,34 +426,15 @@
           tCurrentLineEdges = tLineEdges[tCurrentLineStyle];
         }
 
-        if (tCurrentFillEdges0) {
-          tCurrentFillEdges0.push({
-            type: 1,
-            deltaX: tRecord.moveDeltaX,
-            deltaY: tRecord.moveDeltaY
-          });
-        }
-
-        if (tCurrentFillEdges1) {
-          tCurrentFillEdges1.push({
-            type: 1,
-            deltaX: tRecord.moveDeltaX,
-            deltaY: tRecord.moveDeltaY
-          });
-        }
-
-        if (tCurrentLineEdges) {
-          tCurrentLineEdges.push({
-            type: 1,
-            deltaX: tRecord.moveDeltaX,
-            deltaY: tRecord.moveDeltaY
-          });
+        if (tRecord.hasMove === true) {
+          tX = tRecord.moveDeltaX;
+          tY = tRecord.moveDeltaY;
         }
       }
     }
 
-    flush('fill', tFillEdges, tFillStyles, tX, tY);
-    flush('line', tLineEdges, tLineStyles, tX, tY);
+    flush('fill', tFillEdges, tFillStyles);
+    flush('line', tLineEdges, tLineStyles);
 
     var tFunction = eval('(function(pContext) {\n' + tCode.join('\n') + '\n})');
 
