@@ -69,6 +69,13 @@
     var tCurrentFillStyle1 = null;
     var tCurrentLineStyle = null;
 
+    /**
+     * Flushes the edges arrays in to code.
+     * @param {String=line|fill} pType The type of edge.
+     * @param {Object.<String, Object>} pAllPoints A map of all points to edges in this shape so far.
+     * @param {Array.<Object>} pStyles The array of fill or line styles to reference from.
+     * @private
+     */
     function flush(pType, pAllPoints, pStyles) {
       var tFinalPointX = 0;
       var tFinalPointY = 0;
@@ -224,18 +231,63 @@
 
         if (Object.keys(tPoints).length === 0) continue;
 
-        var tStyle = 'rgba(255,0,0,1)';
         var tStyleData = pStyles[i - 1];
-        if (tStyleData.color) {
-          tStyle = tStyleData.color.toString();
-        }
 
-        tCode.push(
-          pType !== 'line' ? 'tTempContext.globalCompositeOperation = \'xor\';' : '',
-          'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');',
-          'tTempContext.' + (pType === 'line' ? 'stroke' : pType) + 'Style = "' + tStyle + '";',
-          pType === 'line' ? 'tTempContext.lineWidth = ' + tStyleData.width + ';' : ''
-        );
+        if (pType === 'line') {
+          tCode.push(
+            'tTempContext.globalCompositeOperation = \'source-over\';',
+            'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');',
+            'tTempContext.lineWidth = ' + tStyleData.width + ';',
+            'tTempContext.strokeStyle = \'' + tStyleData.color.toString() + '\';'
+          );
+        } else {
+          tCode.push(
+            'tTempContext.globalCompositeOperation = \'xor\';',
+            'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');'
+          );
+
+          if (tStyleData.color !== null) {
+            tCode.push('tTempContext.fillStyle = \'' + tStyleData.color.toString() + '\';');
+          } else if (tStyleData.gradient !== null) {
+            var tMatrix = tStyleData.matrix;
+            var tStops = tStyleData.gradient.stops;
+
+            var tPoint0X = -16384 * tMatrix[0] + tMatrix[4];
+            var tPoint0Y = -16384 * tMatrix[1] + tMatrix[5];
+            var tPoint1X = 16384 * tMatrix[0] + tMatrix[4];
+            var tPoint1Y = 16384 * tMatrix[1] + tMatrix[5];
+
+            if (tStyleData.type === 0x10) {
+              tCode.push(
+                'var tStyle = tTempContext.createLinearGradient(' + tPoint0X + ', ' + tPoint0Y + ', ' + tPoint1X + ', ' + tPoint1Y + ');'
+              );
+
+              for (var tRadialIndex = 0, tRadialLength = tStops.length; tRadialIndex < tRadialLength; tRadialIndex++) {
+                var tStop = tStops[tRadialIndex];
+                tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
+              }
+            } else if (tStyleData.type === 0x12) {
+              var tCircleWidth = Math.abs(tPoint1X - tPoint0X);
+              var tCircleHeight = Math.abs(tPoint1Y - tPoint0Y);
+              var tCircleX = tPoint0X + tCircleWidth / 2;
+              var tCircleY = tPoint0Y + tCircleHeight / 2;
+
+              tCode.push(
+                'var tStyle = tTempContext.createRadialGradient(' + tCircleX + ', ' + tCircleY + ', 0, ' + tCircleX + ', ' + tCircleY + ', ' + tCircleWidth / 2 + ');'
+              );
+
+              for (var tRadialIndex = 0, tRadialLength = tStops.length; tRadialIndex < tRadialLength; tRadialIndex++) {
+                var tStop = tStops[tRadialIndex];
+                tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
+              }
+            } else {
+              console.warn('Focal radient detected. Showing it as red.');
+              tCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
+            }
+
+            tCode.push('tTempContext.fillStyle = tStyle;');
+          }
+        }
     
         tFinalPointX = 0;
         tFinalPointY = 0;
@@ -317,7 +369,7 @@
 
           tCode.push(
             'pContext.scale(20, 20);',
-            'pContext.drawImage(tTempContext.canvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');',
+            'pContext.drawImage(tTempContext.canvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');', // TODO: Is it possible to get rid of an image style way of doing this?
             'pContext.scale(.05, .05);'
           );
         }
