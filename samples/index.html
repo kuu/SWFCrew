@@ -22,6 +22,10 @@
             url = document.getElementById("url").value;
         container.innerHTML = "";
         e.preventDefault();
+        if (stage !== null) {
+          stage.close();
+          parser.swf.destroy();
+        }
         if (type === "file") {
           var fr = new FileReader();
           var file = document.getElementById("file").files[0];

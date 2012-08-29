@@ -20,7 +20,7 @@
    * Generates a new function for drawing a given shape.
    * @private
    */
-  function generateDrawFunction(pSWF, pShape) {
+  function generateDrawFunction(pSWF, pShape, pPrototype) {
     var tBounds = pShape.bounds;
     var tWidth = (tBounds.right - tBounds.left) / 20 + 1;
     var tHeight = (tBounds.bottom - tBounds.top) / 20 + 1;
@@ -248,30 +248,54 @@
 
           if (tStyleData.color !== null) {
             tCode.push('tTempContext.fillStyle = \'' + tStyleData.color.toString() + '\';');
-          } else if (tStyleData.gradient !== null) {
+          } else if (tStyleData.matrix !== null) {
             var tMatrix = tStyleData.matrix;
-            var tStops = tStyleData.gradient.stops;
 
+            var tTopLeftX = -16384 * tMatrix[0] + -16384 * tMatrix[2] + tMatrix[4];
+            var tTopLeftY = -16384 * tMatrix[1] + -16384 * tMatrix[3] + tMatrix[5];
+            var tTopRightX = 16384 * tMatrix[0] + -16384 * tMatrix[2] + tMatrix[4];
+            var tTopRightY = 16384 * tMatrix[1] + -16384 * tMatrix[3] + tMatrix[5];
+            var tBottomLeftX = -16384 * tMatrix[0] + 16384 * tMatrix[2] + tMatrix[4];
+            var tBottomLeftY = -16384 * tMatrix[1] + 16384 * tMatrix[3] + tMatrix[5];
+            var tBottomRightX = 16384 * tMatrix[0] + 16384 * tMatrix[2] + tMatrix[4];
+            var tBottomRightY = 16384 * tMatrix[1] + 16384 * tMatrix[3] + tMatrix[5];
+
+            
+            /*var tPoint0X = tBottomLeftX + tBottomLeftX - tTopLeftX;
+            var tPoint0Y = tBottomLeftY + tBottomLeftY - tTopLeftY;
+            var tPoint1X = tBottomRightX + tBottomRightX - tTopRightX;
+            var tPoint1Y = tBottomRightY + tBottomRightY - tTopRightY;
+            */
+
+            
             var tPoint0X = -16384 * tMatrix[0] + tMatrix[4];
             var tPoint0Y = -16384 * tMatrix[1] + tMatrix[5];
             var tPoint1X = 16384 * tMatrix[0] + tMatrix[4];
             var tPoint1Y = 16384 * tMatrix[1] + tMatrix[5];
+            
 
-            if (tStyleData.type === 0x10) {
+            //tPoint0X -= (tBottomLeftX - tTopLeftX) * tMatrix[2];
+            //tPoint0Y -= (tBottomLeftY - tTopLeftY) * tMatrix[3];
+            //tPoint1X += (tBottomRightX - tTopRightX) * tMatrix[2];
+            //tPoint1Y += (tBottomRightY - tTopRightY) * tMatrix[3];
+
+            if (tStyleData.type === 0x10) { // linear gradient
               tCode.push(
                 'var tStyle = tTempContext.createLinearGradient(' + tPoint0X + ', ' + tPoint0Y + ', ' + tPoint1X + ', ' + tPoint1Y + ');'
               );
 
+              var tStops = tStyleData.gradient.stops;
               for (var tRadialIndex = 0, tRadialLength = tStops.length; tRadialIndex < tRadialLength; tRadialIndex++) {
                 var tStop = tStops[tRadialIndex];
                 tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
               }
-            } else if (tStyleData.type === 0x12) {
+            } else if (tStyleData.type === 0x12) { // radial gradient
               var tCircleWidth = Math.abs(tPoint1X - tPoint0X);
               var tCircleHeight = Math.abs(tPoint1Y - tPoint0Y);
               var tCircleX = tPoint0X + tCircleWidth / 2;
               var tCircleY = tPoint0Y + tCircleHeight / 2;
 
+              var tStops = tStyleData.gradient.stops;
               tCode.push(
                 'var tStyle = tTempContext.createRadialGradient(' + tCircleX + ', ' + tCircleY + ', 0, ' + tCircleX + ', ' + tCircleY + ', ' + tCircleWidth / 2 + ');'
               );
@@ -280,9 +304,24 @@
                 var tStop = tStops[tRadialIndex];
                 tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
               }
-            } else {
+            } else if (tStyleData.type === 0x13) { // focal radial gradient
               console.warn('Focal radient detected. Showing it as red.');
               tCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
+            } else if (tStyleData.type === 0x40 || tStyleData.type === 0x41) { // repeating bitmap or clipped bitmap
+              if (pSWF.images[tStyleData.bitmapId] === void 0) {
+                tCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
+              } else {
+                if (pPrototype.images === void 0) {
+                  pPrototype.images = new Object();
+                }
+                pPrototype.images[tStyleData.bitmapId] = pSWF.images[tStyleData.bitmapId];
+
+                tCode.push(
+                  'var tPatternMatrix = [' + tMatrix[0] + ', ' + tMatrix[1] + ', ' + tMatrix[2] + ', ' + tMatrix[3] + ', ' + tMatrix[4] + ', ' + tMatrix[5] + '];',
+                  'var tPatternStyle = tTempContext.createPattern(this.images[' + tStyleData.bitmapId + '], \'' + (tStyleData.type === 0x40 ? 'repeat' : 'no-repeat') + '\');',
+                  'var tStyle = \'rgba(0, 255, 0, 1)\';'
+                );
+              }
             }
 
             tCode.push('tTempContext.fillStyle = tStyle;');
@@ -367,9 +406,23 @@
             findNext(tEdgeMain, false);
           }
 
+          if (tStyleData.bitmapId !== null && pSWF.images[tStyleData.bitmapId] !== void 0) {
+            tCode.push(
+              'tTempContext.save();',
+              'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
+              'tTempContext.scale(.05, .05);',
+              'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');',
+              'tTempContext.transform(tPatternMatrix[0], tPatternMatrix[1], tPatternMatrix[2], tPatternMatrix[3], tPatternMatrix[4], tPatternMatrix[5]);',
+              'tTempContext.globalCompositeOperation = \'source-in\';',
+              'tTempContext.fillStyle = tPatternStyle;',
+              'tTempContext.fillRect(-16384, -16384, 32768, 32768);',
+              'tTempContext.restore();'
+            );
+          }
+
           tCode.push(
             'pContext.scale(20, 20);',
-            'pContext.drawImage(tTempContext.canvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');', // TODO: Is it possible to get rid of an image style way of doing this?
+            'pContext.drawImage(tTempCanvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');', // TODO: Is it possible to get rid of an image style way of doing this?
             'pContext.scale(.05, .05);'
           );
         }
@@ -511,7 +564,7 @@
     
     var tProto = tShapeActor.prototype;
 
-    tProto.draw = generateDrawFunction(pSWF, pShape);
+    tProto.draw = generateDrawFunction(pSWF, pShape, tProto);
 
     tProto.twipsWidth = pShape.bounds.right - pShape.bounds.left;
     tProto.twipsHeight = pShape.bounds.bottom - pShape.bounds.top;
