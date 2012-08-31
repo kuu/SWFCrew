@@ -20,6 +20,9 @@
       return;
     }
     var tNewActor = new pDictionary[pData.id]();
+    if (pData.clipDepth > 0) {
+      tNewActor.clipDepth = pData.clipDepth;
+    }
     pSpriteActor.addActor(tNewActor, pData);
     var tMatrix = tNewActor.matrix;
     var tDataMatrix = pData.matrix;
@@ -32,7 +35,22 @@
   };
 
   mActions.replace = function(pSpriteActor, pDictionary, pData) {
-    console.error('replace happened. time to implement it.');
+    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    if (tActor === null) {
+      console.error('Could not move non-existant Actor at layer ' + pData.layer);
+      return;
+    }
+    var tMatrix = tActor.matrix;
+
+    tActor.leave();
+
+    if (!(pData.id in pDictionary)) {
+      return;
+    }
+
+    var tNewActor = new pDictionary[pData.id]();
+    tNewActor.matrix = tMatrix;
+    pSpriteActor.addActor(tNewActor, pData);
   };
 
   mActions.move = function(pSpriteActor, pDictionary, pData) {

@@ -13,6 +13,7 @@
 
   function DOMSpriteActor() {
     this.base();
+    this.clipDepth = 0;
 
     this.listen('enter', onDOMEnter);
   }

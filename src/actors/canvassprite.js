@@ -13,6 +13,7 @@
 
   function CanvasSpriteActor() {
     this.base();
+    this.clipDepth = 0;
   }
   theatre.inherit(CanvasSpriteActor, theatre.crews.canvas.CanvasActor);
 
