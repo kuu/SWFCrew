@@ -20,7 +20,7 @@
     "QuickSWF": {
       "type": "package",
       "location": "git",
-      "url": "git@git.gree-dev.net:JavaScript-Clan/QuickSWF.git",
+      "url": "git@github.com:Moncader/QuickSWF.git",
       "branch": "master",
       "target": "quickswf"
     }
