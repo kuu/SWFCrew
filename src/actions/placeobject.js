@@ -1,5 +1,6 @@
 (function(global) {
 
+  var theatre = global.theatre;
   var mActions = theatre.define('theatre.crews.swf.actions');
 
   /**
@@ -9,8 +10,11 @@
    * @param {Object} pData The data to use to know what to add.
    */
   mActions.add = function(pSpriteActor, pDictionary, pData) {
-    if (!(pData.id in pDictionary)) return;
-    var tNewActor = pSpriteActor.addActor(pDictionary[pData.id], pData);
+    if (!(pData.id in pDictionary)) {
+      return;
+    }
+    var tNewActor = new pDictionary[pData.id]();
+    pSpriteActor.addActor(tNewActor, pData);
     var tMatrix = tNewActor.matrix;
     var tDataMatrix = pData.matrix;
     tMatrix.a = tDataMatrix[0];
@@ -22,7 +26,7 @@
   };
 
   mActions.replace = function(pSpriteActor, pDictionary, pData) {
-
+    console.error('replace happened. time to implement it.');
   };
 
   mActions.move = function(pSpriteActor, pDictionary, pData) {

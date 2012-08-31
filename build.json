@@ -1,4 +1,6 @@
 {
+  "defaultTarget": "swfcrew",
+
   "properties": {
     "docsDir": "docs",
     "vendorDir": "vendor",
@@ -43,6 +45,25 @@
         {
           "type": "files",
           "root": "src",
+          "files": [
+            "swfcrew.js"
+          ]
+        },
+
+        {
+          "type": "files",
+          "root": "src/actors",
+          "files": [
+            "shape.js",
+            "sprite.js",
+            "canvassprite.js",
+            "domsprite.js"
+          ]
+        },
+
+        {
+          "type": "files",
+          "root": "src/actions",
           "include": "\\.js$"
         }
       ]

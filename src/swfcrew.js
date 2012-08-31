@@ -17,7 +17,8 @@
   swfcrew.create = function(pSWF, pAttachTo, pOptions) {
     var tStage = new theatre.Stage();
 
-    var tContainer = tStage.addActor(theatre.crews.dom.DOMActor, {
+    var tContainer = new theatre.crews.dom.DOMActor();
+    tStage.addActor(tContainer, {
       container: pAttachTo,
       width: pSWF.width,
       height: pSWF.height
@@ -34,13 +35,15 @@
     var tDictionary = pSWF.dictionary;
     for (k in tDictionary) {
       var tDisplayListType = tDictionary[k].displayListType;
-      if (tHandlers[tDisplayListType] === void 0) continue;
+      if (tHandlers[tDisplayListType] === void 0) {
+        continue;
+      }
       tHandlers[tDisplayListType](pSWF, tDictionaryToActorMap, tDictionary[k], pOptions);
     }
 
     tHandlers[1](pSWF, tDictionaryToActorMap, pSWF.rootSprite, pOptions);
 
-    tContainer.addActor(tDictionaryToActorMap[0], {
+    tContainer.addActor(new tDictionaryToActorMap[0](), {
       layer: 0,
       name: 'root'
     });

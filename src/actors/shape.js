@@ -6,15 +6,21 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
+  mActors.ShapeActor = ShapeActor;
 
   /**
-   * Initializer used for all types of shapes.
-   * @private
+   * The actor for handling SWF Shapes.
+   * @constructor
+   * @type {theatre.crews.swf.actors.ShapeActor}
+   * @extends {theatre.crews.canvas.CanvasActor}
    */
-  function initializer(pOptions, pStage, pLayer, pParent, pName) {
+  function ShapeActor() {
+    this.base();
+
     this.width = this.twipsWidth / 20;
     this.height = this.twipsHeight / 20;
   }
+  theatre.inherit(ShapeActor, theatre.crews.canvas.CanvasActor);
 
   /**
    * Generates a new function for drawing a given shape.
@@ -556,11 +562,10 @@
    */
   mHandlers[2] = function(pSWF, pDictionaryToActorMap, pShape, pOptions) {
     var tActions = mSWFCrew.actions;
-    var tShapeActor = pDictionaryToActorMap[pShape.id] = theatre.createActor(
-      'Shape_' + pShape.id,
-      theatre.crews.canvas.CanvasActor,
-      initializer
-    );
+    var tShapeActor = pDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
+      this.base();
+    };
+    theatre.inherit(tShapeActor, ShapeActor);
     
     var tProto = tShapeActor.prototype;
 

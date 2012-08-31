@@ -6,39 +6,6 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
-
-  /**
-   * Initializer used for all types of sprites.
-   * @private
-   */
-  function initializer(pOptions, pStage, pLayer, pParent, pName) {
-    var tStepData = this.stepData;
-    for (var i = 0, il = tStepData.length; i < il; i++) {
-      var tScripts = tStepData[i];
-      for (var k = 0, kl = tScripts.length; k < kl; k++) {
-        this.addPreparationScript(i, tScripts[k]);
-      }
-    }
-
-    if (this.spriteType === 'dom') {
-      this.listen('enter', onDOMEnter);
-    }
-
-    this.listen('sceneloop', onSceneLooped);
-  }
-
-  /**
-   * @private
-   */
-  function onDOMEnter() {
-    this.ignore('enter', onDOMEnter);
-    var tStyle = this.element.style;
-    tStyle.position = 'absolute';
-    tStyle.top = '0';
-    tStyle.left = '0';
-    tStyle.webkitTransformOrigin = '0 0';
-  }
-
   /**
    * When a scene loops for a Sprite, we call this.
    * @private
@@ -53,51 +20,19 @@
   /**
    * @private
    */
-  function canvasDraw(pContext) {
-    if (this.parent.dispatchDraw === void 0) {
-      pContext.clearRect(0, 0, pContext.canvas.width * 20, pContext.canvas.height * 20);
-    }
-  }
-
-  var mGetDrawingCacheBackup = theatre.crews.canvas.CanvasActor.prototype.getDrawingCache;
-
-  /**
-   * @private
-   */
-  function getDrawingCacheOverload() {
-    var tCache = mGetDrawingCacheBackup.call(this);
-    if (tCache._swfAjusted !== true) {
-      tCache.scale(1 / 20, 1 / 20);
-      tCache._swfAjusted = true;
-    }
-    return tCache;
-  }
-
-  var mDOMActBackup = theatre.crews.dom.DOMActor.prototype.act;
-
-  /**
-   * @private
-   */
-  function domActOverload() {
-    
-  }
-
-  /**
-   * @private
-   */
   function getClazz(pOptions) {
     if (pOptions && pOptions.spriteType) {
       switch (pOptions.spriteType) {
         case 'dom':
-          return theatre.crews.dom.DOMActor;
+          return theatre.crews.swf.actors.DOMSpriteActor;
         case 'canvas':
-          return theatre.crews.canvas.CanvasActor;
+          return theatre.crews.swf.actors.CanvasSpriteActor;
         default:
           throw new Error('Sprite type of ' + pOptions.spriteType + ' is not supported.');
       }
     }
 
-    return theatre.crews.canvas.CanvasActor;
+    return theatre.crews.swf.actors.CanvasSpriteActor;
   };
 
   /**
@@ -110,22 +45,22 @@
    */
   mHandlers[1] = function(pSWF, pDictionaryToActorMap, pSprite, pOptions) {
     var tActions = mSWFCrew.actions;
-    var tSpriteActor = pDictionaryToActorMap[pSprite.id] = theatre.createActor(
-      'Sprite_' + pSprite.id,
-      getClazz(pOptions),
-      initializer
-    );
+    var tSpriteActor = pDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
+      this.base();
+
+      this.listen('sceneloop', onSceneLooped);
+
+      var tStepData = this.stepData;
+      for (var i = 0, il = tStepData.length; i < il; i++) {
+        var tScripts = tStepData[i];
+        for (var k = 0, kl = tScripts.length; k < kl; k++) {
+          this.addPreparationScript(i, tScripts[k]);
+        }
+      }
+    };
+    theatre.inherit(tSpriteActor, getClazz(pOptions));
     
-    var tProto = tSpriteActor.prototype;
-
-    var tSpriteType = tProto.spriteType = pOptions.spriteType || 'canvas';
-
-    if (tSpriteType === 'canvas') {
-      tProto.draw = canvasDraw;
-      tProto.getDrawingCache = getDrawingCacheOverload;
-    }
-
-    var tStepData = tProto.stepData = new Array();
+    var tStepData = tSpriteActor.prototype.stepData = new Array();
 
     for (var i = 0, il = pSprite.frames.length; i < il; i++) {
       var tFrame = pSprite.frames[i];
