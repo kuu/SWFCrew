@@ -16,58 +16,95 @@
       var parser = null;
       var stage = null;
 
-      function onGo(e) {
-        var container = document.getElementById("container"),
-            type = document.getElementById("type").value,
-            url = document.getElementById("url").value;
-        container.innerHTML = "";
+      function onAjax(e) {
         e.preventDefault();
+
+        var container = document.getElementById("container");
         if (stage !== null) {
           stage.close();
           parser.swf.destroy();
         }
-        if (type === "file") {
-          var fr = new FileReader();
-          var file = document.getElementById("file").files[0];
-          fr.onload = function(e) {
-            var tData = new Uint8Array(e.target.result);
-            parser = new quickswf.Parser(tData);
-            console.time('Parse');
-            parser.parse(
-              function(pSWF) {
-                console.timeEnd('Parse');
-                console.time('Convert');
-                var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                  spriteType: "canvas" 
-                });
-                console.timeEnd('Convert');
-                tStage.open();
-              },
-              function(pError) {
-                console.error(pError);
-              }
-            );
-          };
-          fr.readAsArrayBuffer(file);
-        } else {
+        container.innerHTML = '';
+
+        var tXhr = new XMLHttpRequest();
+        tXhr.addEventListener('load', function(e) {
+          var tData = new Uint8Array(this.response);
+          parser = new quickswf.Parser(tData);
+          console.time('Parse');
+          parser.parse(
+            function(pSWF) {
+              console.timeEnd('Parse');
+              console.time('Convert');
+              var tStage = stage = theatre.crews.swf.create(pSWF, container, {
+                spriteType: "canvas" 
+              });
+              console.timeEnd('Convert');
+              tStage.open();
+            },
+            function(pError) {
+              console.error(pError);
+            }
+          );
+        }, false);
+
+        tXhr.addEventListener('error', function(e) {
+          console.log(e);
+        }, false);
+
+        tXhr.open('GET', document.getElementById('url').value, true);
+        tXhr.responseType = 'arraybuffer';
+        tXhr.send(null);
+      }
+
+      function onFile(e) {
+        e.preventDefault();
+
+        var container = document.getElementById("container");
+        if (stage !== null) {
+          stage.close();
+          parser.swf.destroy();
         }
+        container.innerHTML = '';
+
+        var fr = new FileReader();
+        var file = document.getElementById("file").files[0];
+
+        fr.onload = function(e) {
+          var tData = new Uint8Array(e.target.result);
+          parser = new quickswf.Parser(tData);
+          console.time('Parse');
+          parser.parse(
+            function(pSWF) {
+              console.timeEnd('Parse');
+              console.time('Convert');
+              var tStage = stage = theatre.crews.swf.create(pSWF, container, {
+                spriteType: "canvas" 
+              });
+              console.timeEnd('Convert');
+              tStage.open();
+            },
+            function(pError) {
+              console.error(pError);
+            }
+          );
+        };
+
+        fr.readAsArrayBuffer(file);
       }
 
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("go").addEventListener("click", onGo, false);
+    document.getElementById("goajax").addEventListener("click", onAjax, false);
+    document.getElementById("gofile").addEventListener("click", onFile, false);
     }, false);
 </script>
 </head>
 <body>
   <div id="container"></div>
   <div id="options" style="position:absolute;z-index:999999999999;bottom:0;left:0">
-    <select id="type">
-      <option value="file">File</option>
-      <option value="ajax">Ajax</option>
-    </select>
     <input type="text" id="url" />
+    <input type="submit" id="goajax" value="Go Ajax" />
     <input type="file" id="file" name="file" />
-    <input type="submit" id="go" value="Go" />
+    <input type="submit" id="gofile" value="Go File" />
   </div>
 </body>
 </html>
