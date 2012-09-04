@@ -20,24 +20,25 @@
       return;
     }
     var tNewActor = new pDictionary[pData.id]();
-    if (pData.clipDepth > 0) {
-      tNewActor.clipDepth = pData.clipDepth;
-    }
+
     pSpriteActor.addActor(tNewActor, pData);
-    var tMatrix = tNewActor.matrix;
-    var tDataMatrix = pData.matrix;
-    tMatrix.a = tDataMatrix[0];
-    tMatrix.b = tDataMatrix[1];
-    tMatrix.c = tDataMatrix[2];
-    tMatrix.d = tDataMatrix[3];
-    tMatrix.e = tDataMatrix[4];
-    tMatrix.f = tDataMatrix[5];
+
+    if (pData.matrix !== null) {
+      var tMatrix = tNewActor.matrix;
+      var tDataMatrix = pData.matrix;
+      tMatrix.a = tDataMatrix[0];
+      tMatrix.b = tDataMatrix[1];
+      tMatrix.c = tDataMatrix[2];
+      tMatrix.d = tDataMatrix[3];
+      tMatrix.e = tDataMatrix[4];
+      tMatrix.f = tDataMatrix[5];
+    }
   };
 
   mActions.replace = function(pSpriteActor, pDictionary, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
-      console.error('Could not move non-existant Actor at layer ' + pData.layer);
+      console.error('Could not move non-existent Actor at layer ' + pData.layer);
       return;
     }
     var tMatrix = tActor.matrix;
@@ -49,24 +50,51 @@
     }
 
     var tNewActor = new pDictionary[pData.id]();
-    tNewActor.matrix = tMatrix;
     pSpriteActor.addActor(tNewActor, pData);
+    tNewActor.matrix = tMatrix;
   };
 
   mActions.move = function(pSpriteActor, pDictionary, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
-      console.error('Could not move non-existant Actor at layer ' + pData.layer);
+      console.error('Could not move non-existent Actor at layer ' + pData.layer);
       return;
     }
-    var tMatrix = tActor.matrix;
-    var tDataMatrix = pData.matrix;
-    tMatrix.a = tDataMatrix[0];
-    tMatrix.b = tDataMatrix[1];
-    tMatrix.c = tDataMatrix[2];
-    tMatrix.d = tDataMatrix[3];
-    tMatrix.e = tDataMatrix[4];
-    tMatrix.f = tDataMatrix[5];
+
+    if (pData.matrix !== null) {
+      var tMatrix = tActor.matrix;
+      var tDataMatrix = pData.matrix;
+      tMatrix.a = tDataMatrix[0];
+      tMatrix.b = tDataMatrix[1];
+      tMatrix.c = tDataMatrix[2];
+      tMatrix.d = tDataMatrix[3];
+      tMatrix.e = tDataMatrix[4];
+      tMatrix.f = tDataMatrix[5];
+    }
+
+    tActor.invalidate();
+  };
+
+  mActions.clip = function(pSpriteActor, pDictionary, pData) {
+    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    if (tActor === null) {
+      console.error('Could not clip non-existent Actor at layer ' + pData.layer);
+      return;
+    }
+
+    tActor.clipDepth = pData.clipDepth;
+
+    tActor.invalidate();
+  };
+
+  mActions.colorTransform = function(pSpriteActor, pDictionary, pData) {
+    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    if (tActor === null) {
+      console.error('Could not color transform non-existent Actor at layer ' + pData.layer);
+      return;
+    }
+
+    tActor.colorTransform = pData.colorTransform;
 
     tActor.invalidate();
   };

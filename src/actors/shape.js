@@ -25,6 +25,9 @@
 
     this.width = this.twipsWidth / 20;
     this.height = this.twipsHeight / 20;
+
+    this.colorTransform = null;
+    this.clipDepth = 0;
   }
   theatre.inherit(ShapeActor, theatre.crews.canvas.CanvasActor);
 
@@ -141,7 +144,9 @@
 
         // Remove the base edge as we already used it.
         var tIndex = tNextPoint.indexOf(pEdge);
-        if (tIndex === -1) console.error('Could not find edge that has to be there. Error with algorithm!');
+        if (tIndex === -1) {
+          console.error('Could not find edge that has to be there. Error with algorithm!');
+        }
         tNextPoint.splice(tIndex, 1);
 
         for (var i = 0; i < tNextPointEdgesLength; i++) {
@@ -182,7 +187,7 @@
               }
 
               // Clean things up as we have now used this edge.
-              var tIndex = tPoint.indexOf(tNextEdge);
+              tIndex = tPoint.indexOf(tNextEdge);
               if (tIndex === -1) {
                 console.error('Major error in shape algorithm. Last edge is not in first point array.');
               }
@@ -217,7 +222,7 @@
               }
 
               // Clean things up as we have now used this edge.
-              var tIndex = tPoint.indexOf(tNextEdge);
+              tIndex = tPoint.indexOf(tNextEdge);
               if (tIndex === -1) {
                 console.error('Major error in shape algorithm. Last edge is not in first point array.');
               }
@@ -241,21 +246,29 @@
       for (var i = 1, il = pAllPoints.length; i < il; i++) {
         tPoints = pAllPoints[i];
 
-        if (Object.keys(tPoints).length === 0) continue;
+        if (Object.keys(tPoints).length === 0) {
+          continue;
+        }
 
         var tStyleData = pStyles[i - 1];
 
         if (pType === 'line') {
           tCode.push(
             'tTempContext.globalCompositeOperation = \'source-over\';',
-            'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');',
+            'tTempContext.save();',
+            'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
+            'tTempContext.clearRect(0, 0, ' + tWidth + ', ' + tHeight + ');',
+            'tTempContext.restore()',
             'tTempContext.lineWidth = ' + tStyleData.width + ';',
             'tTempContext.strokeStyle = \'' + tStyleData.color.toString() + '\';'
           );
         } else {
           tCode.push(
             'tTempContext.globalCompositeOperation = \'xor\';',
-            'tTempContext.clearRect(0, 0, ' + tWidth * 20 + ', ' + tHeight * 20 + ');'
+            'tTempContext.save();',
+            'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
+            'tTempContext.clearRect(0, 0, ' + tWidth + ', ' + tHeight + ');',
+            'tTempContext.restore()'
           );
 
           if (tStyleData.color !== null) {
@@ -291,14 +304,19 @@
             //tPoint1X += (tBottomRightX - tTopRightX) * tMatrix[2];
             //tPoint1Y += (tBottomRightY - tTopRightY) * tMatrix[3];
 
+            var tStops;
+            var tStop;
+            var tStopsIndex;
+            var tStopsLength;
+
             if (tStyleData.type === 0x10) { // linear gradient
               tCode.push(
                 'var tStyle = tTempContext.createLinearGradient(' + tPoint0X + ', ' + tPoint0Y + ', ' + tPoint1X + ', ' + tPoint1Y + ');'
               );
 
-              var tStops = tStyleData.gradient.stops;
-              for (var tRadialIndex = 0, tRadialLength = tStops.length; tRadialIndex < tRadialLength; tRadialIndex++) {
-                var tStop = tStops[tRadialIndex];
+              tStops = tStyleData.gradient.stops;
+              for (tStopsIndex = 0, tStopsLength = tStops.length; tStopsIndex < tStopsLength; tStopsIndex++) {
+                tStop = tStops[tStopsIndex];
                 tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
               }
             } else if (tStyleData.type === 0x12) { // radial gradient
@@ -307,13 +325,13 @@
               var tCircleX = tPoint0X + tCircleWidth / 2;
               var tCircleY = tPoint0Y + tCircleHeight / 2;
 
-              var tStops = tStyleData.gradient.stops;
+              tStops = tStyleData.gradient.stops;
               tCode.push(
                 'var tStyle = tTempContext.createRadialGradient(' + tCircleX + ', ' + tCircleY + ', 0, ' + tCircleX + ', ' + tCircleY + ', ' + tCircleWidth / 2 + ');'
               );
 
-              for (var tRadialIndex = 0, tRadialLength = tStops.length; tRadialIndex < tRadialLength; tRadialIndex++) {
-                var tStop = tStops[tRadialIndex];
+              for (tStopsIndex = 0, tStopsLength = tStops.length; tStopsIndex < tStopsLength; tStopsIndex++) {
+                tStop = tStops[tStopsIndex];
                 tCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
               }
             } else if (tStyleData.type === 0x13) { // focal radial gradient
@@ -553,9 +571,7 @@
     flush('fill', tFillEdges, tFillStyles);
     flush('line', tLineEdges, tLineStyles);
 
-    var tFunction = eval('(function(pContext) {\n' + tCode.join('\n') + '\n})');
-
-    return tFunction;
+    return eval('(function(pContext) {\n' + tCode.join('\n') + '\n})');
   }
 
   /**
