@@ -56,26 +56,52 @@
 
       this.listen('sceneloop', onSceneLooped);
 
-      var tStepData = this.stepData;
-      for (var i = 0, il = tStepData.length; i < il; i++) {
-        var tScripts = tStepData[i];
-        for (var k = 0, kl = tScripts.length; k < kl; k++) {
+      var i, il, k, kl, tScripts;
+      var tData = this.stepData;
+      for (i = 0, il = tData.length; i < il; i++) {
+        tScripts = tData[i];
+        for (k = 0, kl = tScripts.length; k < kl; k++) {
+          if (tScripts[k] === void 0) {
+            continue;
+          }
           this.addPreparationScript(i, tScripts[k]);
+        }
+      }
+
+      tData = this.stepScripts;
+      for (i = 0, il = tData.length; i < il; i++) {
+        tScripts = tData[i];
+        for (k = 0, kl = tScripts.length; k < kl; k++) {
+          if (tScripts[k] === void 0) {
+            continue;
+          }
+          this.addScript(i, tScripts[k]);
         }
       }
     };
     theatre.inherit(tSpriteActor, getClazz(pOptions));
     
     var tStepData = tSpriteActor.prototype.stepData = new Array();
+    var tStepScripts = tSpriteActor.prototype.stepScripts = new Array();
 
     for (var i = 0, il = pSprite.frames.length; i < il; i++) {
       var tFrame = pSprite.frames[i];
       tStepData[i] = new Array();
-      if (tFrame === void 0) continue;
+      tStepScripts[i] = new Array();
+
+      if (tFrame === void 0) {
+        continue;
+      }
 
       for (var k = 0, kl = tFrame.length; k < kl; k++) {
         var tData = tFrame[k];
         var tType = tData.type;
+
+        if (tType === 'script') {
+          tStepScripts[i].push(tData.script);
+          continue;
+        }
+
         if (!(tType in tActions)) {
           continue;
         }
