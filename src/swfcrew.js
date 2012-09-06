@@ -23,6 +23,8 @@
   swfcrew.create = function(pSWF, pAttachTo, pOptions) {
     var tStage = new theatre.Stage();
 
+    tStage.asTargetStack = [];
+
     var tContainer = new theatre.crews.dom.DOMActor();
     tStage.addActor(tContainer, {
       container: pAttachTo,
@@ -56,4 +58,45 @@
 
     return tStage;
   };
+
+  /**
+   * Attempts to resolve and return the Actor at the location
+   * given by the path.
+   * @param {theatre.Actor} pCurrentTarget
+   * @param {string} pPath
+   */
+  swfcrew.setTarget = function(pCurrentTarget, pPath) {
+    if (pPath === '') {
+      return pCurrentTarget.stage.asTargetStack.pop() || pCurrentTarget;
+    } else if (!pPath) {
+      return pCurrentTarget;
+    }
+
+    var tNewTarget = pCurrentTarget;
+    var tParts = pPath.split('/');
+
+    for (var i = 0, il = tParts.length; i < il; i++) {
+      var tPart = tParts[i];
+      if (tPart === '' || tPart === '.') {
+        continue;
+      } else if (tPart === '..') {
+        tNewTarget = tNewTarget.parent;
+      } else if (tPart === '_root') {
+        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0); // Right?
+      } else if (tPart.indexOf('_level') === 0) {
+        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0); // TODO: Implement this properly.
+      } else {
+        tNewTarget = tNewTarget.getActorByName(tPart);
+      }
+      if (tNewTarget === null) {
+        tNewTarget = pCurrentTarget;
+        break;
+      }
+    }
+
+    tNewTarget.stage.asTargetStack.push(pCurrentTarget);
+
+    return tNewTarget;
+  };
+
 }(this));

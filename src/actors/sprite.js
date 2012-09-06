@@ -7,16 +7,17 @@
 (function(global) {
   
   var theatre = global.theatre;
+  var AtoJ = global.AtoJ;
 
   var mActors = theatre.define('theatre.crews.swf.actors');
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
   /**
-   * When a scene loops for a Sprite, we call this.
+   * When a scene seeks backwards for a Sprite, we call this.
    * @private
    */
-  function onSceneLooped() {
+  function onReverseStep() {
     var tChildren = this.getActors();
     for (var i = 0, il = tChildren.length; i < il; i++) {
       tChildren[i].leave();
@@ -39,6 +40,16 @@
     }
 
     return theatre.crews.swf.actors.CanvasSpriteActor;
+  }
+
+  var mFunctionMap = {
+    setTarget: 'theatre.crews.swf.setTarget(tTarget, ${TARGET});',
+    nextFrame: 'tTarget.gotoStep(tTarget.currentStep + 1);',
+    previousFrame: 'tTarget.gotoStep(tTarget.currentStep - 1);',
+    play: 'tTarget.startActing();',
+    stop: 'tTarget.stopActing();',
+    gotoFrame: 'tTarget.gotoStep(${FRAME_INDEX}) || tTarget.gotoStep(0);',
+    gotoLabel: 'tTarget.gotoLabel(${FRAME_LABEL}) || tTarget.gotoStep(tTarget.numberOfSteps - 1);'
   };
 
   /**
@@ -54,7 +65,7 @@
     var tSpriteActor = pDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
       this.base();
 
-      this.listen('sceneloop', onSceneLooped);
+      this.listen('reversestep', onReverseStep);
 
       var i, il, k, kl, tScripts;
       var tData = this.stepData;
@@ -78,9 +89,16 @@
           this.addScript(i, tScripts[k]);
         }
       }
+
+      var tLabels = this.frameLabels;
+      for (var tName in tLabels) {
+        this.setLabelInScene('', tName, tLabels[tName]);
+      }
     };
     theatre.inherit(tSpriteActor, getClazz(pOptions));
-    
+
+    tSpriteActor.prototype.labels = pSprite.frameLabels;
+
     var tStepData = tSpriteActor.prototype.stepData = new Array();
     var tStepScripts = tSpriteActor.prototype.stepScripts = new Array();
 
@@ -98,7 +116,7 @@
         var tType = tData.type;
 
         if (tType === 'script') {
-          tStepScripts[i].push(tData.script);
+          tStepScripts[i].push(AtoJ.compileActionScript2(tData.script, mFunctionMap));
           continue;
         }
 
