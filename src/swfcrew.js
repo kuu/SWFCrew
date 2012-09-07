@@ -59,20 +59,25 @@
     return tStage;
   };
 
-  /**
-   * Attempts to resolve and return the Actor at the location
-   * given by the path.
-   * @param {theatre.Actor} pCurrentTarget
-   * @param {string} pPath
-   */
-  swfcrew.setTarget = function(pCurrentTarget, pPath) {
-    if (pPath === '') {
-      return pCurrentTarget.stage.asTargetStack.pop() || pCurrentTarget;
-    } else if (!pPath) {
-      return pCurrentTarget;
+  function getTargetAndData(pCurrentTarget, pPath) {
+    if (!pPath) {
+      return {
+        target: pCurrentTarget,
+        step: 0,
+        label: ''
+      };
+    }
+
+    var tFramePartIndex = pPath.indexOf(':');
+    var tFramePart;
+    if (tFramePartIndex !== -1) {
+      tFramePart = pPath.substring(tFramePartIndex + 1);
+      pPath = pPath.substring(0, tFramePartIndex);
     }
 
     var tNewTarget = pCurrentTarget;
+    var tStep = 0;
+    var tLabel = '';
     var tParts = pPath.split('/');
 
     for (var i = 0, il = tParts.length; i < il; i++) {
@@ -82,9 +87,9 @@
       } else if (tPart === '..') {
         tNewTarget = tNewTarget.parent;
       } else if (tPart === '_root') {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0); // Right?
+        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // Right?
       } else if (tPart.indexOf('_level') === 0) {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0); // TODO: Implement this properly.
+        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // TODO: Implement this properly.
       } else {
         tNewTarget = tNewTarget.getActorByName(tPart);
       }
@@ -94,9 +99,95 @@
       }
     }
 
-    tNewTarget.stage.asTargetStack.push(pCurrentTarget);
+    if (tFramePart !== void 0) {
+      var tTempStep = parseInt(tFramePart, 10);
+      if (tTempStep + '' === tFramePart) {
+        tStep = tTempStep;
+      } else {
+        tLabel = tFramePart;
+      }
+    }
+
+    return {
+      target: tNewTarget,
+      step: tStep,
+      label: tLabel
+    };
+  }
+
+  /**
+   * Attempts to resolve and return the Actor at the location
+   * given by the path.
+   * @param {string} pPath
+   */
+  swfcrew.setTarget = function(pArgs) {
+    var tCurrentTarget = pArgs.currentTarget;
+    var tPath = pArgs.target;
+
+    if (tPath === '') {
+      return tCurrentTarget.stage.asTargetStack.pop() || tCurrentTarget;
+    }
+
+    var tNewTarget = getTargetAndData(tCurrentTarget, tPath).target;
+
+    tNewTarget.stage.asTargetStack.push(tCurrentTarget);
 
     return tNewTarget;
+  };
+
+  swfcrew.call = function(pArgs) {
+    var tCurrentTarget = pArgs.currentTarget;
+    var tFrame = pArgs.frame;
+
+    if (tFrame && tFrame.indexOf(':') === -1) {
+      tFrame = ':' + tFrame; // Hack...
+    }
+    var tData = getTargetAndData(tCurrentTarget, tFrame);
+    if (tData.label !== '') {
+      var tStep = tData.target.getLabelStepFromScene('', tData.label);
+      if (tStep !== null) {
+        tData.target.doScripts(tStep, tCurrentTarget);
+      } else {
+        console.error('Label in call() did not exist');
+      }
+    } else {
+      tData.target.doScripts(tData.step, tCurrentTarget);
+    }
+  };
+
+  swfcrew.gotoFrame = function(pArgs) {
+    var tCurrentTarget = pArgs.currentTarget;
+    var tFrame = parseInt(pArgs.frame, 10);
+
+    tCurrentTarget.gotoStep(tFrame) || tCurrentTarget.gotoStep(0);
+  };
+
+  swfcrew.gotoLabel = function(pArgs) {
+    var tCurrentTarget = pArgs.currentTarget;
+    var tFrame = pArgs.frame;
+
+    tCurrentTarget.gotoLabel(tFrame) || tCurrentTarget.gotoStep(tCurrentTarget.numberOfSteps - 1);
+  };
+
+  swfcrew.gotoFrameOrLabel = function(pArgs) {
+    var tCurrentTarget = pArgs.currentTarget;
+    var tFrame = pArgs.frame;
+    var tBias = pArgs.bias;
+
+    if (typeof tFrame === 'number') {
+      tCurrentTarget.gotoStep(tFrame + tBias) || tCurrentTarget.gotoStep(0);
+      return;
+    }
+
+    if (tFrame && tFrame.indexOf(':') === -1) {
+      tFrame = ':' + tFrame; // Hack...
+    }
+    var tData = getTargetAndData(tCurrentTarget, tFrame);
+    if (tData.label !== '') {
+      return tData.target.gotoLabel(tData.label); // TODO: Support bias?
+    } else {
+      return tData.target.gotoStep(tData.step + tBias);
+    }
   };
 
 }(this));

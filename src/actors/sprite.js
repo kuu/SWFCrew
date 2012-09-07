@@ -43,13 +43,64 @@
   }
 
   var mFunctionMap = {
-    setTarget: 'theatre.crews.swf.setTarget(tTarget, ${TARGET});',
-    nextFrame: 'tTarget.gotoStep(tTarget.currentStep + 1);',
-    previousFrame: 'tTarget.gotoStep(tTarget.currentStep - 1);',
-    play: 'tTarget.startActing();',
-    stop: 'tTarget.stopActing();',
-    gotoFrame: 'tTarget.gotoStep(${FRAME_INDEX}) || tTarget.gotoStep(0);',
-    gotoLabel: 'tTarget.gotoLabel(${FRAME_LABEL}) || tTarget.gotoStep(tTarget.numberOfSteps - 1);'
+    setTarget: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.setTarget'
+      }
+    },
+    nextFrame: {
+      type: 'raw',
+      value: 'tTarget.gotoStep(tTarget.currentStep + 1);'
+    },
+    previousFrame: {
+      type: 'raw',
+      value: 'tTarget.gotoStep(tTarget.currentStep - 1);'
+    },
+    play: {
+      type: 'raw',
+      value: 'tTarget.startActing();'
+    },
+    stop: {
+      type: 'raw',
+      value: 'tTarget.stopActing();'
+    },
+    gotoFrame: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.gotoFrame'
+      }
+    },
+    gotoLabel: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.gotoLabel'
+      }
+    },
+    trace: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'console.debug'
+      }
+    },
+    call: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.call'
+      }
+    },
+    gotoFrameOrLabel: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.gotoFrameOrLabel'
+      }
+    }
   };
 
   /**
@@ -90,7 +141,7 @@
         }
       }
 
-      var tLabels = this.frameLabels;
+      var tLabels = this.labels;
       for (var tName in tLabels) {
         this.setLabelInScene('', tName, tLabels[tName]);
       }
@@ -116,7 +167,7 @@
         var tType = tData.type;
 
         if (tType === 'script') {
-          tStepScripts[i].push(AtoJ.compileActionScript2(tData.script, mFunctionMap));
+          tStepScripts[i].push(AtoJ.compileActionScript2(tData.script, mFunctionMap, pSWF.version));
           continue;
         }
 
