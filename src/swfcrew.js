@@ -33,7 +33,7 @@
     });
 
     tStage.stepRate = 1000 / pSWF.frameRate;
-    
+
     var tActorTypes = swfcrew.actors;
     var tDictionaryToActorMap = new Object();
     var k;
@@ -160,6 +160,10 @@
     var tFrame = parseInt(pArgs.frame, 10);
 
     tCurrentTarget.gotoStep(tFrame) || tCurrentTarget.gotoStep(0);
+  };
+
+  swfcrew.trace = function(pArgs) {
+    global.console.debug(pArgs.message);
   };
 
   swfcrew.gotoLabel = function(pArgs) {

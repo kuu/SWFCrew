@@ -45,7 +45,7 @@
       if (this.clipUntil !== -1) {
         console.error('Clip inside clip depth! Need to support!');
       }
-      this.clipUntil = pActor.layer + pActor.clipDepth;
+      this.clipUntil = pActor.clipDepth;
       // TODO: Make it use the bounds of the child shapes. But first we need to make that information...
       var tWidth = pParentContext.canvas.width;
       var tHeight = pParentContext.canvas.height;
@@ -78,7 +78,7 @@
       tTransformContext.transform(tMatrix.a, tMatrix.b, tMatrix.c, tMatrix.d, tMatrix.e, tMatrix.f);
 
       return tTransformContext;
-    } else if (pActor.layer < this.clipUntil) {
+    } else if (pActor.layer <= this.clipUntil) {
       return this.currentClippedContext;
     }
 
@@ -122,43 +122,11 @@
       // TODO: Fix me. Make me fast. Make me better!
       // Yes, I know lots of stuff here is bad. Let's all think of a better way.
       var tColorTransform = pActor.colorTransform;
-      var tImageData = pChildContext.getImageData(0, 0, pChildContext.canvas.width, pChildContext.canvas.height);
-      var tPixels = tImageData.data;
 
+      var tHasAlpha = !!(tColorTransform.aa !== 0 || tColorTransform.am !== 1);
       var tHasRed = !!(tColorTransform.ra !== 0 || tColorTransform.rm !== 1);
       var tHasGreen = !!(tColorTransform.ga !== 0 || tColorTransform.gm !== 1);
       var tHasBlue = !!(tColorTransform.ba !== 0 || tColorTransform.bm !== 1);
-      var tHasAlpha = !!(tColorTransform.aa !== 0 || tColorTransform.am !== 1);
-
-      var tRM = tColorTransform.rm;
-      var tRA = tColorTransform.ra;
-      var tGM = tColorTransform.gm;
-      var tGA = tColorTransform.ga;
-      var tBM = tColorTransform.bm;
-      var tBA = tColorTransform.ba;
-      var tAM = tColorTransform.am;
-      var tAA = tColorTransform.aa;
-
-      for (var i = 0, il = tPixels.length; i < il; i += 4) {
-        if (tPixels[i + 3] === 0) {
-          continue;
-        }
-
-        if (tHasRed === true) {
-          tPixels[i] = ((((tPixels[i] * tRM) / 256) + tRA) * 255) | 0;
-        }
-        if (tHasGreen === true) {
-          tPixels[i + 1] = ((((tPixels[i + 1] * tGM) / 256) + tGA) * 255) | 0;
-        }
-        if (tHasBlue === true) {
-          tPixels[i + 2] = ((((tPixels[i + 2] * tBM) / 256) + tBA) * 255) | 0;
-        }
-        if (tHasAlpha === true) {
-          tPixels[i + 3] = ((((tPixels[i + 3] * tAM) / 256) + tAA) * 255) | 0;
-        }
-      }
-
-      pChildContext.putImageData(tImageData, 0, 0);
 
       var tContextToTransferTo = pParentContext;
 
@@ -166,10 +134,52 @@
         tContextToTransferTo = this.currentClippedContext;
       }
 
-      tContextToTransferTo.save();
-      tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
-      tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
-      tContextToTransferTo.restore();
+      if (tHasRed || tHasGreen || tHasBlue) {
+        var tImageData = pChildContext.getImageData(0, 0, pChildContext.canvas.width, pChildContext.canvas.height);
+        var tPixels = tImageData.data;
+
+        var tRM = tColorTransform.rm;
+        var tRA = tColorTransform.ra;
+        var tGM = tColorTransform.gm;
+        var tGA = tColorTransform.ga;
+        var tBM = tColorTransform.bm;
+        var tBA = tColorTransform.ba;
+        var tAM = tColorTransform.am;
+        var tAA = tColorTransform.aa;
+
+        for (var i = 0, il = tPixels.length; i < il; i += 4) {
+          if (tPixels[i + 3] === 0) {
+            continue;
+          }
+
+          if (tHasRed === true) {
+            tPixels[i] = ((((tPixels[i] * tRM) / 256) + tRA) * 255) | 0;
+          }
+          if (tHasGreen === true) {
+            tPixels[i + 1] = ((((tPixels[i + 1] * tGM) / 256) + tGA) * 255) | 0;
+          }
+          if (tHasBlue === true) {
+            tPixels[i + 2] = ((((tPixels[i + 2] * tBM) / 256) + tBA) * 255) | 0;
+          }
+          if (tHasAlpha === true) {
+            tPixels[i + 3] = ((((tPixels[i + 3] * tAM) / 256) + tAA) * 255) | 0;
+          }
+        }
+
+        pChildContext.putImageData(tImageData, 0, 0);
+
+        tContextToTransferTo.save();
+        tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
+        tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
+        tContextToTransferTo.restore();
+      } else {
+        tContextToTransferTo.save();
+        tContextToTransferTo.globalAlpha = tColorTransform.am + tColorTransform.aa;
+        tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
+        tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
+        tContextToTransferTo.restore();
+      }
+
     }
 
     if (this.clipUntil !== -1) { // We are currently clipping.

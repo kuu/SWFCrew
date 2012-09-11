@@ -5,7 +5,7 @@
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
-  
+
   var theatre = global.theatre;
   var AtoJ = global.AtoJ;
 
@@ -84,7 +84,7 @@
       type: 'call',
       value: {
         type: 'raw',
-        value: 'console.debug'
+        value: 'theatre.crews.swf.trace'
       }
     },
     call: {
@@ -174,7 +174,7 @@
         if (!(tType in tActions)) {
           continue;
         }
-  
+
         var tConvertedData = {};
 
         // TODO: Need to convert more stuff?
