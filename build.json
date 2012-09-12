@@ -12,7 +12,7 @@
     "TheatreScript": {
       "type": "package",
       "location": "git",
-      "url": "git@github.com:Moncader/TheatreScript.git",
+      "url": "git://github.com/Moncader/TheatreScript.git",
       "branch": "master",
       "targets": ["all"]
     },
@@ -20,7 +20,7 @@
     "QuickSWF": {
       "type": "package",
       "location": "git",
-      "url": "git@github.com:Moncader/QuickSWF.git",
+      "url": "git://github.com/Moncader/QuickSWF.git",
       "branch": "master",
       "target": "quickswf"
     },
@@ -28,7 +28,7 @@
     "AtoJ": {
       "type": "package",
       "location": "git",
-      "url": "git@github.com:Moncader/AtoJ.git",
+      "url": "git://github.com/Moncader/AtoJ.git",
       "target": "atoj"
     }
   },
