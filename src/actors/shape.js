@@ -31,6 +31,11 @@
   }
   theatre.inherit(ShapeActor, theatre.crews.canvas.CanvasActor);
 
+  ShapeActor.prototype.preDraw = function(pContext) {
+    pContext.translate(this.bounds.left, this.bounds.top);
+    pContext.scale(20, 20);
+  };
+
   /**
    * Generates a new function for drawing a given shape.
    * @private
@@ -202,7 +207,7 @@
             }
           } else {
             // We use b.
-            
+
             // Draw the current edge.
             if (tEdgeType === 2) { // Curve
               tCode.push('tTempContext.quadraticCurveTo(' + tNextEdge.controlX + ', ' + tNextEdge.controlY + ', ' + tNextEdge.x + ', ' + tNextEdge.y + ');');
@@ -285,19 +290,19 @@
             var tBottomRightX = 16384 * tMatrix[0] + 16384 * tMatrix[2] + tMatrix[4];
             var tBottomRightY = 16384 * tMatrix[1] + 16384 * tMatrix[3] + tMatrix[5];
 
-            
+
             /*var tPoint0X = tBottomLeftX + tBottomLeftX - tTopLeftX;
             var tPoint0Y = tBottomLeftY + tBottomLeftY - tTopLeftY;
             var tPoint1X = tBottomRightX + tBottomRightX - tTopRightX;
             var tPoint1Y = tBottomRightY + tBottomRightY - tTopRightY;
             */
 
-            
+
             var tPoint0X = -16384 * tMatrix[0] + tMatrix[4];
             var tPoint0Y = -16384 * tMatrix[1] + tMatrix[5];
             var tPoint1X = 16384 * tMatrix[0] + tMatrix[4];
             var tPoint1Y = 16384 * tMatrix[1] + tMatrix[5];
-            
+
 
             //tPoint0X -= (tBottomLeftX - tTopLeftX) * tMatrix[2];
             //tPoint0Y -= (tBottomLeftY - tTopLeftY) * tMatrix[3];
@@ -357,7 +362,7 @@
             tCode.push('tTempContext.fillStyle = tStyle;');
           }
         }
-    
+
         tFinalPointX = 0;
         tFinalPointY = 0;
 
@@ -451,9 +456,7 @@
           }
 
           tCode.push(
-            'pContext.scale(20, 20);',
-            'pContext.drawImage(tTempCanvas, ' + tBounds.left / 20 + ', ' + tBounds.top / 20 + ');', // TODO: Is it possible to get rid of an image style way of doing this?
-            'pContext.scale(.05, .05);'
+            'pContext.drawImage(tTempCanvas, 0, 0);' // TODO: Is it possible to get rid of an image style way of doing this?
           );
         }
       }
@@ -588,10 +591,12 @@
       this.base();
     };
     theatre.inherit(tShapeActor, ShapeActor);
-    
+
     var tProto = tShapeActor.prototype;
 
     tProto.draw = generateDrawFunction(pSWF, pShape, tProto);
+
+    tProto.bounds = pShape.bounds;
 
     tProto.twipsWidth = pShape.bounds.right - pShape.bounds.left;
     tProto.twipsHeight = pShape.bounds.bottom - pShape.bounds.top;

@@ -23,6 +23,9 @@
     this.currentClippedContext = null;
     this.clipUntil = -1;
     this.colorTransform = null;
+
+    this.cacheDrawResult = false;
+    this.cacheWithClass = false;
   }
   theatre.inherit(CanvasSpriteActor, theatre.crews.canvas.CanvasActor);
 
@@ -196,20 +199,6 @@
     if (this.clipUntil !== -1) { // In other words, we haven't cleaned up our clipping.
       cleanupClip(this, pContext);
     }
-  };
-
-  var mBackupGetDrawingCache = theatre.crews.canvas.CanvasActor.prototype.getDrawingCache;
-
-  /**
-   * @override
-   */
-  CanvasSpriteActor.prototype.getDrawingCache = function() {
-    var tCache = mBackupGetDrawingCache.call(this);
-    if (tCache._swfAjusted !== true) {
-      tCache.scale(0.05, 0.05);
-      tCache._swfAjusted = true;
-    }
-    return tCache;
   };
 
 }(this));

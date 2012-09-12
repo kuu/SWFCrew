@@ -72,7 +72,9 @@
       tMatrix.f = tDataMatrix[5];
     }
 
-    tActor.invalidate();
+    if (tActor.parent !== null) {
+      tActor.parent.invalidate();
+    }
   };
 
   mActions.clip = function(pSpriteActor, pDictionary, pData) {

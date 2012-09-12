@@ -24,6 +24,7 @@
     var tStage = new theatre.Stage();
 
     tStage.asTargetStack = [];
+    tStage.stepRate = 1000 / pSWF.frameRate;
 
     var tContainer = new theatre.crews.dom.DOMActor();
     tStage.addActor(tContainer, {
@@ -31,8 +32,6 @@
       width: pSWF.width,
       height: pSWF.height
     });
-
-    tStage.stepRate = 1000 / pSWF.frameRate;
 
     var tActorTypes = swfcrew.actors;
     var tDictionaryToActorMap = new Object();
@@ -51,7 +50,25 @@
 
     tHandlers[1](pSWF, tDictionaryToActorMap, pSWF.rootSprite, pOptions);
 
-    tContainer.addActor(new tDictionaryToActorMap[0](), {
+    var tCompositor = new theatre.crews.canvas.CanvasActor();
+    tCompositor.width = pSWF.width;
+    tCompositor.height = pSWF.height;
+    tCompositor.cacheWithClass = false;
+
+    tCompositor.preDrawChildren = function(pContext) {
+      pContext.scale(0.05, 0.05);
+    };
+
+    tCompositor.postDrawChildren = function(pContext) {
+      pContext.scale(20, 20);
+    };
+
+    tContainer.addActor(tCompositor, {
+      layer: 0,
+      name: '__compositor__'
+    });
+
+    tCompositor.addActor(new tDictionaryToActorMap[0](), {
       layer: 0,
       name: 'root'
     });
