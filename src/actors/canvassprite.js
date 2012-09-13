@@ -164,14 +164,17 @@
           if (tHasBlue === true) {
             tPixels[i + 2] = ((((tPixels[i + 2] * tBM) / 256) + tBA) * 255) | 0;
           }
-          if (tHasAlpha === true) {
+          /*if (tHasAlpha === true) {
             tPixels[i + 3] = ((((tPixels[i + 3] * tAM) / 256) + tAA) * 255) | 0;
-          }
+          }*/
         }
 
         pChildContext.putImageData(tImageData, 0, 0);
 
         tContextToTransferTo.save();
+        if (tHasAlpha === true) {
+          tContextToTransferTo.globalAlpha = tColorTransform.am + tColorTransform.aa;
+        }
         tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
         tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
         tContextToTransferTo.restore();

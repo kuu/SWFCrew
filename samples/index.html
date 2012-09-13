@@ -17,11 +17,15 @@
       var stage = null;
 
       function onAjax(e) {
-        e.preventDefault();
+        if (e) {
+          e.preventDefault();
+        }
 
         var container = document.getElementById("container");
         if (stage !== null) {
           stage.close();
+        }
+        if (parser !== null) {
           parser.swf.destroy();
         }
         container.innerHTML = '';
@@ -36,7 +40,7 @@
               console.timeEnd('Parse');
               console.time('Convert');
               var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                spriteType: "canvas" 
+                spriteType: "canvas"
               });
               console.timeEnd('Convert');
               tStage.open();
@@ -78,7 +82,7 @@
               console.timeEnd('Parse');
               console.time('Convert');
               var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                spriteType: "canvas" 
+                spriteType: "canvas"
               });
               console.timeEnd('Convert');
               tStage.open();
@@ -92,19 +96,29 @@
         fr.readAsArrayBuffer(file);
       }
 
-document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("goajax").addEventListener("click", onAjax, false);
-    document.getElementById("gofile").addEventListener("click", onFile, false);
-    }, false);
-</script>
-</head>
-<body>
-  <div id="container"></div>
-  <div id="options" style="position:absolute;z-index:999999999999;bottom:0;left:0">
-    <input type="text" id="url" />
-    <input type="submit" id="goajax" value="Go Ajax" />
-    <input type="file" id="file" name="file" />
-    <input type="submit" id="gofile" value="Go File" />
-  </div>
-</body>
+      document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("goajax").addEventListener("click", onAjax, false);
+        document.getElementById("gofile").addEventListener("click", onFile, false);
+
+        if (window.location.hash.length > 1) {
+          document.getElementById('url').value = window.location.hash.substring(1);
+          onAjax();
+        }
+
+        window.addEventListener('hashchange', function() {
+          document.getElementById('url').value = window.location.hash.substring(1);
+          onAjax();
+        }, false);
+      }, false);
+    </script>
+  </head>
+  <body>
+    <div id="container"></div>
+    <div id="options" style="position:absolute;z-index:999999999999;bottom:0;left:0">
+      <input type="text" id="url" />
+      <input type="submit" id="goajax" value="Go Ajax" />
+      <input type="file" id="file" name="file" />
+      <input type="submit" id="gofile" value="Go File" />
+    </div>
+  </body>
 </html>
