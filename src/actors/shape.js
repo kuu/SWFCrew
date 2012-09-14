@@ -23,8 +23,8 @@
   function ShapeActor() {
     this.base();
 
-    this.width = this.twipsWidth / 20;
-    this.height = this.twipsHeight / 20;
+    var tWidth = this.width = this.twipsWidth / 20;
+    var tHeight = this.height = this.twipsHeight / 20;
 
     this.colorTransform = null;
     this.clipDepth = 0;
@@ -42,18 +42,14 @@
    */
   function generateDrawFunction(pSWF, pShape, pPrototype) {
     var tBounds = pShape.bounds;
-    var tWidth = (tBounds.right - tBounds.left) / 20 + 1;
-    var tHeight = (tBounds.bottom - tBounds.top) / 20 + 1;
+    var tWidth = (tBounds.right - tBounds.left) / 20;
+    var tHeight = (tBounds.bottom - tBounds.top) / 20;
     // TODO: Account for the very small offset created by this scale.
 
     var tCode = [
-      'var tTempCanvas = document.createElement(\'canvas\');',
-      'tTempCanvas.width = ' + tWidth + ';',
-      'tTempCanvas.height = ' + tHeight + ';',
-      'var tTempContext = tTempCanvas.getContext(\'2d\');',
-      'tTempContext.lineCap = \'round\';',
-      'tTempContext.lineJoin = \'round\';',
-      'tTempContext.scale(.05, .05);',
+      'var tTempCanvas = this.drawingCanvas;',
+      'var tTempContext = this.drawingContext;',
+      'tTempContext.save();',
       'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');'
     ];
 
@@ -574,6 +570,8 @@
     flush('fill', tFillEdges, tFillStyles);
     flush('line', tLineEdges, tLineStyles);
 
+    tCode.push('tTempContext.restore();');
+
     return eval('(function(pContext) {\n' + tCode.join('\n') + '\n})');
   }
 
@@ -598,8 +596,16 @@
 
     tProto.bounds = pShape.bounds;
 
-    tProto.twipsWidth = pShape.bounds.right - pShape.bounds.left;
-    tProto.twipsHeight = pShape.bounds.bottom - pShape.bounds.top;
+    var tTwipsWidth = tProto.twipsWidth = pShape.bounds.right - pShape.bounds.left;
+    var tTwipsHeight = tProto.twipsHeight = pShape.bounds.bottom - pShape.bounds.top;
+
+    var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
+    tCanvas.width = tTwipsWidth / 20;
+    tCanvas.height = tTwipsHeight / 20;
+    var tContext = tProto.drawingContext = tCanvas.getContext('2d');
+    tContext.lineCap = 'round';
+    tContext.lineJoin = 'round';
+    tContext.scale(0.05, 0.05);
   };
 
 }(this));
