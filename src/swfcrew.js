@@ -211,4 +211,43 @@
     }
   };
 
+  swfcrew.setVariable = function(pArgs) {
+    var tName = pArgs.name;
+    if (!/:/.test(tName)) {
+      tName = ':' + tName;
+    }
+    var tData = getTargetAndData(pArgs.currentTarget, tName);
+    tData.target.variables[tData.label] = pArgs.value;
+  };
+
+  swfcrew.getVariable = function(pArgs) {
+    var tName = pArgs.name;
+    if (!/:/.test(tName)) {
+      tName = ':' + tName;
+    }
+    var tData = getTargetAndData(pArgs.currentTarget, tName);
+    return tData.target.variables[tData.label];
+  };
+
+  swfcrew.fscommand2 = function(pArgs) {
+    console.debug('fscommand2', pArgs.name, pArgs.args);
+    return '';
+  };
+
+  swfcrew.getProperty = function(pArgs) {
+    return '';
+  };
+
+  swfcrew.setProperty = function(pArgs) {
+
+  };
+
+  swfcrew.cloneSprite = function(pArgs) {
+
+  };
+
+  swfcrew.removeSprite = function(pArgs) {
+
+  };
+
 }(this));

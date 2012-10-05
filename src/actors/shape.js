@@ -28,6 +28,8 @@
 
     this.colorTransform = null;
     this.clipDepth = 0;
+
+    this.variables = {};
   }
   theatre.inherit(ShapeActor, theatre.crews.canvas.CanvasActor);
 

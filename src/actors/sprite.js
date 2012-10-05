@@ -100,6 +100,55 @@
         type: 'raw',
         value: 'theatre.crews.swf.gotoFrameOrLabel'
       }
+    },
+    setVariable: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.setVariable'
+      }
+    },
+    getVariable: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.getVariable'
+      }
+    },
+    fscommand2: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.fscommand2'
+      }
+    },
+    getProperty: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.getProperty'
+      }
+    },
+    setProperty: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.setProperty'
+      }
+    },
+    cloneSprite: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.cloneSprite'
+      }
+    },
+    removeSprite: {
+      type: 'call',
+      value: {
+        type: 'raw',
+        value: 'theatre.crews.swf.removeSprite'
+      }
     }
   };
 
@@ -115,6 +164,7 @@
     var tActions = mSWFCrew.actions;
     var tSpriteActor = pDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
       this.base();
+      this.variables = {};
 
       this.listen('reversestep', onReverseStep);
 
