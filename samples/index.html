@@ -22,13 +22,14 @@
         }
 
         var container = document.getElementById("container");
+
         if (stage !== null) {
           stage.close();
         }
         if (parser !== null) {
           parser.swf.destroy();
         }
-        container.innerHTML = '';
+        container.width = container.width;
 
         var tXhr = new XMLHttpRequest();
         tXhr.addEventListener('load', function(e) {
@@ -38,6 +39,8 @@
           parser.parse(
             function(pSWF) {
               console.timeEnd('Parse');
+              container.width = pSWF.width;
+              container.height = pSWF.height;
               console.time('Convert');
               var tStage = stage = theatre.crews.swf.create(pSWF, container, {
                 spriteType: "canvas"
@@ -68,7 +71,7 @@
           stage.close();
           parser.swf.destroy();
         }
-        container.innerHTML = '';
+        container.width = container.width;
 
         var fr = new FileReader();
         var file = document.getElementById("file").files[0];
@@ -80,6 +83,8 @@
           parser.parse(
             function(pSWF) {
               console.timeEnd('Parse');
+              container.width = pSWF.width;
+              container.height = pSWF.height;
               console.time('Convert');
               var tStage = stage = theatre.crews.swf.create(pSWF, container, {
                 spriteType: "canvas"
@@ -113,7 +118,7 @@
     </script>
   </head>
   <body>
-    <div id="container"></div>
+    <canvas id="container"></canvas>
     <div id="options" style="position:absolute;z-index:999999999999;bottom:0;left:0">
       <input type="text" id="url" />
       <input type="submit" id="goajax" value="Go Ajax" />

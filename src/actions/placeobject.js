@@ -20,8 +20,11 @@
       return;
     }
     var tNewActor = new pDictionary[pData.id]();
+    if (pData.name) {
+      tNewActor.name = pData.name;
+    }
 
-    pSpriteActor.addActor(tNewActor, pData);
+    pSpriteActor.addActor(tNewActor, pData.layer);
 
     if (pData.matrix !== null) {
       var tMatrix = tNewActor.matrix;
@@ -50,7 +53,10 @@
     }
 
     var tNewActor = new pDictionary[pData.id]();
-    pSpriteActor.addActor(tNewActor, pData);
+    if (pData.name) {
+      tNewActor.name = pData.name;
+    }
+    pSpriteActor.addActor(tNewActor, pData.layer);
     tNewActor.matrix = tMatrix;
   };
 
@@ -72,9 +78,7 @@
       tMatrix.f = tDataMatrix[5];
     }
 
-    if (tActor.parent !== null) {
-      tActor.parent.invalidate();
-    }
+    tActor.invalidate();
   };
 
   mActions.clip = function(pSpriteActor, pDictionary, pData) {

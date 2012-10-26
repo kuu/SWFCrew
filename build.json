@@ -16,7 +16,7 @@
       "branch": "master",
       "targets": ["all"]
     },
-    
+
     "QuickSWF": {
       "type": "package",
       "location": "git",
@@ -68,8 +68,7 @@
           "files": [
             "shape.js",
             "sprite.js",
-            "canvassprite.js",
-            "domsprite.js"
+            "canvassprite.js"
           ]
         },
 

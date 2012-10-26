@@ -18,7 +18,7 @@
    * The actor for handling SWF Shapes.
    * @constructor
    * @type {theatre.crews.swf.actors.ShapeActor}
-   * @extends {theatre.crews.canvas.CanvasActor}
+   * @extends {theatre.Actor}
    */
   function ShapeActor() {
     this.base();
@@ -31,11 +31,33 @@
 
     this.variables = {};
   }
-  theatre.inherit(ShapeActor, theatre.crews.canvas.CanvasActor);
+  theatre.inherit(ShapeActor, theatre.Actor);
 
-  ShapeActor.prototype.preDraw = function(pContext) {
-    pContext.translate(this.bounds.left, this.bounds.top);
-    pContext.scale(20, 20);
+  function ShapeProp(pBackingCanvas, pWidth, pHeight) {
+    this.base(pBackingCanvas, pWidth, pHeight);
+    this.cacheDrawResult = false;
+  }
+  theatre.inherit(ShapeProp, theatre.crews.canvas.CanvasProp);
+
+  var mPreDrawBackup = theatre.crews.canvas.CanvasProp.prototype.preDraw;
+  var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
+
+  ShapeProp.prototype.preDraw = function(pData) {
+    var tContext = pData.context;
+    var tActor = this.actor;
+
+    tContext.save();
+
+    tContext.translate(tActor.bounds.left, tActor.bounds.top);
+    tContext.scale(20, 20);
+
+    return mPreDrawBackup.call(this, pData);
+  };
+
+  ShapeProp.prototype.postDraw = function(pData) {
+    mPostDrawBackup.call(this, pData);
+
+    pData.context.restore();
   };
 
   /**
@@ -49,6 +71,7 @@
     // TODO: Account for the very small offset created by this scale.
 
     var tCode = [
+      'var tContext = pData.context;',
       'var tTempCanvas = this.drawingCanvas;',
       'var tTempContext = this.drawingContext;',
       'tTempContext.save();',
@@ -454,7 +477,7 @@
           }
 
           tCode.push(
-            'pContext.drawImage(tTempCanvas, 0, 0);' // TODO: Is it possible to get rid of an image style way of doing this?
+            'tContext.drawImage(tTempCanvas, 0, 0);' // TODO: Is it possible to get rid of an image style way of doing this?
           );
         }
       }
@@ -574,7 +597,7 @@
 
     tCode.push('tTempContext.restore();');
 
-    return eval('(function(pContext) {\n' + tCode.join('\n') + '\n})');
+    return eval('(function(pData) {\n' + tCode.join('\n') + '\n})');
   }
 
   /**
@@ -585,29 +608,44 @@
    * @param {quickswf.Sprite} pSprite The Shape to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[2] = function(pSWF, pDictionaryToActorMap, pShape, pOptions) {
+  mHandlers[2] = function(pSWF, pStage, pDictionaryToActorMap, pShape, pOptions) {
     var tActions = mSWFCrew.actions;
-    var tShapeActor = pDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
-      this.base();
-    };
-    theatre.inherit(tShapeActor, ShapeActor);
+    var tProto;
+    var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
+    var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
 
-    var tProto = tShapeActor.prototype;
+    var tShapePropClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
+      this.base(pBackingContainer, pWidth, pHeight);
+    }
+    theatre.inherit(tShapePropClass, ShapeProp);
+
+    tProto = tShapePropClass.prototype;
 
     tProto.draw = generateDrawFunction(pSWF, pShape, tProto);
 
-    tProto.bounds = pShape.bounds;
-
-    var tTwipsWidth = tProto.twipsWidth = pShape.bounds.right - pShape.bounds.left;
-    var tTwipsHeight = tProto.twipsHeight = pShape.bounds.bottom - pShape.bounds.top;
-
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
-    tCanvas.width = tTwipsWidth / 20;
-    tCanvas.height = tTwipsHeight / 20;
+    tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
+    tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
     var tContext = tProto.drawingContext = tCanvas.getContext('2d');
     tContext.lineCap = 'round';
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
+
+    var tShapeActor = pDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
+      this.base();
+
+      var tShapeProp = new tShapePropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+
+      this.addProp(tShapeProp);
+    };
+    theatre.inherit(tShapeActor, ShapeActor);
+
+    tProto = tShapeActor.prototype;
+
+    tProto.twipsWidth = tTwipsWidth;
+    tProto.twipsHeight = tTwipsHeight;
+    tProto.bounds = pShape.bounds;
+
   };
 
 }(this));

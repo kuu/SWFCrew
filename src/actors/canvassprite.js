@@ -8,40 +8,38 @@
 
   var theatre = global.theatre;
 
-  var mActors = theatre.define('theatre.crews.swf.actors');
-  mActors.CanvasSpriteActor = CanvasSpriteActor;
+  theatre.define('theatre.crews.swf.props.CanvasSpriteProp', CanvasSpriteProp);
 
   /**
    * An Actor for handing Sprites that use Canvas to draw.
    * @constructor
-   * @extends {theatre.crews.canvas.CanvasActor}
+   * @extends {theatre.crews.canvas.CanvasProp}
    */
-  function CanvasSpriteActor() {
-    this.base();
-    this.clipDepth = 0;
+  function CanvasSpriteProp(pBackingContainer) {
+    this.base(pBackingContainer);
     this.currentClipCanvas = null;
     this.currentClippedContext = null;
     this.clipUntil = -1;
-    this.colorTransform = null;
 
     this.cacheDrawResult = false;
     this.cacheWithClass = false;
   }
-  theatre.inherit(CanvasSpriteActor, theatre.crews.canvas.CanvasActor);
+  theatre.inherit(CanvasSpriteProp, theatre.crews.canvas.CanvasProp);
 
   /**
    * @override
    */
-  CanvasSpriteActor.prototype.draw = function(pContext) {
-    if (this.parent.dispatchDraw === void 0) {
-      pContext.clearRect(0, 0, pContext.canvas.width * 20, pContext.canvas.height * 20);
-    }
+  CanvasSpriteProp.prototype.draw = function(pData) {
+    /*var tContext = pData.context;
+    var tCanvas = tContext.canvas;
+    tContext.clearRect(0, 0, tCanvas.width, tCanvas.height);
+     */
   };
 
   /**
    * @override
    */
-  CanvasSpriteActor.prototype.getDrawingContextForChild = function(pParentContext, pActor) {
+  CanvasSpriteProp.prototype.getDrawingContextForChild = function(pParentContext, pActor) {
     var tMatrix;
 
     if (pActor.clipDepth > 0) {
@@ -88,39 +86,47 @@
     return pParentContext;
   };
 
-  var mBackupPreDispatchDraw = theatre.crews.canvas.CanvasActor.prototype.preDispatchDraw;
+  var mBackupPreDrawChild = theatre.crews.canvas.CanvasProp.prototype.preDrawChild;
 
   /**
    * @override
    */
-  CanvasSpriteActor.prototype.preDispatchDraw = function(pParentContext, pChildContext, pActor) {
+  CanvasSpriteProp.prototype.preDrawChild = function(pData, pActor) {
+    pData.parentContext = pData.context;
+    var tChildContext = pData.context = this.getDrawingContextForChild(pData.context, pActor);
+
     if (this.clipUntil !== -1 || pActor.colorTransform !== null) { // In other words, we are currently clipping.
-      mBackupPreDispatchDraw.call(this, pChildContext, pChildContext, pActor); // Hack it to the child.
+      mBackupPreDrawChild.call(this, pData, pActor); // Hack it to the child.
       return;
     }
 
-    mBackupPreDispatchDraw.call(this, pParentContext, pChildContext, pActor);
+    mBackupPreDrawChild.call(this, pData, pActor);
   };
 
-  function cleanupClip(pActor, pParentContext) {
-    var tClippedContext = pActor.currentClippedContext;
+  function cleanupClip(pProp, pParentContext) {
+    var tClippedContext = pProp.currentClippedContext;
     tClippedContext.globalCompositeOperation = 'destination-in';
     tClippedContext.scale(20, 20);
-    tClippedContext.drawImage(pActor.currentClipCanvas, 0, 0);
+    tClippedContext.drawImage(pProp.currentClipCanvas, 0, 0);
 
     pParentContext.scale(20, 20);
     pParentContext.drawImage(tClippedContext.canvas, 0, 0);
     pParentContext.scale(0.05, 0.05);
 
-    pActor.currentClipCanvas = null;
-    pActor.currentClippedContext = null;
-    pActor.clipUntil = -1;
+    pProp.currentClipCanvas = null;
+    pProp.currentClippedContext = null;
+    pProp.clipUntil = -1;
   }
+
+  var mBackupPostDrawChild = theatre.crews.canvas.CanvasProp.prototype.postDrawChild;
 
   /**
    * @override
    */
-  CanvasSpriteActor.prototype.postDispatchDraw = function(pParentContext, pChildContext, pActor) {
+  CanvasSpriteProp.prototype.postDrawChild = function(pData, pActor) {
+    var tChildContext = pData.context;
+    var tParentContext = pData.parentContext;
+
     if (pActor.colorTransform !== null) {
       // TODO: Fix me. Make me fast. Make me better!
       // Yes, I know lots of stuff here is bad. Let's all think of a better way.
@@ -131,14 +137,14 @@
       var tHasGreen = !!(tColorTransform.ga !== 0 || tColorTransform.gm !== 1);
       var tHasBlue = !!(tColorTransform.ba !== 0 || tColorTransform.bm !== 1);
 
-      var tContextToTransferTo = pParentContext;
+      var tContextToTransferTo = tParentContext;
 
       if (pActor.layer <= this.clipUntil) {
         tContextToTransferTo = this.currentClippedContext;
       }
 
       if (tHasRed || tHasGreen || tHasBlue) {
-        var tImageData = pChildContext.getImageData(0, 0, pChildContext.canvas.width, pChildContext.canvas.height);
+        var tImageData = tChildContext.getImageData(0, 0, tChildContext.canvas.width, tChildContext.canvas.height);
         var tPixels = tImageData.data;
 
         var tRM = tColorTransform.rm;
@@ -169,20 +175,20 @@
           }*/
         }
 
-        pChildContext.putImageData(tImageData, 0, 0);
+        tChildContext.putImageData(tImageData, 0, 0);
 
         tContextToTransferTo.save();
         if (tHasAlpha === true) {
           tContextToTransferTo.globalAlpha = tColorTransform.am + tColorTransform.aa;
         }
         tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
-        tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
+        tContextToTransferTo.drawImage(tChildContext.canvas, 0, 0);
         tContextToTransferTo.restore();
       } else {
         tContextToTransferTo.save();
         tContextToTransferTo.globalAlpha = tColorTransform.am + tColorTransform.aa;
         tContextToTransferTo.setTransform(1, 0, 0, 1, 0, 0);
-        tContextToTransferTo.drawImage(pChildContext.canvas, 0, 0);
+        tContextToTransferTo.drawImage(tChildContext.canvas, 0, 0);
         tContextToTransferTo.restore();
       }
 
@@ -190,17 +196,21 @@
 
     if (this.clipUntil !== -1) { // We are currently clipping.
       if (pActor.layer > this.clipUntil) { // Double check.
-        cleanupClip(this, pParentContext);
+        cleanupClip(this, tParentContext);
       }
     }
+
+    mBackupPostDrawChild.call(this, pData);
+
+    pData.context = tParentContext;
   };
 
   /**
    * @override
    */
-  CanvasSpriteActor.prototype.postDrawChildren = function(pContext) {
+  CanvasSpriteProp.prototype.postDrawChildren = function(pData) {
     if (this.clipUntil !== -1) { // In other words, we haven't cleaned up our clipping.
-      cleanupClip(this, pContext);
+      cleanupClip(this, pData.context);
     }
   };
 

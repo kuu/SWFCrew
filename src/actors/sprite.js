@@ -9,7 +9,6 @@
   var theatre = global.theatre;
   var AtoJ = global.AtoJ;
 
-  var mActors = theatre.define('theatre.crews.swf.actors');
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
@@ -24,23 +23,45 @@
     }
   }
 
-  /**
-   * @private
-   */
-  function getClazz(pOptions) {
-    if (pOptions && pOptions.spriteType) {
-      switch (pOptions.spriteType) {
-        case 'dom':
-          return theatre.crews.swf.actors.DOMSpriteActor;
-        case 'canvas':
-          return theatre.crews.swf.actors.CanvasSpriteActor;
-        default:
-          throw new Error('Sprite type of ' + pOptions.spriteType + ' is not supported.');
+  function SpriteActor() {
+    this.base();
+    this.variables = {};
+    this.colorTransform = null;
+    this.clipDepth = 0;
+
+    this.on('reversestep', onReverseStep);
+
+    var i, il, k, kl, tScripts;
+    var tData = this.stepData;
+    for (i = 0, il = tData.length; i < il; i++) {
+      tScripts = tData[i];
+      for (k = 0, kl = tScripts.length; k < kl; k++) {
+        if (tScripts[k] === void 0) {
+          continue;
+        }
+        this.addPreparationScript(i, tScripts[k]);
       }
     }
 
-    return theatre.crews.swf.actors.CanvasSpriteActor;
+    tData = this.stepScripts;
+    for (i = 0, il = tData.length; i < il; i++) {
+      tScripts = tData[i];
+      for (k = 0, kl = tScripts.length; k < kl; k++) {
+        if (tScripts[k] === void 0) {
+          continue;
+        }
+        this.addScript(i, tScripts[k]);
+      }
+    }
+
+    var tLabels = this.labels;
+    for (var tName in tLabels) {
+      this.setLabelInScene('', tName, tLabels[tName]);
+    }
+
+    this.addProp(new this.propClass(this.backingContainer));
   }
+  theatre.inherit(SpriteActor, theatre.Actor);
 
   var mFunctionMap = {
     setTarget: {
@@ -160,45 +181,26 @@
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[1] = function(pSWF, pDictionaryToActorMap, pSprite, pOptions) {
+  mHandlers[1] = function(pSWF, pStage, pDictionaryToActorMap, pSprite, pOptions) {
     var tActions = mSWFCrew.actions;
     var tSpriteActor = pDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
       this.base();
-      this.variables = {};
-
-      this.listen('reversestep', onReverseStep);
-
-      var i, il, k, kl, tScripts;
-      var tData = this.stepData;
-      for (i = 0, il = tData.length; i < il; i++) {
-        tScripts = tData[i];
-        for (k = 0, kl = tScripts.length; k < kl; k++) {
-          if (tScripts[k] === void 0) {
-            continue;
-          }
-          this.addPreparationScript(i, tScripts[k]);
-        }
-      }
-
-      tData = this.stepScripts;
-      for (i = 0, il = tData.length; i < il; i++) {
-        tScripts = tData[i];
-        for (k = 0, kl = tScripts.length; k < kl; k++) {
-          if (tScripts[k] === void 0) {
-            continue;
-          }
-          this.addScript(i, tScripts[k]);
-        }
-      }
-
-      var tLabels = this.labels;
-      for (var tName in tLabels) {
-        this.setLabelInScene('', tName, tLabels[tName]);
-      }
     };
-    theatre.inherit(tSpriteActor, getClazz(pOptions));
+    theatre.inherit(tSpriteActor, SpriteActor);
 
     tSpriteActor.prototype.labels = pSprite.frameLabels;
+
+    switch (pOptions.spriteType) {
+      case 'dom':
+        tSpriteActor.prototype.propClass = theatre.crews.dom.DOMProp;
+        break;
+      case 'canvas':
+      default:
+        tSpriteActor.prototype.propClass = mSWFCrew.props.CanvasSpriteProp;
+        break;
+    }
+
+    tSpriteActor.prototype.backingContainer = pStage.backingContainer;
 
     var tStepData = tSpriteActor.prototype.stepData = new Array();
     var tStepScripts = tSpriteActor.prototype.stepScripts = new Array();

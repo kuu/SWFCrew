@@ -25,13 +25,7 @@
 
     tStage.asTargetStack = [];
     tStage.stepRate = 1000 / pSWF.frameRate;
-
-    var tContainer = new theatre.crews.dom.DOMActor();
-    tStage.addActor(tContainer, {
-      container: pAttachTo,
-      width: pSWF.width,
-      height: pSWF.height
-    });
+    tStage.backingContainer = pAttachTo;
 
     var tActorTypes = swfcrew.actors;
     var tDictionaryToActorMap = new Object();
@@ -45,33 +39,46 @@
       if (tHandlers[tDisplayListType] === void 0) {
         continue;
       }
-      tHandlers[tDisplayListType](pSWF, tDictionaryToActorMap, tDictionary[k], pOptions);
+      tHandlers[tDisplayListType](pSWF, tStage, tDictionaryToActorMap, tDictionary[k], pOptions);
     }
 
-    tHandlers[1](pSWF, tDictionaryToActorMap, pSWF.rootSprite, pOptions);
+    tHandlers[1](pSWF, tStage, tDictionaryToActorMap, pSWF.rootSprite, pOptions);
 
-    var tCompositor = new theatre.crews.canvas.CanvasActor();
+    var tCompositor = new theatre.Actor();
     tCompositor.width = pSWF.width;
     tCompositor.height = pSWF.height;
-    tCompositor.cacheWithClass = false;
+    tCompositor.name = '__compositor__';
 
-    tCompositor.preDrawChildren = function(pContext) {
-      pContext.scale(0.05, 0.05);
+    tStage.addActor(tCompositor, 0);
+
+    var tCompositingProp;
+
+    switch (pOptions.spriteType) {
+      case 'dom':
+        tCompositingProp = new theatre.crews.dom.DOMProp(pAttachTo);
+        break;
+      case 'canvas':
+      default:
+        tCompositingProp = new theatre.crews.canvas.CanvasProp(pAttachTo, pSWF.width, pSWF.height);
+        tCompositingProp.cacheDrawResult = false;
+        tCompositingProp.cacheWithClass = false;
+        break;
+    }
+
+    tCompositingProp.preDrawChildren = function(pData) {
+      pData.context.scale(0.05, 0.05);
     };
 
-    tCompositor.postDrawChildren = function(pContext) {
-      pContext.scale(20, 20);
+    tCompositingProp.postDrawChildren = function(pData) {
+      pData.context.scale(20, 20);
     };
 
-    tContainer.addActor(tCompositor, {
-      layer: 0,
-      name: '__compositor__'
-    });
+    tCompositor.addProp(tCompositingProp);
 
-    tCompositor.addActor(new tDictionaryToActorMap[0](), {
-      layer: 0,
-      name: 'root'
-    });
+    var tRoot = new tDictionaryToActorMap[0]();
+    tRoot.name = 'root';
+
+    tCompositor.addActor(tRoot, 0);
 
     return tStage;
   };
@@ -231,7 +238,7 @@
 
   swfcrew.fscommand2 = function(pArgs) {
     console.debug('fscommand2', pArgs.name, pArgs.args);
-    return '';
+    return 0;
   };
 
   swfcrew.getProperty = function(pArgs) {
