@@ -223,6 +223,15 @@
           continue;
         }
 
+        if (tType === 'startSound' && pDictionaryToActorMap['snd-' + tData.soundId] === void 0) {
+
+          pDictionaryToActorMap['snd-' + tData.soundId] = pSWF.eventSounds[tData.soundId + ''];
+
+        } else if (tType === 'soundStreamBlock' && pDictionaryToActorMap['soundStreamHead'] === void 0) {
+
+          pDictionaryToActorMap['soundStreamHead'] = pSWF.streamSoundMetadata;
+        }
+
         if (!(tType in tActions)) {
           continue;
         }
