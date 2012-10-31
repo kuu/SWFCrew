@@ -177,13 +177,14 @@
    * Handles SWF Sprites.
    * The 1 is the displayList code for sprites in QuickSWF.
    * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {Object.<String, theatre.Actor>} pDictionaryToActorMap A map holding mappings for dictionary objects to Actor classes.
+   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[1] = function(pSWF, pStage, pDictionaryToActorMap, pSprite, pOptions) {
+  mHandlers[1] = function(pSWF, pStage, pParams, pSprite, pOptions) {
+    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     var tActions = mSWFCrew.actions;
-    var tSpriteActor = pDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
+    var tSpriteActor = tDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
       this.base();
     };
     theatre.inherit(tSpriteActor, SpriteActor);
@@ -241,12 +242,12 @@
           }
         }
 
-        tStepData[i].push((function(pAction, pDictionaryToActorMap, pData) {
+        tStepData[i].push((function(pAction, pParams, pData) {
           return function() {
             // this is in this case is the Sprite instance.
-            pAction(this, pDictionaryToActorMap, pData);
+            pAction(this, pParams, pData);
           };
-        })(tActions[tType], pDictionaryToActorMap, tConvertedData));
+        })(tActions[tType], pParams, tConvertedData));
       }
     }
   };

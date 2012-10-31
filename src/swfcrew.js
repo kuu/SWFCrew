@@ -28,7 +28,13 @@
     tStage.backingContainer = pAttachTo;
 
     var tActorTypes = swfcrew.actors;
-    var tDictionaryToActorMap = new Object();
+    var tParams = {
+        dictionaryToActorMap: {},
+        eventSounds: pSWF.eventSounds,
+        streamSoundMetadata: pSWF.streamSoundMetadata,
+        // More data will be added.
+      };
+    var tDictionaryToActorMap = tParams.dictionaryToActorMap;
     var k;
 
     var tHandlers = swfcrew.handlers;
@@ -39,10 +45,10 @@
       if (tHandlers[tDisplayListType] === void 0) {
         continue;
       }
-      tHandlers[tDisplayListType](pSWF, tStage, tDictionaryToActorMap, tDictionary[k], pOptions);
+      tHandlers[tDisplayListType](pSWF, tStage, tParams, tDictionary[k], pOptions);
     }
 
-    tHandlers[1](pSWF, tStage, tDictionaryToActorMap, pSWF.rootSprite, pOptions);
+    tHandlers[1](pSWF, tStage, tParams, pSWF.rootSprite, pOptions);
 
     var tCompositor = new theatre.Actor();
     tCompositor.width = pSWF.width;
