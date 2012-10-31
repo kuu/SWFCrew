@@ -604,11 +604,12 @@
    * Handles SWF Shapes.
    * The 2 is the displayList code for shapes in QuickSWF.
    * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {Object.<String, theatre.Actor>} pDictionaryToActorMap A map holding mappings for dictionary objects to Actor classes.
+   * @param {Object} pParams An obect containing a dictionary-actor map object.
    * @param {quickswf.Sprite} pSprite The Shape to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[2] = function(pSWF, pStage, pDictionaryToActorMap, pShape, pOptions) {
+  mHandlers[2] = function(pSWF, pStage, pParams, pShape, pOptions) {
+    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     var tActions = mSWFCrew.actions;
     var tProto;
     var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
@@ -631,7 +632,7 @@
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
 
-    var tShapeActor = pDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
+    var tShapeActor = tDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
       this.base();
 
       var tShapeProp = new tShapePropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...

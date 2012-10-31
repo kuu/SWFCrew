@@ -12,13 +12,13 @@
   /**
    * Sets up playing back event sounds.
    * @param {theatre.Actor} pSpriteActor The Sprite Actor the sound belongs to.
-   * @param {Object.<String, quickSWF.EventSound>} pDictionary A map of ids to event sounds.
+   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {Object} pData The data to use to know haw to play back the sound.
    */
-  mActions.startSound = function(pSpriteActor, pDictionary, pData) {
+  mActions.startSound = function(pSpriteActor, pParams, pData) {
     var tId = pData.soundId,
         tInfo = pData.soundInfo,
-        tSound = pDictionary['snd-' + tId];
+        tSound = pParams.eventSounds[tId + ''];
 
     console.log('StartSound: id=' + tId);
     console.log(tSound);
@@ -38,11 +38,11 @@
   /**
    * Sets up playing back audio streams.
    * @param {theatre.Actor} pSpriteActor The Sprite Actor the sound belongs to.
-   * @param {Object.<String, quickSWF.EventSound>} pDictionary A map containing metadata.
+   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {Object} pData The audio data.
    */
-  mActions.soundStreamBlock = function(pSpriteActor, pDictionary, pData) {
-    var tMetadata = pDictionary['soundStreamHead'],
+  mActions.soundStreamBlock = function(pSpriteActor, pParams, pData) {
+    var tMetadata = pParams.soundStreamHead,
         tSound = pData.soundData;
 
     console.log('SoundStreamBlock:');
