@@ -7,6 +7,7 @@
 (function(global) {
 
   var theatre = global.theatre;
+  var AudioProp = theatre.AudioProp;
   var mActions = theatre.define('theatre.crews.swf.actions');
 
   /**
@@ -18,20 +19,33 @@
   mActions.startSound = function(pSpriteActor, pParams, pData) {
     var tId = pData.soundId,
         tInfo = pData.soundInfo,
-        tSound = pParams.eventSounds[tId + ''];
+        tSound = pParams.eventSounds[tId + ''],
+        tProps = pSpriteActor.getProps('Audio'), tAudioProp;
 
     console.log('StartSound: id=' + tId);
     console.log(tSound);
     console.log(tInfo);
 
+    // Check if the same id's AudioProp already exists.
+    for (var i = tProps, il = tProps.length; i < il; i++) {
+      if (tProps[i].id === tId) {
+        tAudioProp = tProps[i];
+      }
+    }
+
     if (tInfo.syncStop) {
         // Stop sound
-        // ... Query the AudioProp
-        // pSpriteActor.removeProp(tAudioProp);
+        if (tAudioProp) {
+          tAudioProp.stop();
+        }
     } else {
+        // Create AudioProp
+        if (!tAudioProp) {
+          tAudioProp = new AudioProp(tId, tSound);
+          pSpriteActor.addProp(tAudioProp);
+        }
         // Start sound
-        // ... Create an AudioProp
-        // pSpriteActor.addProp(tAudioProp);
+        tAudioProp.play();
     }
   };
 
