@@ -7,7 +7,7 @@
 (function(global) {
 
   var theatre = global.theatre;
-  var AudioProp = theatre.AudioProp;
+  var AudioProp = theatre.crews.audio.AudioProp;
   var mActions = theatre.define('theatre.crews.swf.actions');
 
   /**
