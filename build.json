@@ -26,7 +26,7 @@
       "type": "package",
       "location": "git",
       "url": "git://github.com/Moncader/AlphabetJS.git",
-      "targets": ["AS1Decompiler"]
+      "targets": ["AS1VM"]
     }
   },
 

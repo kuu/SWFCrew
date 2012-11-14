@@ -25,7 +25,7 @@
    */
   swfcrew.create = function(pSWF, pAttachTo, pOptions) {
     var tStage = new theatre.Stage();
-    var tASType = pOptions.asType || 'AS1Decompiler';
+    var tASType = pOptions.asType || 'AS1VM';
 
     tStage.stepRate = 1000 / pSWF.frameRate;
     tStage.backingContainer = pAttachTo;
