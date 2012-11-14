@@ -1,16 +1,29 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 Jason Parrott.
+ * Copyright (C) 2012 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
 
   var theatre = global.theatre;
-  var AtoJ = global.AtoJ;
 
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
+
+  function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
+    var tId = pStage.actionScriptLoader.load(
+      pStage.actionScriptProgram,
+      pScripts,
+      {
+        version: pSWFVersion
+      }
+    );
+
+    return function() {
+      this.stage.actionScriptProgram.run(tId, this);
+    }
+  }
 
   /**
    * When a scene seeks backwards for a Sprite, we call this.
@@ -63,116 +76,6 @@
   }
   theatre.inherit(SpriteActor, theatre.Actor);
 
-  var mFunctionMap = {
-    setTarget: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.setTarget'
-      }
-    },
-    nextFrame: {
-      type: 'raw',
-      value: 'tTarget.gotoStep(tTarget.currentStep + 1);'
-    },
-    previousFrame: {
-      type: 'raw',
-      value: 'tTarget.gotoStep(tTarget.currentStep - 1);'
-    },
-    play: {
-      type: 'raw',
-      value: 'tTarget.startActing();'
-    },
-    stop: {
-      type: 'raw',
-      value: 'tTarget.stopActing();'
-    },
-    gotoFrame: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.gotoFrame'
-      }
-    },
-    gotoLabel: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.gotoLabel'
-      }
-    },
-    trace: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.trace'
-      }
-    },
-    call: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.call'
-      }
-    },
-    gotoFrameOrLabel: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.gotoFrameOrLabel'
-      }
-    },
-    setVariable: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.setVariable'
-      }
-    },
-    getVariable: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.getVariable'
-      }
-    },
-    fscommand2: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.fscommand2'
-      }
-    },
-    getProperty: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.getProperty'
-      }
-    },
-    setProperty: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.setProperty'
-      }
-    },
-    cloneSprite: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.cloneSprite'
-      }
-    },
-    removeSprite: {
-      type: 'call',
-      value: {
-        type: 'raw',
-        value: 'theatre.crews.swf.removeSprite'
-      }
-    }
-  };
-
   /**
    * Handles SWF Sprites.
    * The 1 is the displayList code for sprites in QuickSWF.
@@ -220,7 +123,7 @@
         var tType = tData.type;
 
         if (tType === 'script') {
-          tStepScripts[i].push(AtoJ.compileActionScript2(tData.script, mFunctionMap, pSWF.version));
+          tStepScripts[i].push(createLoaderWrapper(pStage, tData.script, pSWF.version));
           continue;
         }
 

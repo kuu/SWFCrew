@@ -2,10 +2,7 @@
   "defaultTarget": "swfcrew",
 
   "properties": {
-    "docsDir": "docs",
-    "vendorDir": "vendor",
-    "binDir": "bin",
-    "closure-compiler-jar": "${vendorDir}/google-closure-compiler/compiler.jar"
+    "binDir": "bin"
   },
 
   "resources": {
@@ -25,11 +22,11 @@
       "target": "quickswf"
     },
 
-    "AtoJ": {
+    "AlphabetJS": {
       "type": "package",
       "location": "git",
-      "url": "git://github.com/Moncader/AtoJ.git",
-      "target": "atoj"
+      "url": "git://github.com/Moncader/AlphabetJS.git",
+      "targets": ["AS1Decompiler"]
     }
   },
 
@@ -46,7 +43,7 @@
 
         {
           "type": "reference",
-          "name": "AtoJ"
+          "name": "AlphabetJS"
         },
 
         {
@@ -66,6 +63,7 @@
           "type": "files",
           "root": "src/actors",
           "files": [
+            "compositor.js",
             "shape.js",
             "sprite.js",
             "canvassprite.js"
@@ -75,6 +73,12 @@
         {
           "type": "files",
           "root": "src/actions",
+          "include": "\\.js$"
+        },
+
+        {
+          "type": "files",
+          "root": "src/actionscript",
           "include": "\\.js$"
         }
       ]

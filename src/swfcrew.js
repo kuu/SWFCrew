@@ -1,14 +1,17 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 Jason Parrott.
+ * Copyright (C) 2012 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
   var theatre = global.theatre,
-      quickswf = global.quickswf;
+      quickswf = global.quickswf,
+      AlphabetJS = global.AlphabetJS;
 
   var swfcrew = theatre.define('theatre.crews.swf');
+
+  swfcrew.ASHandlers = {};
 
   /**
    * Converts the given SWF to a TheatreScript Stage.
@@ -22,18 +25,20 @@
    */
   swfcrew.create = function(pSWF, pAttachTo, pOptions) {
     var tStage = new theatre.Stage();
+    var tASType = pOptions.asType || 'AS1Decompiler';
 
-    tStage.asTargetStack = [];
     tStage.stepRate = 1000 / pSWF.frameRate;
     tStage.backingContainer = pAttachTo;
+    tStage.actionScriptProgram = AlphabetJS.createProgram(tASType, swfcrew.ASHandlers);
+    tStage.actionScriptLoader = AlphabetJS.createLoader(tASType);
 
     var tActorTypes = swfcrew.actors;
     var tParams = {
-        dictionaryToActorMap: {},
-        eventSounds: pSWF.eventSounds,
-        streamSoundMetadata: pSWF.streamSoundMetadata,
-        // More data will be added.
-      };
+      dictionaryToActorMap: {},
+      eventSounds: pSWF.eventSounds,
+      streamSoundMetadata: pSWF.streamSoundMetadata
+      // More data will be added.
+    };
     var tDictionaryToActorMap = tParams.dictionaryToActorMap;
     var k;
 
@@ -50,36 +55,10 @@
 
     tHandlers[1](pSWF, tStage, tParams, pSWF.rootSprite, pOptions);
 
-    var tCompositor = new theatre.Actor();
-    tCompositor.width = pSWF.width;
-    tCompositor.height = pSWF.height;
+    var tCompositor = new swfcrew.actors.Compositor(pSWF, pAttachTo, pOptions);
     tCompositor.name = '__compositor__';
 
     tStage.addActor(tCompositor, 0);
-
-    var tCompositingProp;
-
-    switch (pOptions.spriteType) {
-      case 'dom':
-        tCompositingProp = new theatre.crews.dom.DOMProp(pAttachTo);
-        break;
-      case 'canvas':
-      default:
-        tCompositingProp = new theatre.crews.canvas.CanvasProp(pAttachTo, pSWF.width, pSWF.height);
-        tCompositingProp.cacheDrawResult = false;
-        tCompositingProp.cacheWithClass = false;
-        break;
-    }
-
-    tCompositingProp.preDrawChildren = function(pData) {
-      pData.context.scale(0.05, 0.05);
-    };
-
-    tCompositingProp.postDrawChildren = function(pData) {
-      pData.context.scale(20, 20);
-    };
-
-    tCompositor.addProp(tCompositingProp);
 
     var tRoot = new tDictionaryToActorMap[0]();
     tRoot.name = 'root';
@@ -87,180 +66,6 @@
     tCompositor.addActor(tRoot, 0);
 
     return tStage;
-  };
-
-  function getTargetAndData(pCurrentTarget, pPath) {
-    if (!pPath) {
-      return {
-        target: pCurrentTarget,
-        step: 0,
-        label: ''
-      };
-    }
-
-    var tFramePartIndex = pPath.indexOf(':');
-    var tFramePart;
-    if (tFramePartIndex !== -1) {
-      tFramePart = pPath.substring(tFramePartIndex + 1);
-      pPath = pPath.substring(0, tFramePartIndex);
-    }
-
-    var tNewTarget = pCurrentTarget;
-    var tStep = 0;
-    var tLabel = '';
-    var tParts = pPath.split('/');
-
-    for (var i = 0, il = tParts.length; i < il; i++) {
-      var tPart = tParts[i];
-      if (tPart === '' || tPart === '.') {
-        continue;
-      } else if (tPart === '..') {
-        tNewTarget = tNewTarget.parent;
-      } else if (tPart === '_root') {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // Right?
-      } else if (tPart.indexOf('_level') === 0) {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // TODO: Implement this properly.
-      } else {
-        tNewTarget = tNewTarget.getActorByName(tPart);
-      }
-      if (tNewTarget === null) {
-        tNewTarget = pCurrentTarget;
-        break;
-      }
-    }
-
-    if (tFramePart !== void 0) {
-      var tTempStep = parseInt(tFramePart, 10);
-      if (tTempStep + '' === tFramePart) {
-        tStep = tTempStep;
-      } else {
-        tLabel = tFramePart;
-      }
-    }
-
-    return {
-      target: tNewTarget,
-      step: tStep,
-      label: tLabel
-    };
-  }
-
-  /**
-   * Attempts to resolve and return the Actor at the location
-   * given by the path.
-   * @param {string} pPath
-   */
-  swfcrew.setTarget = function(pArgs) {
-    var tCurrentTarget = pArgs.currentTarget;
-    var tPath = pArgs.target;
-
-    if (tPath === '') {
-      return tCurrentTarget.stage.asTargetStack.pop() || tCurrentTarget;
-    }
-
-    var tNewTarget = getTargetAndData(tCurrentTarget, tPath).target;
-
-    tNewTarget.stage.asTargetStack.push(tCurrentTarget);
-
-    return tNewTarget;
-  };
-
-  swfcrew.call = function(pArgs) {
-    var tCurrentTarget = pArgs.currentTarget;
-    var tFrame = pArgs.frame;
-
-    if (tFrame && tFrame.indexOf(':') === -1) {
-      tFrame = ':' + tFrame; // Hack...
-    }
-    var tData = getTargetAndData(tCurrentTarget, tFrame);
-    if (tData.label !== '') {
-      var tStep = tData.target.getLabelStepFromScene('', tData.label);
-      if (tStep !== null) {
-        tData.target.doScripts(tStep, tCurrentTarget);
-      } else {
-        console.error('Label in call() did not exist');
-      }
-    } else {
-      tData.target.doScripts(tData.step, tCurrentTarget);
-    }
-  };
-
-  swfcrew.gotoFrame = function(pArgs) {
-    var tCurrentTarget = pArgs.currentTarget;
-    var tFrame = parseInt(pArgs.frame, 10);
-
-    tCurrentTarget.gotoStep(tFrame) || tCurrentTarget.gotoStep(0);
-  };
-
-  swfcrew.trace = function(pArgs) {
-    global.console.debug(pArgs.message);
-  };
-
-  swfcrew.gotoLabel = function(pArgs) {
-    var tCurrentTarget = pArgs.currentTarget;
-    var tFrame = pArgs.frame;
-
-    tCurrentTarget.gotoLabel(tFrame) || tCurrentTarget.gotoStep(tCurrentTarget.numberOfSteps - 1);
-  };
-
-  swfcrew.gotoFrameOrLabel = function(pArgs) {
-    var tCurrentTarget = pArgs.currentTarget;
-    var tFrame = pArgs.frame;
-    var tBias = pArgs.bias;
-
-    if (typeof tFrame === 'number') {
-      tCurrentTarget.gotoStep(tFrame + tBias) || tCurrentTarget.gotoStep(0);
-      return;
-    }
-
-    if (tFrame && tFrame.indexOf(':') === -1) {
-      tFrame = ':' + tFrame; // Hack...
-    }
-    var tData = getTargetAndData(tCurrentTarget, tFrame);
-    if (tData.label !== '') {
-      return tData.target.gotoLabel(tData.label); // TODO: Support bias?
-    } else {
-      return tData.target.gotoStep(tData.step + tBias);
-    }
-  };
-
-  swfcrew.setVariable = function(pArgs) {
-    var tName = pArgs.name;
-    if (!/:/.test(tName)) {
-      tName = ':' + tName;
-    }
-    var tData = getTargetAndData(pArgs.currentTarget, tName);
-    tData.target.variables[tData.label] = pArgs.value;
-  };
-
-  swfcrew.getVariable = function(pArgs) {
-    var tName = pArgs.name;
-    if (!/:/.test(tName)) {
-      tName = ':' + tName;
-    }
-    var tData = getTargetAndData(pArgs.currentTarget, tName);
-    return tData.target.variables[tData.label];
-  };
-
-  swfcrew.fscommand2 = function(pArgs) {
-    console.debug('fscommand2', pArgs.name, pArgs.args);
-    return 0;
-  };
-
-  swfcrew.getProperty = function(pArgs) {
-    return '';
-  };
-
-  swfcrew.setProperty = function(pArgs) {
-
-  };
-
-  swfcrew.cloneSprite = function(pArgs) {
-
-  };
-
-  swfcrew.removeSprite = function(pArgs) {
-
   };
 
 }(this));
