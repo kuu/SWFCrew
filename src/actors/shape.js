@@ -35,7 +35,8 @@
 
   function ShapeProp(pBackingCanvas, pWidth, pHeight) {
     this.base(pBackingCanvas, pWidth, pHeight);
-    this.cacheDrawResult = false;
+    this.cacheDrawResult = true;
+    this.cacheWithClass = true;
   }
   theatre.inherit(ShapeProp, theatre.crews.canvas.CanvasProp);
 

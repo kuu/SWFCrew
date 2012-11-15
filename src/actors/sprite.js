@@ -21,7 +21,7 @@
     );
 
     return function() {
-      this.stage.actionScriptProgram.run(tId, this);
+      pStage.actionScriptProgram.run(tId, this);
     }
   }
 
@@ -108,9 +108,10 @@
 
     var tStepData = tSpriteActor.prototype.stepData = new Array();
     var tStepScripts = tSpriteActor.prototype.stepScripts = new Array();
+    var tFrames = pSprite.frames;
 
-    for (var i = 0, il = pSprite.frames.length; i < il; i++) {
-      var tFrame = pSprite.frames[i];
+    for (var i = 0, il = tFrames.length; i < il; i++) {
+      var tFrame = tFrames[i];
       tStepData[i] = new Array();
       tStepScripts[i] = new Array();
 

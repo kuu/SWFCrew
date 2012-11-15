@@ -20,6 +20,7 @@
     this.currentClipCanvas = null;
     this.currentClippedContext = null;
     this.clipUntil = -1;
+    this.parentContext = null;
 
     this.cacheDrawResult = false;
     this.cacheWithClass = false;
@@ -92,7 +93,7 @@
    * @override
    */
   CanvasSpriteProp.prototype.preDrawChild = function(pData, pActor) {
-    pData.parentContext = pData.context;
+    this.parentContext = pData.context;
     var tChildContext = pData.context = this.getDrawingContextForChild(pData.context, pActor);
 
     if (this.clipUntil !== -1 || pActor.colorTransform !== null) { // In other words, we are currently clipping.
@@ -106,12 +107,13 @@
   function cleanupClip(pProp, pParentContext) {
     var tClippedContext = pProp.currentClippedContext;
     tClippedContext.globalCompositeOperation = 'destination-in';
-    tClippedContext.scale(20, 20);
+    tClippedContext.setTransform(1, 0, 0, 1, 0, 0);
     tClippedContext.drawImage(pProp.currentClipCanvas, 0, 0);
 
-    pParentContext.scale(20, 20);
+    var tMatrix = pProp.actor.getAbsoluteMatrix();
+    pParentContext.setTransform(1, 0, 0, 1, 0, 0);
     pParentContext.drawImage(tClippedContext.canvas, 0, 0);
-    pParentContext.scale(0.05, 0.05);
+    pParentContext.setTransform(tMatrix.a, tMatrix.b, tMatrix.c, tMatrix.d, tMatrix.e, tMatrix.f);
 
     pProp.currentClipCanvas = null;
     pProp.currentClippedContext = null;
@@ -125,7 +127,7 @@
    */
   CanvasSpriteProp.prototype.postDrawChild = function(pData, pActor) {
     var tChildContext = pData.context;
-    var tParentContext = pData.parentContext;
+    var tParentContext = this.parentContext;
 
     if (pActor.colorTransform !== null) {
       // TODO: Fix me. Make me fast. Make me better!
@@ -191,7 +193,6 @@
         tContextToTransferTo.drawImage(tChildContext.canvas, 0, 0);
         tContextToTransferTo.restore();
       }
-
     }
 
     if (this.clipUntil !== -1) { // We are currently clipping.
@@ -210,6 +211,8 @@
    */
   CanvasSpriteProp.prototype.postDrawChildren = function(pData) {
     if (this.clipUntil !== -1) { // In other words, we haven't cleaned up our clipping.
+      pData.context = this.parentContext;
+      this.parentContext = null;
       cleanupClip(this, pData.context);
     }
   };
