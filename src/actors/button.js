@@ -56,6 +56,8 @@
   function ButtonActor() {
     this.base();
 
+    this.colorTransform = null;
+
     var tCondActions = this.condActions;
     var tRecords = this.records;
 
@@ -81,7 +83,7 @@
     });
 
     // Add the button shapes.
-    for (i = 0, il = tRecords.length; i < il; i++) {
+    for (var i = 0, il = tRecords.length; i < il; i++) {
       var tRecord = tRecords[i];
       console.log('** record=', tRecord);
       if (tRecord.state.up) { // Initial state is ButtonUp.
@@ -111,14 +113,14 @@
 
     var tCondActions = tButtonActor.prototype.condActions = new Array();
     var tRecords = tButtonActor.prototype.records = new Array();
-    var i, il, tRawCondActions = pButton.condActions || [], 
+    var i, il, tRawCondActions = pButton.condActions || [],
         tRawRecords = pButton.records || [];
 
     // Decompile ActionScript
     for (i = 0, il = tRawCondActions.length; i < il; i++) {
       var tRawCondAction = tRawCondActions[i];
       tCondActions.push({
-          cond: tRawCondAction.cond, 
+          cond: tRawCondAction.cond,
           script: createLoaderWrapper(pStage, tRawCondAction.action, pSWF.version)
       });
     }
