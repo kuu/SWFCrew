@@ -61,18 +61,20 @@
     var tRecords = this.records;
 
     // Register the event handlers.
+    var tThis = this;
     for (i = 0, il = tCondActions.length; i < il; i++) {
       tCond = tCondActions[i].cond;
       tScript = tCondActions[i].script;
       if (tCond.keyPress) {
-        var tThis = this;
-        var onKeyDown = function (pEvent) {
-            var tKeyCode = translateKeyCode(pEvent.code);
+        var onKeyDown = (function (pCond, pScript) {
+            return function (pEvent) {
+              var tKeyCode = translateKeyCode(pEvent.code);
 console.log('KeyDown: code=', tKeyCode);
-            if (tCond.keyPress === tKeyCode) {
-              tScript(tThis.parent);
-            }
-          };
+                if (pCond.keyPress === tKeyCode) {
+                  pScript(tThis.parent);
+                }
+              };
+          }(tCond, tScript));
         this.on('enter', function () {
             tThis.stage.on('keydown', onKeyDown);
           });
