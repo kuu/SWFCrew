@@ -11,7 +11,7 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
-  function createLoaderWrapper(pStage, pScripts, pSWFVersion, pActor) {
+  function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
     var tId = pStage.actionScriptLoader.load(
       pStage.actionScriptProgram,
       pScripts,
@@ -21,7 +21,7 @@
     );
 
     return function(pTarget) {
-      pStage.actionScriptProgram.run(tId, pTarget);
+      pStage.actionScriptProgram.run(tId, pActor);
     }
   }
 
@@ -56,33 +56,29 @@
   function ButtonActor() {
     this.base();
 
-    var i, il, tCond, tScript;
     var tCondActions = this.condActions;
     var tRecords = this.records;
 
     // Register the event handlers.
     var tThis = this;
-    for (i = 0, il = tCondActions.length; i < il; i++) {
-      tCond = tCondActions[i].cond;
-      tScript = tCondActions[i].script;
-      if (tCond.keyPress) {
-        var onKeyDown = (function (pCond, pScript) {
-            return function (pEvent) {
-              var tKeyCode = translateKeyCode(pEvent.code);
-console.log('KeyDown: code=', tKeyCode);
-                if (pCond.keyPress === tKeyCode) {
-                  pScript(tThis.parent);
-                }
-              };
-          }(tCond, tScript));
-        this.on('enter', function () {
-            tThis.stage.on('keydown', onKeyDown);
-          });
-        this.on('leave', function () {
-            tThis.stage.ignore('keydown', onKeyDown);
-          });
+    function onKeyDown(pEvent) {
+      var tKeyCode = translateKeyCode(pEvent.code);
+      console.log('KeyDown: code=', tKeyCode);
+      var i, il, tCond, tScript;
+      for (i = 0, il = tCondActions.length; i < il; i++) {
+        tCond = tCondActions[i].cond;
+        tScript = tCondActions[i].script;
+        if (tCond.keyPress === tKeyCode) {
+          tScript(tThis.parent);
+        }
       }
     }
+    this.on('enter', function () {
+      tThis.stage.on('keydown', onKeyDown);
+    });
+    this.on('leave', function () {
+      tThis.stage.ignore('keydown', onKeyDown);
+    });
 
     // Add the button shapes.
     for (i = 0, il = tRecords.length; i < il; i++) {
