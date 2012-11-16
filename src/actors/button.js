@@ -11,7 +11,7 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
 
-  function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
+  function createLoaderWrapper(pStage, pScripts, pSWFVersion, pActor) {
     var tId = pStage.actionScriptLoader.load(
       pStage.actionScriptProgram,
       pScripts,
@@ -20,8 +20,8 @@
       }
     );
 
-    return function() {
-      pStage.actionScriptProgram.run(tId, this);
+    return function(pTarget) {
+      pStage.actionScriptProgram.run(tId, pTarget);
     }
   }
 
@@ -70,14 +70,14 @@
             var tKeyCode = translateKeyCode(pEvent.code);
 console.log('KeyDown: code=', tKeyCode);
             if (tCond.keyPress === tKeyCode) {
-              tScript();
+              tScript(tThis.parent);
             }
           };
         this.on('enter', function () {
             tThis.stage.on('keydown', onKeyDown);
           });
         this.on('leave', function () {
-            tThis.stage.off('keydown', onKeyDown);
+            tThis.stage.ignore('keydown', onKeyDown);
           });
       }
     }
