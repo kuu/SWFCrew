@@ -21,9 +21,37 @@
     );
 
     return function() {
-      this.stage.actionScriptProgram.run(tId, this);
+      pStage.actionScriptProgram.run(tId, this);
     }
   }
+
+  function translateKeyCode(pKeyCode) {
+    var tKeyCode = pKeyCode;
+    switch (pKeyCode) {
+    case 9: // tab
+      tKeyCode = 18;
+      break;
+    case 27: // escape
+      tKeyCode = 19;
+      break;
+    case 37: // left
+      tKeyCode =  1;
+      break;
+    case 38: // up
+      tKeyCode = 14;
+      break;
+    case 39: // right
+      tKeyCode = 2;
+      break;
+    case 40: // down
+      tKeyCode = 15;
+      break;
+    case 46: // delete
+      tKeyCode = 6;
+      break;
+    }
+    return tKeyCode;
+  };
 
   function ButtonActor() {
     this.base();
@@ -37,7 +65,20 @@
       tCond = tCondActions[i].cond;
       tScript = tCondActions[i].script;
       if (tCond.keyPress) {
-        // TODO: this.listen('click', tScript);
+        var tThis = this;
+        var onKeyDown = function (pEvent) {
+            var tKeyCode = translateKeyCode(pEvent.code);
+console.log('KeyDown: code=', tKeyCode);
+            if (tCond.keyPress === tKeyCode) {
+              tScript();
+            }
+          };
+        this.on('enter', function () {
+            tThis.stage.on('keydown', onKeyDown);
+          });
+        this.on('leave', function () {
+            tThis.stage.off('keydown', onKeyDown);
+          });
       }
     }
 
@@ -45,12 +86,12 @@
     for (i = 0, il = tRecords.length; i < il; i++) {
       var tRecord = tRecords[i];
       console.log('** record=', tRecord);
-      var tActor = new tRecord.actor();
-      tActor.colorTransform = tRecord.colorTransform;
-      if (tRecord.state.up) {
+      if (tRecord.state.up) { // Initial state is ButtonUp.
+        var tActor = new tRecord.actor();
+        tActor.colorTransform = tRecord.colorTransform;
         this.colorTransform = tRecord.colorTransform;
+        this.addActor(tActor);
       }
-      this.addActor(tActor);
     }
   }
   theatre.inherit(ButtonActor, theatre.Actor);
