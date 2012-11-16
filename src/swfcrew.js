@@ -32,6 +32,9 @@
     tStage.actionScriptProgram = AlphabetJS.createProgram(tASType, swfcrew.ASHandlers);
     tStage.actionScriptLoader = AlphabetJS.createLoader(tASType);
 
+    theatre.crews.dom.enableKeyInput(tStage);
+    theatre.crews.dom.enableMotionInput(tStage);
+
     var tActorTypes = swfcrew.actors;
     var tParams = {
       dictionaryToActorMap: {},
