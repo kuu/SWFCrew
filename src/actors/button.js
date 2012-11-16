@@ -21,7 +21,7 @@
     );
 
     return function(pTarget) {
-      pStage.actionScriptProgram.run(tId, pActor);
+      pStage.actionScriptProgram.run(tId, pTarget);
     }
   }
 
