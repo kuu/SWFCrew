@@ -56,8 +56,6 @@
   function ButtonActor() {
     this.base();
 
-    this.colorTransform = null;
-
     var tCondActions = this.condActions;
     var tRecords = this.records;
 
@@ -94,7 +92,7 @@
       }
     }
   }
-  theatre.inherit(ButtonActor, theatre.Actor);
+  theatre.inherit(ButtonActor, mSWFCrew.DisplayListActor);
 
   /**
    * Handles SWF Sprites.

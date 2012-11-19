@@ -38,9 +38,6 @@
 
   function SpriteActor() {
     this.base();
-    this.variables = {};
-    this.colorTransform = null;
-    this.clipDepth = 0;
 
     this.on('reversestep', onReverseStep);
 
@@ -74,7 +71,7 @@
 
     this.addProp(new this.propClass(this.backingContainer));
   }
-  theatre.inherit(SpriteActor, theatre.Actor);
+  theatre.inherit(SpriteActor, mSWFCrew.DisplayListActor);
 
   /**
    * Handles SWF Sprites.

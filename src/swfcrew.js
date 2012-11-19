@@ -65,6 +65,7 @@
 
     var tRoot = new tDictionaryToActorMap[0]();
     tRoot.name = 'root';
+    tRoot.__isRoot = true;
 
     tCompositor.addActor(tRoot, 0);
 

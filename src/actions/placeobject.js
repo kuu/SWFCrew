@@ -70,6 +70,10 @@
     }
 
     if (pData.matrix !== null) {
+      if (tActor.isMatrixLocked === true) {
+        return;
+      }
+
       var tMatrix = tActor.matrix;
       var tDataMatrix = pData.matrix;
       tMatrix.a = tDataMatrix[0];
@@ -78,9 +82,9 @@
       tMatrix.d = tDataMatrix[3];
       tMatrix.e = tDataMatrix[4];
       tMatrix.f = tDataMatrix[5];
-    }
 
-    tActor.invalidate();
+      tActor.invalidate();
+    }
   };
 
   mActions.clip = function(pSpriteActor, pParams, pData) {

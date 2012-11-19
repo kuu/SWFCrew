@@ -27,14 +27,20 @@
   }
   theatre.inherit(CanvasSpriteProp, theatre.crews.canvas.CanvasProp);
 
+  var mBackupPreDraw = theatre.crews.canvas.CanvasProp.prototype.preDraw;
+
+  CanvasSpriteProp.prototype.preDraw = function(pData) {
+    if (this.actor.isVisible === false) {
+      return false;
+    }
+    return mBackupPreDraw.call(this, pData);
+  };
+
   /**
    * @override
    */
   CanvasSpriteProp.prototype.draw = function(pData) {
-    /*var tContext = pData.context;
-    var tCanvas = tContext.canvas;
-    tContext.clearRect(0, 0, tCanvas.width, tCanvas.height);
-     */
+    // Do nothing
   };
 
   /**
@@ -93,15 +99,13 @@
    * @override
    */
   CanvasSpriteProp.prototype.preDrawChild = function(pData, pActor) {
-    this.parentContext = pData.context;
-    var tChildContext = pData.context = this.getDrawingContextForChild(pData.context, pActor);
-
-    if (this.clipUntil !== -1 || pActor.colorTransform !== null) { // In other words, we are currently clipping.
-      mBackupPreDrawChild.call(this, pData, pActor); // Hack it to the child.
-      return;
+    if (pActor.isVisible === false) {
+      return false;
     }
 
-    mBackupPreDrawChild.call(this, pData, pActor);
+    this.parentContext = pData.context;
+    pData.context = this.getDrawingContextForChild(pData.context, pActor);
+    return mBackupPreDrawChild.call(this, pData, pActor);
   };
 
   function cleanupClip(pProp, pParentContext) {

@@ -25,13 +25,8 @@
 
     var tWidth = this.width = this.twipsWidth / 20;
     var tHeight = this.height = this.twipsHeight / 20;
-
-    this.colorTransform = null;
-    this.clipDepth = 0;
-
-    this.variables = {};
   }
-  theatre.inherit(ShapeActor, theatre.Actor);
+  theatre.inherit(ShapeActor, mSWFCrew.DisplayListActor);
 
   function ShapeProp(pBackingCanvas, pWidth, pHeight) {
     this.base(pBackingCanvas, pWidth, pHeight);
@@ -44,6 +39,10 @@
   var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
 
   ShapeProp.prototype.preDraw = function(pData) {
+    if (this.actor.isVisible === false) {
+      return false;
+    }
+
     var tContext = pData.context;
     var tActor = this.actor;
 
@@ -52,7 +51,13 @@
     tContext.translate(tActor.bounds.left, tActor.bounds.top);
     tContext.scale(20, 20);
 
-    return mPreDrawBackup.call(this, pData);
+    var tWillDraw = mPreDrawBackup.call(this, pData);
+
+    if (tWillDraw === false) {
+      pData.context.restore();
+    }
+
+    return tWillDraw;
   };
 
   ShapeProp.prototype.postDraw = function(pData) {

@@ -64,6 +64,7 @@
           "root": "src/actors",
           "files": [
             "compositor.js",
+            "displaylistactor.js",
             "shape.js",
             "sprite.js",
             "canvassprite.js",

@@ -157,12 +157,203 @@
     return 0;
   };
 
-  mHandlers.GetProperty = function(pName, pProperty) {
+  mHandlers.SetProperty = function(pName, pProperty, pValue) {
+    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    var tMatrix;
+    var tFloat;
+    var tColorTransform;
+
+    switch (pProperty) {
+      case 0: // x
+        tMatrix = tTarget.matrix;
+        tTarget.isMatrixLocked = true;
+        tMatrix.e = this.toFloat(pValue);
+        tTarget.invalidate();
+        break;
+      case 1: // y
+        tMatrix = tTarget.matrix;
+        tTarget.isMatrixLocked = true;
+        tMatrix.f = this.toFloat(pValue);
+        tTarget.invalidate();
+        break;
+      case 2: // xscale
+        tMatrix = tTarget.matrix;
+        tTarget.isMatrixLocked = true;
+        tMatrix.a = (tMatrix.a < 0 ? -1 : 1) * this.toFloat(pValue) / 100;
+        tTarget.invalidate();
+        break;
+      case 3: // yscale
+        tMatrix = tTarget.matrix;
+        tTarget.isMatrixLocked = true;
+        tMatrix.d = (tMatrix.d < 0 ? -1 : 1) * this.toFloat(pValue) / 100;
+        tTarget.invalidate();
+        break;
+      case 4: // currentFrame
+        tTarget.gotoStep(this.toInt(pValue) - 1);
+        break;
+      case 5: // totalFrames
+        console.warn('Set Property totalFrames.');
+        break;
+      case 6: // alpha
+        tFloat = this.toFloat(pValue);
+
+        if (tFloat < 0) {
+          tFloat = 0;
+        }
+
+        tColorTransform = tTarget.colorTransform;
+        if (tColorTransform === null) {
+          tColorTransform = tTarget.colorTransform = new global.quickswf.structs.ColorTransform();
+        }
+        tColorTransform.am = 1;
+        tColorTransform.aa = (tFloat * 2.55) | 0;
+
+        tTarget.invalidate();
+        break;
+      case 7: // visible
+        if (tTarget.isVisible != pValue) {
+          tTarget.isVisible = pValue ? true : false;
+          tTarget.invalidate();
+        }
+        break;
+      case 8: // width
+        tMatrix = tTarget.matrix;
+        tMatrix.a = (tMatrix.a < 0 ? -1 : 1) * this.toInt(pValue) / this.width;
+        break;
+      case 9: // height
+        tMatrix = tTarget.matrix;
+        tMatrix.d = (tMatrix.d < 0 ? -1 : 1) * this.toInt(pValue) / this.height;
+        break;
+      case 10: // rotation
+        console.warn('Set Property ROTATION.');
+        break;
+      case 11: // target
+        console.warn('Set Property target');
+        break;
+      case 12: // framesLoaded
+        console.warn('Set Property framesLoaded');
+        break;
+      case 13: // name
+        this.name = this.toString(pValue);
+        break;
+      case 14: // dropTarget
+        console.warn('Set Property dropTarget');
+        break;
+      case 15: // url
+        console.warn('Set Property url');
+        break;
+      case 16: // highQuality
+        console.warn('Set Property highQuality');
+        break;
+      case 17: // focusRect
+        console.warn('Set Property focusRect');
+        break;
+      case 18: // soundBufTime
+        console.warn('Set Property soundBufTime');
+        break;
+      case 19: // quality
+        console.warn('Set Property quality');
+        break;
+      case 20: // xmouse
+        console.warn('Set Property xmouse');
+        break;
+      case 21: // ymouse
+        console.warn('Set Property ymouse');
+        break;
+      default:
+        console.warn('Attempt to get unknown property ' + pProperty + ' on ' + pName);
+        break;
+    }
+
     return '';
   };
 
-  mHandlers.SetProperty = function(pName, pProperty, pValue) {
+  mHandlers.GetProperty = function(pName, pProperty) {
+    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    var tResult;
 
+    switch (pProperty) {
+      case 0: // x
+        return tTarget.matrix.e;
+      case 1: // y
+        return tTarget.matrix.f;
+      case 2: // xscale
+        tResult = tTarget.matrix.a * 100;
+        if (tResult < 0) {
+          tResult = -tResult;
+        }
+        return tResult;
+      case 3: // yscale
+        tResult = tTarget.matrix.d * 100;
+        if (tResult < 0) {
+          tResult = -tResult;
+        }
+        return tResult;
+      case 4: // currentFrame
+        return tTarget.currentStep + 1;
+      case 5: // totalFrames
+        return tTarget.numberOfSteps;
+      case 6: // alpha
+        if (tTarget.colorTransform !== null) {
+          // TODO: Is alpha separate from color transform?
+          return ((tTarget.colorTransform.am + tTarget.colorTransform.aa) / 2.55) | 0;
+        } else {
+          return 100;
+        }
+      case 7: // visible
+        return tTarget.isVisible === true ? 1 : 0;
+      case 8: // width
+        // TODO: Use getSize() when done.
+        return tTarget.width || 0;
+      case 9: // height
+        // TODO: Use getSize() when done.
+        return tTarget.height || 0;
+      case 10: // rotation
+        console.warn('Get Property ROTATION.');
+        return 0;
+      case 11: // target
+        if (tTarget.__isRoot === true) {
+          return '/';
+        }
+
+        var tNames = [tTarget.name];
+        // TODO: This loop is a hack until we track roots.
+        while ((tTarget = tTarget.parent) !== null && !tTarget.__isRoot) {
+          tNames.push(tTarget.name);
+        }
+
+        return '/' + tNames.reverse().join('/');
+      case 12: // framesLoaded
+        return tTarget.numberOfSteps;
+      case 13: // name
+        return tTarget.name;
+      case 14: // dropTarget
+        console.warn('Get property dropTarget encountered.');
+        return '';
+      case 15: // url
+        console.warn('Get property url encountered.');
+        return '';
+      case 16: // highQuality
+        return 1;
+      case 17: // focusRect
+        console.warn('Get property focusRect encountered.');
+        return '';
+      case 18: // soundBufTime
+        console.warn('Get property soundBufTime encountered.');
+        return 0;
+      case 19: // quality
+        console.warn('Get property quality encountered.');
+        return 1;
+      case 20: // xmouse
+        console.warn('Get property xmouse encountered.');
+        return 0;
+      case 21: // ymouse
+        console.warn('Get property ymouse encountered.');
+        return 0;
+      default:
+        console.warn('Attempt to set unknown property ' + pProperty + ' on ' + pName + ' to ' + pValue);
+        return '';
+    }
   };
 
   mHandlers.CloneSprite = function(pTarget, pDepth, pName) {
@@ -172,5 +363,34 @@
   mHandlers.RemoveSprite = function(pName) {
 
   };
+
+  mHandlers.StopSounds = function() {
+
+  };
+
+  mHandlers.StartDrag = function() {
+
+  };
+
+  mHandlers.StopDrag = function() {
+
+  };
+
+  mHandlers.WaitForFrame = function(pWaitCount, pSkipCount) {
+
+  };
+
+  mHandlers.WaitForFrame2 = function(pSkipCount) {
+
+  };
+
+  mHandlers.GetURL = function(pURL, pTarget) {
+
+  };
+
+  mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
+
+  };
+
 
 }(this));

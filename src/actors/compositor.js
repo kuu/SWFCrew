@@ -34,6 +34,7 @@
 
     tCompositingProp.preDrawChildren = function(pData) {
       pData.context.scale(0.05, 0.05);
+      return true;
     };
 
     tCompositingProp.postDrawChildren = function(pData) {
