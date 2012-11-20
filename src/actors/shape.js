@@ -70,7 +70,7 @@
    * Generates a new function for drawing a given shape.
    * @private
    */
-  function generateDrawFunction(pSWF, pShape, pPrototype) {
+  ShapeActor.generateDrawFunction = function (pSWF, pShape, pPrototype) {
     var tBounds = pShape.bounds;
     var tWidth = (tBounds.right - tBounds.left) / 20;
     var tHeight = (tBounds.bottom - tBounds.top) / 20;
@@ -621,14 +621,14 @@
     var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
     var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
 
-    var tShapePropClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
+    var tShapePropClass = ShapeActor.propClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
       this.base(pBackingContainer, pWidth, pHeight);
     }
     theatre.inherit(tShapePropClass, ShapeProp);
 
     tProto = tShapePropClass.prototype;
 
-    tProto.draw = generateDrawFunction(pSWF, pShape, tProto);
+    tProto.draw = ShapeActor.generateDrawFunction(pSWF, pShape, tProto);
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
