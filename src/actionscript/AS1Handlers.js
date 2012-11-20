@@ -8,7 +8,7 @@
   var mHandlers = global.theatre.crews.swf.ASHandlers;
 
 
-  mHandlers.GetTargetAndData = function(pPath, pCurrentTarget) {
+  mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
     if (!pCurrentTarget) {
       pCurrentTarget = this.target;
     }
@@ -24,19 +24,26 @@
     var tFramePartIndex = pPath.indexOf(':');
     var tFramePart;
     if (tFramePartIndex !== -1) {
-      tFramePart = pPath.substring(tFramePartIndex + 1);
-      pPath = pPath.substring(0, tFramePartIndex);
+      pLastPartIsFrame = true;
     }
 
     var tNewTarget = pCurrentTarget;
     var tStep = 0;
     var tLabel = '';
-    var tParts = pPath.split('/');
+    var tParts = pPath.split(/:|\//);
+    var tPartsLength = tParts.length;
 
-    for (var i = 0, il = tParts.length; i < il; i++) {
+    if (pLastPartIsFrame === true) {
+      tFramePart = tParts[tPartsLength - 1];
+      tPartsLength--;
+    }
+
+    for (var i = 0; i < tPartsLength; i++) {
       var tPart = tParts[i];
-      if (tPart === '' || tPart === '.') {
+      if (tPart === '.') {
         continue;
+      } else if (tPart === '') {
+        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // Right?
       } else if (tPart === '..') {
         tNewTarget = tNewTarget.parent;
       } else if (tPart === '_root') {
@@ -99,11 +106,7 @@
   mHandlers.Call = function(pFrame) {
     var tCurrentTarget = this.target;
 
-    if (pFrame && pFrame.indexOf(':') === -1) {
-      pFrame = ':' + pFrame; // Hack...
-    }
-
-    var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget);
+    var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
     if (tData.label !== '') {
       var tStep = tData.target.getLabelStepFromScene('', tData.label);
@@ -125,10 +128,7 @@
       return;
     }
 
-    if (pFrame && pFrame.indexOf(':') === -1) {
-      pFrame = ':' + pFrame; // Hack...
-    }
-    var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget);
+    var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
     if (tData.label !== '') {
       return tData.target.gotoLabel(tData.label); // TODO: Support bias?
     } else {
@@ -137,18 +137,12 @@
   };
 
   mHandlers.SetVariable = function(pName, pValue) {
-    if (!/:/.test(pName)) {
-      pName = ':' + pName;
-    }
-    var tData = this.callMapped('GetTargetAndData', pName);
+    var tData = this.callMapped('GetTargetAndData', pName, this.target, true);
     tData.target.variables[tData.label] = pValue;
   };
 
   mHandlers.GetVariable = function(pName) {
-    if (!/:/.test(pName)) {
-      pName = ':' + pName;
-    }
-    var tData = this.callMapped('GetTargetAndData', pName);
+    var tData = this.callMapped('GetTargetAndData', pName, this.target, true);
     return tData.target.variables[tData.label];
   };
 
@@ -167,13 +161,13 @@
       case 0: // x
         tMatrix = tTarget.matrix;
         tTarget.isMatrixLocked = true;
-        tMatrix.e = this.toFloat(pValue);
+        tMatrix.e = this.toFloat(pValue) * 20;
         tTarget.invalidate();
         break;
       case 1: // y
         tMatrix = tTarget.matrix;
         tTarget.isMatrixLocked = true;
-        tMatrix.f = this.toFloat(pValue);
+        tMatrix.f = this.toFloat(pValue) * 20;
         tTarget.invalidate();
         break;
       case 2: // xscale
@@ -211,8 +205,9 @@
         tTarget.invalidate();
         break;
       case 7: // visible
-        if (tTarget.isVisible != pValue) {
-          tTarget.isVisible = pValue ? true : false;
+        tFloat = this.toFloat(pValue);
+        if (tTarget.isVisible != tFloat) {
+          tTarget.isVisible = tFloat ? true : false;
           tTarget.invalidate();
         }
         break;
@@ -264,8 +259,6 @@
         console.warn('Attempt to get unknown property ' + pProperty + ' on ' + pName);
         break;
     }
-
-    return '';
   };
 
   mHandlers.GetProperty = function(pName, pProperty) {
@@ -274,9 +267,9 @@
 
     switch (pProperty) {
       case 0: // x
-        return tTarget.matrix.e;
+        return tTarget.matrix.e / 20;
       case 1: // y
-        return tTarget.matrix.f;
+        return tTarget.matrix.f / 20;
       case 2: // xscale
         tResult = tTarget.matrix.a * 100;
         if (tResult < 0) {
@@ -356,12 +349,42 @@
     }
   };
 
-  mHandlers.CloneSprite = function(pTarget, pDepth, pName) {
+  mHandlers.CloneSprite = function(pNewName, pDepth, pOriginalName) {
+    var tOriginal = this.callMapped('GetTargetAndData', pOriginalName).target;
 
+    if (!tOriginal) {
+      console.warn('Could not find ' + pOriginalName + ' to clone.');
+      return;
+    }
+
+    var tNewActor = new tOriginal.constructor();
+
+    var tOriginalColorTransform = tOriginal.colorTransform;
+    if (tOriginalColorTransform !== null) {
+      var tColorTransform = tNewActor.colorTransform = new quickswf.structs.ColorTransform();
+      for (var k in tOriginalColorTransform) {
+        tColorTransform[k] = tOriginalColorTransform[k];
+      }
+    }
+
+    var tOriginalMatrix = tOriginal.matrix;
+    var tMatrix = tNewActor.matrix;
+    tMatrix.a = tOriginalMatrix.a;
+    tMatrix.b = tOriginalMatrix.b;
+    tMatrix.c = tOriginalMatrix.c;
+    tMatrix.d = tOriginalMatrix.d;
+    tMatrix.e = tOriginalMatrix.e;
+    tMatrix.f = tOriginalMatrix.f;
+
+    tNewActor.name = pNewName;
+
+    tOriginal.parent.addActor(tNewActor, pDepth);
+    tNewActor.invalidate();
   };
 
   mHandlers.RemoveSprite = function(pName) {
-
+    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    tTarget.leave();
   };
 
   mHandlers.StopSounds = function() {
