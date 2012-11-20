@@ -68,7 +68,8 @@
             "shape.js",
             "sprite.js",
             "canvassprite.js",
-            "button.js"
+            "button.js",
+            "text.js"
           ]
         },
 

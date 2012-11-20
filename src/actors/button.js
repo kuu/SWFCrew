@@ -83,7 +83,7 @@
     // Add the button shapes.
     for (var i = 0, il = tRecords.length; i < il; i++) {
       var tRecord = tRecords[i];
-      console.log('** record=', tRecord);
+      //console.log('** record=', tRecord);
       if (tRecord.state.up) { // Initial state is ButtonUp.
         var tActor = new tRecord.actor();
         tActor.colorTransform = tRecord.colorTransform;
