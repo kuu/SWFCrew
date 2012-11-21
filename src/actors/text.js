@@ -39,8 +39,6 @@
     var tActor = this.actor;
 
     tContext.save();
-
-    tContext.translate(tActor.bounds.left, tActor.bounds.top);
     tContext.scale(20, 20);
 
     var tWillDraw = mPreDrawBackup.call(this, pData);
@@ -85,14 +83,15 @@
     for (i = 0, il = tTextRecords.length; i < il; i++) {
 
       var tTextRecord = tTextRecords[i], 
-          tFont, tShapeList, tShape, tGlyphList, tGlyph,
-          tDrawFunctions = new Array(),
-          tTextBounds = pText.bounds, tCharBounds, tBounds;
+          tFont, tPrevFont, tShape, tGlyphList, tGlyph,
+          tDrawFunctions = new Array(), tScaleRatioList = new Array(), tPaddingList = new Array(),
+          tTextBounds = pText.bounds.clone(), tBounds, tWidth, tHeight, tXPadding = 0;
 
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
-      tFont = pSWF.fonts[tTextRecord.id];
-      //tTextBounds.move(tTextRecord.x || 0, tTextRecord.y || 0);
+      tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
+      tTextBounds.move(tTextRecord.x || 0, tTextRecord.y || 0);
+      //tTextBounds.move(tTextBounds.left * -1, tTextBounds.top * -1);
 
       for (j = 0, jl = tGlyphList.length; j < jl; j++) {
         tGlyph = tGlyphList[j];
@@ -100,16 +99,30 @@
         tBounds = tShape.bounds = tTextBounds.clone();
         tBounds.right = (tBounds.left + tGlyph.advance);
         tTextBounds.left = tBounds.right;
-//console.log('Shape[' + j + '] = ', tShape.bounds);
-        tDrawFunctions.push(ShapeActor.generateDrawFunction(pSWF, tShape, tProto));
+        tShape.fillStyles[0].color = tTextRecord.color;
+        tWidth = tBounds.right - tBounds.left;
+        tHeight = tBounds.bottom - tBounds.top;
+        tDrawFunctions.push(ShapeActor.generateDrawFunction(pSWF, tShape, tProto, true));
+        tScaleRatioList.push({x: tWidth / 1024, y: tHeight / 1024});
+        tPaddingList.push({x: tXPadding, y: tHeight});
+        tXPadding += tWidth;
+        //console.log('DrawFunc[' + j + '] = ', tDrawFunctions[j]);
       }
-      tTextLines.push(tDrawFunctions);
+      tTextLines.push({draws: tDrawFunctions, scales: tScaleRatioList, paddings: tPaddingList});
     }
     tProto.draw = function (pData) {
+        var tContext = this.drawingContext;
+
         for (i = 0, il = tTextLines.length; i < il; i++) {
-          var tLine = tTextLines[i];
-          for (j = 0, jl = tLine.length; j < jl; j++) {
-            tLine[j].call(this, pData);
+          var tDrawList = tTextLines[i].draws;
+          var tScaleRatio = tTextLines[i].scales;
+          var tPadding = tTextLines[i].paddings;
+          for (j = 0, jl = tDrawList.length; j < jl; j++) {
+            tContext.translate(tPadding[j].x, tPadding[j].y);
+            tContext.scale(tScaleRatio[j].x, tScaleRatio[j].y);
+            tDrawList[j].call(this, pData);
+            tContext.scale(1/tScaleRatio[j].x, 1/tScaleRatio[j].y);
+            tContext.translate(-tPadding[j].x, -tPadding[j].y);
           }
         }
       };
@@ -118,6 +131,7 @@
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
     tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
+    console.log('TextProp: Canvas size : w=' + tCanvas.width + ', h=' + tCanvas.height);
     var tContext = tProto.drawingContext = tCanvas.getContext('2d');
     tContext.lineCap = 'round';
     tContext.lineJoin = 'round';
