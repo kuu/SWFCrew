@@ -70,7 +70,7 @@
    * Generates a new function for drawing a given shape.
    * @private
    */
-  ShapeActor.generateDrawFunction = function (pSWF, pShape, pPrototype) {
+  ShapeActor.generateDrawFunction = function (pSWF, pShape, pPrototype, pSkipTranslate) {
     var tBounds = pShape.bounds;
     var tWidth = (tBounds.right - tBounds.left) / 20;
     var tHeight = (tBounds.bottom - tBounds.top) / 20;
@@ -81,7 +81,7 @@
       'var tTempCanvas = this.drawingCanvas;',
       'var tTempContext = this.drawingContext;',
       'tTempContext.save();',
-      'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');'
+      pSkipTranslate ? '' : 'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');'
     ];
 
     var i, il, k, kl;
@@ -473,7 +473,7 @@
               'tTempContext.save();',
               'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
               'tTempContext.scale(.05, .05);',
-              'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');',
+              pSkipTranslate ? '' : 'tTempContext.translate(' + -tBounds.left + ',' + -tBounds.top + ');',
               'tTempContext.transform(tPatternMatrix[0], tPatternMatrix[1], tPatternMatrix[2], tPatternMatrix[3], tPatternMatrix[4], tPatternMatrix[5]);',
               'tTempContext.globalCompositeOperation = \'source-in\';',
               'tTempContext.fillStyle = tPatternStyle;',
