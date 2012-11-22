@@ -111,4 +111,16 @@
     tActor.invalidate();
   };
 
+  mActions.ratio = function(pSpriteActor, pParams, pData) {
+    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    if (tActor === null) {
+      console.error('Could not color transform non-existent Actor at layer ' + pData.layer);
+      return;
+    }
+
+    tActor.ratio = Math.round((pData.ratio / 0xFFFE) * 1) / 1;
+
+    tActor.invalidate();
+  };
+
 }(this));

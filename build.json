@@ -69,7 +69,8 @@
             "sprite.js",
             "canvassprite.js",
             "button.js",
-            "text.js"
+            "text.js",
+            "morphshape.js"
           ]
         },
 

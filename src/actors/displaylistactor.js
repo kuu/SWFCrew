@@ -20,6 +20,7 @@
     this.clipDepth = 0;
     this.isVisible = true;
     this.isMatrixLocked = false;
+    this.ratio = 0;
 
     // -1 means auto.
     this._width = -1;

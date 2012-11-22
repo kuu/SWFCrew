@@ -9,7 +9,7 @@
   var theatre = global.theatre;
 
   var mSWFCrew = theatre.crews.swf;
-  var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
+  var mHandlers = mSWFCrew.handlers;
 
   function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
     var tId = pStage.actionScriptLoader.load(
@@ -81,7 +81,7 @@
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[1] = function(pSWF, pStage, pParams, pSprite, pOptions) {
+  mHandlers['DefineSprite'] = function(pSWF, pStage, pParams, pSprite, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     var tActions = mSWFCrew.actions;
     var tSpriteActor = tDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {

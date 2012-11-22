@@ -11,6 +11,8 @@
 
   var swfcrew = theatre.define('theatre.crews.swf');
 
+  swfcrew.handlers = {};
+
   swfcrew.ASHandlers = {};
 
   /**
@@ -56,7 +58,7 @@
       tHandlers[tDisplayListType](pSWF, tStage, tParams, tDictionary[k], pOptions);
     }
 
-    tHandlers[1](pSWF, tStage, tParams, pSWF.rootSprite, pOptions);
+    tHandlers['DefineSprite'](pSWF, tStage, tParams, pSWF.rootSprite, pOptions);
 
     var tCompositor = new swfcrew.actors.Compositor(pSWF, pAttachTo, pOptions);
     tCompositor.name = '__compositor__';

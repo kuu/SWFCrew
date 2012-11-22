@@ -9,10 +9,12 @@
   var theatre = global.theatre;
 
   var mActors = theatre.define('theatre.crews.swf.actors');
+  var mProps = theatre.define('theatre.crews.swf.props');
   var mSWFCrew = theatre.crews.swf;
-  var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
+  var mHandlers = mSWFCrew.handlers;
 
   mActors.ShapeActor = ShapeActor;
+  mProps.ShapeProp = ShapeProp;
 
   /**
    * The actor for handling SWF Shapes.
@@ -70,10 +72,10 @@
    * Generates a new function for drawing a given shape.
    * @private
    */
-  ShapeActor.generateDrawFunction = function (pSWF, pShape, pPrototype, pSkipTranslate) {
+  ShapeActor.generateDrawFunction = function (pImages, pShape, pSkipTranslate) {
     var tBounds = pShape.bounds;
-    var tWidth = (tBounds.right - tBounds.left) / 20;
-    var tHeight = (tBounds.bottom - tBounds.top) / 20;
+    var tWidth = Math.ceil((tBounds.right - tBounds.left) / 20);
+    var tHeight = Math.ceil((tBounds.bottom - tBounds.top) / 20);
     // TODO: Account for the very small offset created by this scale.
 
     var tCode = [
@@ -370,14 +372,9 @@
               console.warn('Focal radient detected. Showing it as red.');
               tCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
             } else if (tStyleData.type === 0x40 || tStyleData.type === 0x41) { // repeating bitmap or clipped bitmap
-              if (pSWF.images[tStyleData.bitmapId] === void 0) {
+              if (pImages[tStyleData.bitmapId] === void 0) {
                 tCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
               } else {
-                if (pPrototype.images === void 0) {
-                  pPrototype.images = new Object();
-                }
-                pPrototype.images[tStyleData.bitmapId] = pSWF.images[tStyleData.bitmapId];
-
                 tCode.push(
                   'var tPatternMatrix = [' + tMatrix[0] + ', ' + tMatrix[1] + ', ' + tMatrix[2] + ', ' + tMatrix[3] + ', ' + tMatrix[4] + ', ' + tMatrix[5] + '];',
                   'var tPatternStyle = tTempContext.createPattern(this.images[' + tStyleData.bitmapId + '], \'' + (tStyleData.type === 0x40 ? 'repeat' : 'no-repeat') + '\');',
@@ -468,7 +465,7 @@
             findNext(tEdgeMain, false);
           }
 
-          if (tStyleData.bitmapId !== null && pSWF.images[tStyleData.bitmapId] !== void 0) {
+          if (tStyleData.bitmapId !== null && pImages[tStyleData.bitmapId] !== void 0) {
             tCode.push(
               'tTempContext.save();',
               'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
@@ -481,9 +478,10 @@
               'tTempContext.restore();'
             );
           }
-
           tCode.push(
-            'tContext.drawImage(tTempCanvas, 0, 0);' // TODO: Is it possible to get rid of an image style way of doing this?
+            //'console.log(tTempCanvas.width, tTempCanvas.height, ' + tWidth + ', ' + tHeight + ');',
+            'tContext.drawImage(tTempCanvas, 0, 0);'
+            //'tContext.drawImage(tTempCanvas, 0, 0, ' + tWidth + ', ' + tHeight + ', 0, 0, ' + tWidth + ', ' + tHeight + ');' // TODO: Is it possible to get rid of an image style way of doing this?
           );
         }
       }
@@ -603,32 +601,32 @@
 
     tCode.push('tTempContext.restore();');
 
-    return eval('(function(pData) {\n' + tCode.join('\n') + '\n})');
+    return new Function('pData', tCode.join('\n'));
   }
 
   /**
    * Handles SWF Shapes.
-   * The 2 is the displayList code for shapes in QuickSWF.
    * @param {quickswf.SWF} pSWF The SWF file.
+   * @param {theatre.Stage} pStage The stage.
    * @param {Object} pParams An obect containing a dictionary-actor map object.
-   * @param {quickswf.Sprite} pSprite The Shape to handle.
+   * @param {quickswf.structs.Shape} pShape The Shape to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[2] = function(pSWF, pStage, pParams, pShape, pOptions) {
+  mHandlers['DefineShape'] = function(pSWF, pStage, pParams, pShape, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
-    var tActions = mSWFCrew.actions;
     var tProto;
     var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
     var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
 
-    var tShapePropClass = ShapeActor.propClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
+    var tShapePropClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
       this.base(pBackingContainer, pWidth, pHeight);
     }
     theatre.inherit(tShapePropClass, ShapeProp);
 
     tProto = tShapePropClass.prototype;
 
-    tProto.draw = ShapeActor.generateDrawFunction(pSWF, pShape, tProto);
+    tProto.images = pSWF.images;
+    tProto.draw = ShapeActor.generateDrawFunction(pSWF.images, pShape);
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;

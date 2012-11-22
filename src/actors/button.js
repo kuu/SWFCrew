@@ -9,7 +9,7 @@
   var theatre = global.theatre;
 
   var mSWFCrew = theatre.crews.swf;
-  var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
+  var mHandlers = mSWFCrew.handlers;
 
   function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
     var tId = pStage.actionScriptLoader.load(
@@ -95,14 +95,14 @@
   theatre.inherit(ButtonActor, mSWFCrew.DisplayListActor);
 
   /**
-   * Handles SWF Sprites.
+   * Handles SWF Buttons.
    * The 1 is the displayList code for sprites in QuickSWF.
    * @param {quickswf.SWF} pSWF The SWF file.
    * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[3] = function(pSWF, pStage, pParams, pButton, pOptions) {
+  mHandlers['DefineButton'] = function(pSWF, pStage, pParams, pButton, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     var tButtonActor = tDictionaryToActorMap[pButton.id] = function BuiltinButtonActor() {
       this.base();

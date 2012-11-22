@@ -9,7 +9,7 @@
   var theatre = global.theatre;
 
   var mSWFCrew = theatre.crews.swf;
-  var mHandlers = mSWFCrew.handlers = mSWFCrew.handlers || new Array();
+  var mHandlers = mSWFCrew.handlers;
   var ShapeActor = mSWFCrew.actors.ShapeActor;
 
   function TextActor() {
@@ -64,12 +64,12 @@
    * @param {quickswf.Text} pText The Text to handle.
    * @param {Object} pOptions Options to customize things.
    */
-  mHandlers[5] = function(pSWF, pStage, pParams, pText, pOptions) {
+  mHandlers['DefineText'] = function(pSWF, pStage, pParams, pText, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     var tTwipsWidth = pText.bounds.right - pText.bounds.left;
     var tTwipsHeight = pText.bounds.bottom - pText.bounds.top;
 
-    var tTextPropClass = TextActor.propClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight) {
+    var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight) {
       this.base(pBackingContainer, pWidth, pHeight);
     }
     theatre.inherit(tTextPropClass, TextProp);
@@ -78,11 +78,10 @@
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
-        tTextLines = new Array(); 
+        tTextLines = new Array();
 
     for (i = 0, il = tTextRecords.length; i < il; i++) {
-
-      var tTextRecord = tTextRecords[i], 
+      var tTextRecord = tTextRecords[i],
           tFont, tPrevFont, tShape, tGlyphList, tGlyph,
           tDrawFunctions = new Array(), tScaleRatioList = new Array(), tPaddingList = new Array(),
           tTextBounds = pText.bounds.clone(), tBounds, tWidth, tHeight, tXPadding = 0;
@@ -127,7 +126,7 @@
         }
       };
 
-    // 
+    //
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
     tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
