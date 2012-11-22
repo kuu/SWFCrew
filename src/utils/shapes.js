@@ -260,7 +260,7 @@
                 tEdgeMain,
                 tPoints,
                 tPoint,
-                tFinalPointY,
+                tFinalPointX,
                 tFinalPointY,
                 false
             ) === false) {
@@ -268,7 +268,8 @@
               tPath.stroke();
             } else {
               console.warn('Encountered an unclosed shape! Forcing it closed!');
-              tPath.close();
+              //tPath.close();
+              tPath.lineTo(tFinalPointX, tFinalPointY);
               tPath.fill();
             }
           }
@@ -280,7 +281,7 @@
     return tDrawables;
   }
 
-  var getResolvedShapes = mShape.getResolvedShapes = function(pShape) {
+  var getResolvedDrawables = mShape.getResolvedDrawables = function(pShape) {
     var tFillStyles = pShape.fillStyles;
     var tLineStyles = pShape.lineStyles;
     var tFillEdges, tLineEdges;
@@ -436,6 +437,8 @@
     this.records = [];
   }
 
+  Path.prototype.constructor = Path;
+
   Path.prototype.draw = function(pCode, pDrawable) {
     var tRecords = this.records;
     var tRecord;
@@ -513,6 +516,8 @@
     this.paths = [];
   }
 
+  Drawable.prototype.constructor = Drawable;
+
   Drawable.prototype.draw = function(pCode, pBounds, pImages, pSkipTranslate) {
     var tPaths = this.paths;
 
@@ -537,6 +542,7 @@
     }
 
     Shape.prototype = Object.create(pSuper.prototype);
+    Shape.prototype.constructor = Shape;
 
     Shape.prototype.paintPath = function(pCode, pPath) {
       pCode.push('tTempContext.fill();');
@@ -661,6 +667,7 @@
     }
 
     Line.prototype = Object.create(pSuper.prototype);
+    Line.prototype.constructor = Line;
 
     Line.prototype.paintPath = function(pCode, pPath) {
       pCode.push('tTempContext.stroke();');
@@ -725,7 +732,7 @@
    * Generates a new function for drawing a given shape.
    */
   mShape.generateDrawFunction = function(pImages, pShape, pSkipTranslate) {
-    return getShapeDrawFunction(getResolvedShapes(pShape), pShape.bounds, pImages, pSkipTranslate);
+    return getShapeDrawFunction(getResolvedDrawables(pShape), pShape.bounds, pImages, pSkipTranslate);
   }
 
 

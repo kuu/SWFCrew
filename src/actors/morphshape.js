@@ -24,7 +24,7 @@
   var QuickSWFEdgeRecord = quickswf.structs.EdgeRecord;
   var QuickSWFStyleChangeRecord = quickswf.structs.StyleChangeRecord;
 
-  var generateDrawFunction = mSWFCrew.utils.shape.generateDrawFunction;
+  var mShapeUtils = mSWFCrew.utils.shape;
 
   mActors.MorphShapeActor = MorphShapeActor;
 
@@ -46,11 +46,17 @@
   }
   theatre.inherit(MorphShapeProp, mProps.ShapeProp);
 
-  function convertFillStyles(pMorphedFillStyles, pRatio) {
-    var i, j, jl;
-    var tMorphedFillStylesLength = pMorphedFillStyles.length;
+  function convertStyle(pMorphedStyle, pRatio) {
+    if (pMorphedStyle.__proto__ === QuickSWFFillStyle.prototype) {
+      return convertFillStyle(pMorphedStyle, pRatio);
+    } else {
+      return convertLineStyle(pMorphedStyle, pRatio);
+    }
+  }
+
+  function convertFillStyle(pMorphedFillStyle, pRatio) {
+    var j, jl;
     var tFillStyle;
-    var tFillStyles = new Array(tMorphedFillStylesLength);
     var tMorphedFillStyle;
     var tMatrix, tStartMatrix, tEndMatrix;
     var tColor, tStartColor, tEndColor;
@@ -58,204 +64,212 @@
     var tStops, tMorphedStops;
     var tStop, tMorphedStop;
 
-    for (i = 0; i < tMorphedFillStylesLength; i++) {
-      tFillStyle = tFillStyles[i] = new QuickSWFFillStyle(false);
-      tMorphedFillStyle = pMorphedFillStyles[i];
-      tFillStyle.bitmapId = tMorphedFillStyle.bitmapId;
-      tFillStyle.type = tMorphedFillStyle.type;
+    tFillStyle = new QuickSWFFillStyle(false);
+    tFillStyle.bitmapId = pMorphedFillStyle.bitmapId;
+    tFillStyle.type = pMorphedFillStyle.type;
 
-      if (tMorphedFillStyle.startMatrix !== null) {
-        tMatrix = tFillStyle.matrix = new QuickSWFMatrix();
-        tStartMatrix = tMorphedFillStyle.startMatrix;
-        tEndMatrix = tMorphedFillStyle.endMatrix;
-        for (j = 0; j < 6; j++) {
-          tMatrix[j] = tStartMatrix[j] + (tEndMatrix[j] - tStartMatrix[j]) * pRatio;
-        }
-      }
-
-      if (tMorphedFillStyle.startColor !== null) {
-        tColor = tFillStyle.color = new QuickSWFRGBA();
-        tStartColor = tMorphedFillStyle.startColor;
-        tEndColor = tMorphedFillStyle.endColor;
-        tColor.red = (tStartColor.red + (tEndColor.red - tStartColor.red) * pRatio) | 0;
-        tColor.green = (tStartColor.green + (tEndColor.green - tStartColor.green) * pRatio) | 0;
-        tColor.blue = (tStartColor.blue + (tEndColor.blue - tStartColor.blue) * pRatio) | 0;
-        tColor.alpha = (tStartColor.alpha + (tEndColor.alpha - tStartColor.alpha) * pRatio) | 0;
-      }
-
-      if (tMorphedFillStyle.gradient !== null) {
-        tGradient = tFillStyle.gradient = new QuickSWFGradient();
-        tMorphedGradient = tMorphedFillStyle.gradient;
-
-        tGradient.spreadMode = tMorphedGradient.spreadMode;
-        tGradient.interpolationMode = tMorphedGradient.interpolationMode;
-        tGradient.focalPoint = tMorphedGradient.focalPoint;
-
-        tStops = tGradient.stops;
-        tMorphedStops = tMorphedGradient.stops;
-
-        for (j = 0, jl = tMorphedStops.length; j < jl; j++) {
-          tStop = tStops[j] = new QuickSWFStop();
-          tMorphedStop = tMorphedStops[j];
-
-          tStop.ratio = tMorphedStop.startRatio + (tMorphedStop.endRatio - tMorphedStop.startRatio) * pRatio;
-
-          tColor = tStop.color = new QuickSWFRGBA();
-          tStartColor = tMorphedStop.startColor;
-          tEndColor = tMorphedStop.endColor;
-          tColor.red = (tStartColor.red + (tEndColor.red - tStartColor.red) * pRatio) | 0;
-          tColor.green = (tStartColor.green + (tEndColor.green - tStartColor.green) * pRatio) | 0;
-          tColor.blue = (tStartColor.blue + (tEndColor.blue - tStartColor.blue) * pRatio) | 0;
-          tColor.alpha = (tStartColor.alpha + (tEndColor.alpha - tStartColor.alpha) * pRatio) | 0;
-        }
+    if (pMorphedFillStyle.startMatrix !== null) {
+      tMatrix = tFillStyle.matrix = new QuickSWFMatrix();
+      tStartMatrix = pMorphedFillStyle.startMatrix;
+      tEndMatrix = pMorphedFillStyle.endMatrix;
+      for (j = 0; j < 6; j++) {
+        tMatrix[j] = interpolate(tStartMatrix[j], tEndMatrix[j], pRatio);
       }
     }
 
-    return tFillStyles;
+    if (pMorphedFillStyle.startColor !== null) {
+      tColor = tFillStyle.color = new QuickSWFRGBA();
+      tStartColor = pMorphedFillStyle.startColor;
+      tEndColor = pMorphedFillStyle.endColor;
+      tColor.red = interpolate(tStartColor.red, tEndColor.red, pRatio) | 0;
+      tColor.green = interpolate(tStartColor.green, tEndColor.green, pRatio) | 0;
+      tColor.blue = interpolate(tStartColor.blue, tEndColor.blue, pRatio) | 0;
+      tColor.alpha = interpolate(tStartColor.alpha, tEndColor.alpha, pRatio) | 0;
+    }
+
+    if (pMorphedFillStyle.gradient !== null) {
+      tGradient = tFillStyle.gradient = new QuickSWFGradient();
+      tMorphedGradient = pMorphedFillStyle.gradient;
+
+      tGradient.spreadMode = tMorphedGradient.spreadMode;
+      tGradient.interpolationMode = tMorphedGradient.interpolationMode;
+      tGradient.focalPoint = tMorphedGradient.focalPoint;
+
+      tStops = tGradient.stops;
+      tMorphedStops = tMorphedGradient.stops;
+
+      for (j = 0, jl = tMorphedStops.length; j < jl; j++) {
+        tStop = tStops[j] = new QuickSWFStop();
+        tMorphedStop = tMorphedStops[j];
+
+        tStop.ratio = interpolate(tMorphedStop.startRatio, tMorphedStop.endRatio, pRatio);
+
+        tColor = tStop.color = new QuickSWFRGBA();
+        tStartColor = tMorphedStop.startColor;
+        tEndColor = tMorphedStop.endColor;
+        tColor.red = interpolate(tStartColor.red, tEndColor.red, pRatio) | 0;
+        tColor.green = interpolate(tStartColor.green, tEndColor.green, pRatio) | 0;
+        tColor.blue = interpolate(tStartColor.blue, tEndColor.blue, pRatio) | 0;
+        tColor.alpha = interpolate(tStartColor.alpha, tEndColor.alpha, pRatio) | 0;
+      }
+    }
+
+    return tFillStyle;
   }
 
-  function convertLineStyles(pMorphedLineStyles, pRatio) {
-    var i;
-    var tMorphedLineStylesLength = pMorphedLineStyles.length;
-    var tLineStyles = new Array(tMorphedLineStylesLength);
+  function convertLineStyle(pMorphedLineStyle, pRatio) {
     var tLineStyle, tMorphedLineStyle;
     var tColor, tStartColor, tEndColor;
 
-    for (i = 0; i < tMorphedLineStylesLength; i++) {
-      tLineStyle = tLineStyles[i] = new QuickSWFLineStyle(false);
-      tMorphedLineStyle = pMorphedLineStyles[i];
+    tLineStyle = new QuickSWFLineStyle(false);
 
-      tLineStyle.width = tMorphedLineStyle.startWidth + (tMorphedLineStyle.endWidth - tMorphedLineStyle.startWidth) * pRatio;
+    tLineStyle.width = pMorphedLineStyle.startWidth + (pMorphedLineStyle.endWidth - pMorphedLineStyle.startWidth) * pRatio;
 
-      if (tMorphedLineStyle.startColor !== null) {
-        tColor = tLineStyle.color = new QuickSWFRGBA();
-        tStartColor = tMorphedLineStyle.startColor;
-        tEndColor = tMorphedLineStyle.endColor;
-        tColor.red = (tStartColor.red + (tEndColor.red - tStartColor.red) * pRatio) | 0;
-        tColor.green = (tStartColor.green + (tEndColor.green - tStartColor.green) * pRatio) | 0;
-        tColor.blue = (tStartColor.blue + (tEndColor.blue - tStartColor.blue) * pRatio) | 0;
-        tColor.alpha = (tStartColor.alpha + (tEndColor.alpha - tStartColor.alpha) * pRatio) | 0;
-      }
+    if (pMorphedLineStyle.startColor !== null) {
+      tColor = tLineStyle.color = new QuickSWFRGBA();
+      tStartColor = pMorphedLineStyle.startColor;
+      tEndColor = pMorphedLineStyle.endColor;
+      tColor.red = interpolate(tStartColor.red, tEndColor.red, pRatio) | 0;
+      tColor.green = interpolate(tStartColor.green, tEndColor.green, pRatio) | 0;
+      tColor.blue = interpolate(tStartColor.blue, tEndColor.blue, pRatio) | 0;
+      tColor.alpha = interpolate(tStartColor.alpha, tEndColor.alpha, pRatio) | 0;
     }
 
-    return tLineStyles;
+    return tLineStyle;
   }
 
   MorphShapeProp.convertBounds = function(pMorphShape, pRatio) {
     var tStartBounds = pMorphShape.startBounds;
     var tEndBounds = pMorphShape.endBounds;
     var tBounds = new QuickSWFRect();
-    tBounds.left = (tStartBounds.left + ((tEndBounds.left - tStartBounds.left) * pRatio));
-    tBounds.top = (tStartBounds.top + ((tEndBounds.top - tStartBounds.top) * pRatio));
-    tBounds.right = (tStartBounds.right + ((tEndBounds.right - tStartBounds.right) * pRatio));
-    tBounds.bottom = (tStartBounds.bottom + ((tEndBounds.bottom - tStartBounds.bottom) * pRatio));
+    tBounds.left = interpolate(tStartBounds.left, tEndBounds.left, pRatio);
+    tBounds.top = interpolate(tStartBounds.top, tEndBounds.top, pRatio);
+    tBounds.right = interpolate(tStartBounds.right, tEndBounds.right, pRatio);
+    tBounds.bottom = interpolate(tStartBounds.bottom, tEndBounds.bottom, pRatio);
 
     return tBounds;
   };
 
-  MorphShapeProp.generateDrawFunction = function(pMorphShape, pBounds, pImages, pRatio) {
-    var tShape = new QuickSWFShape();
-    var tRecords = tShape.records;
-    var tEdgeRecord, tStyleChangeRecord;
+  function interpolate(pStart, pEnd, pRatio) {
+    return pStart + (pEnd - pStart) * pRatio;
+  }
+
+  MorphShapeProp.generateDrawFunction = function(pStartDrawables, pEndDrawables, pBounds, pImages, pRatio) {
+    var tDrawablesLength = pStartDrawables.length;
+    var tDrawables = new Array(tDrawablesLength);
+    var tDrawable, tStartDrawable, tEndDrawable;
+    var tStartPaths, tEndPaths;
+    var tPath, tStartPath, tEndPath;
+    var tRecords, tStartRecords, tEndRecords;
+    var tRecordsLength;
     var tStartRecord, tEndRecord;
-    var tStartRecords = pMorphShape.startEdges;
-    var tEndRecords = pMorphShape.endEdges;
     var tStartType, tEndType;
     var tNewDeltaX, tNewDeltaY;
-    var i, il, j;
+    var i, j, jl, k;
 
-    tShape.fillStyles = convertFillStyles(pMorphShape.fillStyles, pRatio);
-    tShape.lineStyles = convertLineStyles(pMorphShape.lineStyles, pRatio);
-    tShape.bounds = pBounds;
+    for (i = 0; i < tDrawablesLength; i++) {
+      tStartDrawable = pStartDrawables[i];
+      tEndDrawable = pEndDrawables[i];
 
-    if (tStartRecords.length !== tEndRecords.length) {
-      console.error('MorphShape edges dont match. Blowing up nicely with a blank draw.');
-      return function() {};
-    }
+      tDrawable = tDrawables[i] = new tStartDrawable.constructor(convertStyle(tStartDrawable.style, pRatio));
 
-    for (i = 0, il = tStartRecords.length; i < il; i++) {
-      tStartRecord = tStartRecords[i];
-      tEndRecord = tEndRecords[i];
+      if (tEndDrawable === void 0) {
+        console.error('MorphShape end drawable did not exist. Using start drawable.');
+        tDrawable.paths = tStartDrawable.paths;
+        continue;
+      }
 
-      tStartType = tStartRecord.type;
-      tEndType = tEndRecord.type;
+      tStartPaths = tStartDrawable.paths;
+      tEndPaths = tEndDrawable.paths;
 
-      if (tStartType === 1) { // Style Change
-        if (tEndType !== 1) {
-          console.error('MorphShape edge records dont match (' + tStartType + ' and ' + tEndType + '). Blowing up nicely with a blank draw.');
-          return function() {};
+      for (j = 0, jl = tStartPaths.length; j < jl; j++) {
+        tStartPath = tStartPaths[j];
+        tEndPath = tEndPaths[j];
+
+        if (tEndPath === void 0) {
+          console.error('MorphShape end path did not exist. Using start path.');
+          tPath = tStartPath;
+          continue;
         }
 
-        tStyleChangeRecord = tRecords[i] = new QuickSWFStyleChangeRecord(tStartRecord.fillBits, tStartRecord.lineBits);
+        tPath = new tStartPath.constructor(
+          interpolate(tStartPath.startX, tEndPath.startX, pRatio),
+          interpolate(tStartPath.startY, tEndPath.startY, pRatio)
+        );
 
-        tStyleChangeRecord.hasMove = tStartRecord.hasMove;
-        tStyleChangeRecord.moveDeltaX = (tStartRecord.moveDeltaX + (tEndRecord.moveDeltaX - tStartRecord.moveDeltaX) * pRatio);
-        tStyleChangeRecord.moveDeltaY = (tStartRecord.moveDeltaY + (tEndRecord.moveDeltaY - tStartRecord.moveDeltaY) * pRatio);
-        tStyleChangeRecord.fillStyle0 = tStartRecord.fillStyle0;
-        tStyleChangeRecord.fillStyle1 = tStartRecord.fillStyle1;
-        tStyleChangeRecord.lineStyle = tStartRecord.lineStyle;
+        tDrawable.addPath(tPath);
 
-        if (tStartRecord.fillStyles !== null) {
-          // TODO: Is this possible? Do we interpolate between them???
-          console.warn('New fill styles in MorphShape');
-        }
+        tStartRecords = tStartPath.records;
+        tEndRecords = tEndPath.records;
+        tRecordsLength = tStartRecords.length;
 
-        if (tStartRecord.lineStyles !== null) {
-          // TODO: Is this possible? Do we interpolate between them???
-          console.warn('New line styles in MorphShape');
-        }
-      } else if (tStartType === 3) { // Straight edge
-        if (tEndType === 2) {
-          // Convert this edge to a curve.
-          tNewDeltaX = tStartRecord.deltaX / 2;
-          tNewDeltaY = tStartRecord.deltaY / 2;
-          tEdgeRecord = tRecords[i] = new QuickSWFEdgeRecord(
-            2,
-            (tNewDeltaX + (tEndRecord.deltaX - tNewDeltaX) * pRatio) | 0,
-            (tNewDeltaY + (tEndRecord.deltaY - tNewDeltaY) * pRatio) | 0,
-            (tNewDeltaX + (tEndRecord.deltaControlX - tNewDeltaX) * pRatio) | 0,
-            (tNewDeltaY + (tEndRecord.deltaControlY - tNewDeltaY) * pRatio) | 0
-          );
-        } else if (tEndType === 3) {
-          // Just use it.
-          tEdgeRecord = tRecords[i] = new QuickSWFEdgeRecord(
-            3,
-            (tStartRecord.deltaX + (tEndRecord.deltaX - tStartRecord.deltaX) * pRatio) | 0,
-            (tStartRecord.deltaY + (tEndRecord.deltaY - tStartRecord.deltaY) * pRatio) | 0
-          );
-        } else {
-          console.error('MorphShape edge records dont match (' + tStartType + ' and ' + tEndType + '). Blowing up nicely with a blank draw.');
-          return function() {};
-        }
-      } else if (tStartType === 2) { // Curve edge
-        if (tEndType === 3) {
-          // Convert the end edge to a curve.
-          tNewDeltaX = tEndRecord.deltaX / 2;
-          tNewDeltaY = tEndRecord.deltaY / 2;
-          tEdgeRecord = tRecords[i] = new QuickSWFEdgeRecord(
-            2,
-            (tStartRecord.deltaX + (tNewDeltaX - tStartRecord.deltaX) * pRatio) | 0,
-            (tStartRecord.deltaY + (tNewDeltaY - tStartRecord.deltaY) * pRatio) | 0,
-            (tStartRecord.deltaControlX + (tNewDeltaX - tStartRecord.deltaControlX) * pRatio) | 0,
-            (tStartRecord.deltaControlY + (tNewDeltaY - tStartRecord.deltaControlY) * pRatio) | 0
-          );
-        } else if (tEndType === 2) {
-          // Just use it.
-          tEdgeRecord = tRecords[i] = new QuickSWFEdgeRecord(
-            2,
-            (tStartRecord.deltaX + (tEndRecord.deltaX - tStartRecord.deltaX) * pRatio) | 0,
-            (tStartRecord.deltaY + (tEndRecord.deltaY - tStartRecord.deltaY) * pRatio) | 0,
-            (tStartRecord.deltaControlX + (tEndRecord.deltaControlX - tStartRecord.deltaControlX) * pRatio) | 0,
-            (tStartRecord.deltaControlY + (tEndRecord.deltaControlY - tStartRecord.deltaControlY) * pRatio) | 0
-          );
-        } else {
-          console.error('MorphShape edge records dont match (' + tStartType + ' and ' + tEndType + '). Blowing up nicely with a blank draw.');
-          return function() {};
+        tRecords = tPath.records = new Array(tRecordsLength);
+
+        for (k = 0; k < tRecordsLength; k++) {
+          tStartRecord = tStartRecords[k];
+          tEndRecord = tEndRecords[k];
+
+          if (tEndRecord === void 0) {
+            tRecords[k] = tStartRecord;
+            continue;
+          }
+          if (tStartRecord === void 0) {
+            tRecords[k] = tStartRecord;
+            continue;
+          }
+
+          tStartType = tStartRecord.type;
+          tEndType = tEndRecord.type;
+
+          if (tStartType === tEndType) {
+            if (tStartType === 'quadraticCurve') {
+              tRecords[k] = {
+                type: tStartType,
+                controlX: interpolate(tStartRecord.controlX, tEndRecord.controlX, pRatio),
+                controlY: interpolate(tStartRecord.controlY, tEndRecord.controlY, pRatio),
+                x: interpolate(tStartRecord.x, tEndRecord.x, pRatio),
+                y: interpolate(tStartRecord.y, tEndRecord.y, pRatio)
+              };
+            } else if (tStartType === 'line') {
+              tRecords[k] = {
+                type: tStartType,
+                x: interpolate(tStartRecord.x, tEndRecord.x, pRatio),
+                y: interpolate(tStartRecord.y, tEndRecord.y, pRatio)
+              };
+            } else {
+              tRecords[k] = tStartRecord;
+            }
+          } else if (tStartType === 'quadraticCurve') {
+            // Convert end edge to a curve.
+            tNewDeltaX = tEndRecord.x / 2;
+            tNewDeltaY = tEndRecord.y / 2;
+            tRecords[k] = {
+              type: 'quadraticCurve',
+              controlX: interpolate(tStartRecord.controlX, tNewDeltaX, pRatio),
+              controlY: interpolate(tStartRecord.controlY, tNewDeltaY, pRatio),
+              x: interpolate(tStartRecord.x, tNewDeltaX, pRatio),
+              y: interpolate(tStartRecord.y, tNewDeltaY, pRatio)
+            };
+          } else if (tStartType === 'line') {
+            // Convert start edge to a curve.
+            tNewDeltaX = tStartRecord.x / 2;
+            tNewDeltaY = tStartRecord.y / 2;
+            tRecords[k] = {
+              type: 'quadraticCurve',
+              controlX: interpolate(tNewDeltaX, tEndRecord.controlX, pRatio),
+              controlY: interpolate(tNewDeltaY, tEndRecord.controlY, pRatio),
+              x: interpolate(tNewDeltaX, tEndRecord.x, pRatio),
+              y: interpolate(tNewDeltaY, tEndRecord.y, pRatio)
+            };
+          } else {
+            console.error('MorphShape records do not match. Using start records.');
+            tRecords[k] = tStartRecord;
+          }
         }
       }
     }
 
-    return generateDrawFunction(pImages, tShape);
+    return mShapeUtils.getShapeDrawFunction(tDrawables, pBounds, pImages);
   }
 
   MorphShapeProp.drawFunctions = {};
@@ -279,7 +293,13 @@
     tActor.bounds = tBounds;
 
     if (!(tRatioString in tDrawFunctions)) {
-      tDrawFunction = tDrawFunctions[tRatioString] = MorphShapeProp.generateDrawFunction(tMorphShape, tBounds, this.images, tRatio);
+      tDrawFunction = tDrawFunctions[tRatioString] = MorphShapeProp.generateDrawFunction(
+        tActor.startDrawables,
+        tActor.endDrawables,
+        tBounds,
+        this.images,
+        tRatio
+      );
     } else {
       tDrawFunction = tDrawFunctions[tRatioString];
     }
@@ -334,5 +354,35 @@
       this.addProp(tMorphShapeProp);
     };
     theatre.inherit(tMorphShapeActor, MorphShapeActor);
+
+    var tTempShape = new QuickSWFShape();
+    tTempShape.bounds = pMorphShape.startBounds;
+    var tStartRecords = tTempShape.records = pMorphShape.startEdges;
+    tTempShape.fillStyles = pMorphShape.fillStyles;
+    tTempShape.lineStyles = pMorphShape.lineStyles;
+
+    tMorphShapeActor.prototype.startDrawables = mShapeUtils.getResolvedDrawables(tTempShape);
+
+    tTempShape = new QuickSWFShape();
+    tTempShape.bounds = pMorphShape.endBounds;
+    var tEndRecords = tTempShape.records = pMorphShape.endEdges;
+    tTempShape.fillStyles = pMorphShape.fillStyles;
+    tTempShape.lineStyles = pMorphShape.lineStyles;
+    var tEndRecord, tStartRecord;
+
+    // Copy all style changes to the end records.
+    for (var i = 0, il = tEndRecords.length; i < il; i++) {
+      tEndRecord = tEndRecords[i];
+      if (tEndRecord.type === 1) {
+        tStartRecord = tStartRecords[i];
+        tEndRecord.fillStyle0 = tStartRecord.fillStyle0;
+        tEndRecord.fillStyle1 = tStartRecord.fillStyle1;
+        tEndRecord.lineStyle = tStartRecord.lineStyle;
+        tEndRecord.fillStyles = tStartRecord.fillStyles;
+        tEndRecord.lineStyles = tStartRecord.lineStyles;
+      }
+    }
+
+    tMorphShapeActor.prototype.endDrawables = mShapeUtils.getResolvedDrawables(tTempShape);
   };
 }(this));
