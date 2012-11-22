@@ -118,7 +118,7 @@
       return;
     }
 
-    tActor.ratio = Math.round((pData.ratio / 0xFFFE) * 1) / 1;
+    tActor.ratio = Math.round((pData.ratio / 0xFFFE) * 10) / 10;
 
     tActor.invalidate();
   };

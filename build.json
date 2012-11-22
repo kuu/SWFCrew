@@ -61,6 +61,12 @@
 
         {
           "type": "files",
+          "root": "src/utils",
+          "include": "\\.js$"
+        },
+
+        {
+          "type": "files",
           "root": "src/actors",
           "files": [
             "compositor.js",

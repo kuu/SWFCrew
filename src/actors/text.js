@@ -10,6 +10,7 @@
 
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
+  var mShapeUtils = mSWFCrew.utils.shape;
   var ShapeActor = mSWFCrew.actors.ShapeActor;
 
   function TextActor() {
@@ -101,7 +102,7 @@
         tShape.fillStyles[0].color = tTextRecord.color;
         tWidth = tBounds.right - tBounds.left;
         tHeight = tBounds.bottom - tBounds.top;
-        tDrawFunctions.push(ShapeActor.generateDrawFunction(pSWF, tShape, tProto, true));
+        tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape, true));
         tScaleRatioList.push({x: tWidth / 1024, y: tHeight / 1024});
         tPaddingList.push({x: tXPadding, y: tHeight});
         tXPadding += tWidth;

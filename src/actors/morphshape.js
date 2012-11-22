@@ -24,7 +24,7 @@
   var QuickSWFEdgeRecord = quickswf.structs.EdgeRecord;
   var QuickSWFStyleChangeRecord = quickswf.structs.StyleChangeRecord;
 
-  var generateDrawFunction = mSWFCrew.actors.ShapeActor.generateDrawFunction;
+  var generateDrawFunction = mSWFCrew.utils.shape.generateDrawFunction;
 
   mActors.MorphShapeActor = MorphShapeActor;
 

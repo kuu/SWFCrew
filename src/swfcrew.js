@@ -13,6 +13,8 @@
 
   swfcrew.handlers = {};
 
+  swfcrew.utils = {};
+
   swfcrew.ASHandlers = {};
 
   /**
