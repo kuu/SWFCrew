@@ -25,7 +25,7 @@
     }
   }
 
-  function translateKeyCode(pKeyCode) {
+  function translateKeyCode(pKeyCode, pShift) {
     var tKeyCode = pKeyCode;
     switch (pKeyCode) {
     case 9: // tab
@@ -49,6 +49,12 @@
     case 46: // delete
       tKeyCode = 6;
       break;
+    case 51: // 3
+      if (pShift) {
+        // Convert '3' into '#'.
+        tKeyCode = 35;
+      }
+      break;
     }
     return tKeyCode;
   };
@@ -62,7 +68,7 @@
     // Register the event handlers.
     var tThis = this;
     function onKeyDown(pEvent) {
-      var tKeyCode = translateKeyCode(pEvent.code);
+      var tKeyCode = translateKeyCode(pEvent.code, pEvent.shift);
       console.log('KeyDown: code=', tKeyCode);
       var i, il, tCond, tScript;
       for (i = 0, il = tCondActions.length; i < il; i++) {
