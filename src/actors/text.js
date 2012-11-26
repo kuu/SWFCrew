@@ -40,15 +40,14 @@
     var tActor = this.actor;
 
     tContext.save();
+
+    tContext.translate(tActor.bounds.left, tActor.bounds.top);
     tContext.scale(20, 20);
-//console.log('tContext.save();');
-//console.log('tContext.scale(20, 20);');
 
     var tWillDraw = mPreDrawBackup.call(this, pData);
 
     if (tWillDraw === false) {
       pData.context.restore();
-//console.log('tContext.restore();');
     }
 
     return tWillDraw;
@@ -58,7 +57,6 @@
     mPostDrawBackup.call(this, pData);
 
     pData.context.restore();
-//console.log('tContext.restore();');
   };
 
   /**
@@ -71,9 +69,9 @@
    */
   mHandlers['DefineText'] = function(pSWF, pStage, pParams, pText, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
-    var tTwipsWidth = pText.bounds.right - pText.bounds.left;
-    var tTwipsHeight = pText.bounds.bottom - pText.bounds.top;
-
+    var tTwipsWidth = 0, tTwipsHeight = 0;
+    var tBoundsWidth = pText.bounds.right - pText.bounds.left;
+    var tBoundsHeight = pText.bounds.bottom - pText.bounds.top;
     var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight) {
       this.base(pBackingContainer, pWidth, pHeight);
     }
@@ -83,7 +81,7 @@
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
-        tTextLines = new Array(), tEMSquareX = 1024, tEMSquareY = 1024;
+        tTextLines = new Array();
 
     for (i = 0, il = tTextRecords.length; i < il; i++) {
       var tTextRecord = tTextRecords[i],
@@ -94,48 +92,55 @@
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
+//console.log('---------------------');
+//console.log('pText.bounds=', pText.bounds);
+//console.log('tTextRecord[' + i + '].height=' + tTextRecord.height);
+//console.log('tTextRecord[' + i + '].offsetX=' + tTextRecord.x);
+//console.log('tTextRecord[' + i + '].offsetY=' + tTextRecord.y);
+      var tString = '';
 
       for (j = 0, jl = tGlyphList.length; j < jl; j++) {
         tGlyph = tGlyphList[j];
         tShape = tFont.shapes[tGlyph.index];
-        tShape.bounds = {left: 0, right: tEMSquareX, top: -(tEMSquareY / 2), bottom: tEMSquareY / 2};
+        if (tFont.codeTable && tFont.codeTable[tGlyph.index] !== void 0) {
+          tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
+        }
+        tShape.bounds = {left: 0, right: 1024, top: -tTextRecord.height, bottom: 1024 - tTextRecord.height};
         tShape.fillStyles[0].color = tTextRecord.color;
         tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
         tPaddingList.push({x: tXPadding / 20, y: 0});
         tXPadding += tGlyph.advance;
+//console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList});
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height});
+//console.log('Glyph width total=' + tXPadding);
+      tTwipsWidth = Math.max(tTwipsWidth, tXPadding);
+      tTwipsHeight += tTextRecord.height;
     }
+//console.log('tTwipsWidth=' + tTwipsWidth);
+//console.log('tTwipsHeight=' + tTwipsHeight);
+//console.log('tString=' + tString);
+
     tProto.draw = function (pData) {
         var tContext = pData.context;
 
         for (i = 0, il = tTextLines.length; i < il; i++) {
           var tDrawList = tTextLines[i].draws;
           var tPadding = tTextLines[i].paddings;
+          var tFontScale = tTextLines[i].height / 1024;
           this.drawingContext.save();
-//console.log('tTempContext.save();');
-          //var tXScale = this.drawingCanvas.width * 20 / (tEMSquareX * tDrawList.length);
-          //var tYScale = this.drawingCanvas.height * 20 / tEMSquareY;
-          var tWidth = pText.bounds.right - pText.bounds.left;
-          var tHeight = pText.bounds.bottom - pText.bounds.top;
-          var tXScale =  tWidth / (tEMSquareX * tDrawList.length);
-          var tYScale = tHeight / tEMSquareY;
-          this.drawingContext.scale(tXScale, tYScale);
-//console.log('tTempContext.scale(', tXScale, tYScale, ');');
+          this.drawingContext.scale(tFontScale, tFontScale);
           for (j = 0, jl = tDrawList.length; j < jl; j++) {
             tContext.save();
-//console.log('tContext.save();');
             tContext.translate(tPadding[j].x, tPadding[j].y);
 //console.log('tContext.translate(', tPadding[j].x, tPadding[j].y, ');');
-//console.log(tDrawList[j]);
             tDrawList[j].call(this, pData);
             tContext.restore();
-//console.log('tContext.restore();');
           }
           this.drawingContext.restore();
-//console.log('tTempContext.restore();');
         }
       };
+
 
     //
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
@@ -146,7 +151,6 @@
     tContext.lineCap = 'round';
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
-//console.log('tTempContext.scale(0.05, 0.05);');
 
     var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor() {
       this.base();
