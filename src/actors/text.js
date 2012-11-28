@@ -21,10 +21,11 @@
   }
   theatre.inherit(TextActor, mSWFCrew.DisplayListActor);
 
-  function TextProp(pBackingCanvas, pWidth, pHeight) {
+  function TextProp(pBackingCanvas, pWidth, pHeight, pDeviceText) {
     this.base(pBackingCanvas, pWidth, pHeight);
     this.cacheDrawResult = true;
     this.cacheWithClass = true;
+    this.device = pDeviceText;
   }
   theatre.inherit(TextProp, theatre.crews.canvas.CanvasProp);
 
@@ -173,8 +174,8 @@
     pParams.width = tTwipsWidth;
     pParams.height = tTwipsHeight;
     pParams.string = tString;
-console.log('tTwipsWidth=' + tTwipsWidth);
-console.log('tTwipsHeight=' + tTwipsHeight);
+//console.log('tTwipsWidth=' + tTwipsWidth);
+//console.log('tTwipsHeight=' + tTwipsHeight);
 //console.log('tString=' + tString);
 
     return function (pData) {
@@ -184,7 +185,7 @@ console.log('tTwipsHeight=' + tTwipsHeight);
           var tDrawList = tTextLines[i].draws;
           var tPadding = tTextLines[i].paddings;
           var tFontScale = tTextLines[i].height / 1024;
-console.log('tFontScale=' + tFontScale);
+//console.log('tFontScale=' + tFontScale);
           //var tXScale = tTextLines[i].xScale;
           //var tYScale = tTextLines[i].yScale;
 //console.log('tXScale=' + tXScale);
@@ -207,8 +208,32 @@ console.log('tFontScale=' + tFontScale);
     return new Function();
   }
 
-  function generateDeviceEditTextDrawFunction(pText, pSWF) {
-    return new Function();
+  function generateDeviceEditTextDrawFunction(pEditText, pSWF, pParams) {
+//console.log('Device Text: ', pEditText);
+    var tColor = pEditText.textcolor;
+    var tString = pEditText.initialtext;
+    var tFont = pSWF.fonts[pEditText.font];
+    var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pEditText.fontheight + 'px ' + tFont.name;
+    var tBounds = pEditText.bounds;
+    var tXPos = 0, tYPos = 0, tWidth = tBounds.right - tBounds.left, tHeight = tBounds.bottom - tBounds.top;
+    var tCode = [
+        'var tContext = pData.context;',
+        'var tTempCanvas = this.drawingCanvas;',
+        'var tTempContext = this.drawingContext;',
+        'tTempContext.save();',
+        'tTempContext.globalCompositeOperation = \'xor\';',
+        'tTempContext.fillStyle = \'' + tColor.toString() + '\';',
+        'tTempContext.font = \'' + tFontString + '\';',
+        'tTempContext.textBaseline = \'top\';',
+        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
+        'tContext.drawImage(tTempCanvas, 0, 0);',
+        'tTempContext.restore();'
+      ];
+
+    pParams.width = tWidth;
+    pParams.height = tHeight;
+
+    return new Function('pData', tCode.join('\n'));
   }
 
   /**
@@ -223,8 +248,8 @@ console.log('tFontScale=' + tFontScale);
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
 
     // Define TextProp
-    var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight) {
-      this.base(pBackingContainer, pWidth, pHeight);
+    var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
+      this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
     }
     theatre.inherit(tTextPropClass, TextProp);
     var tProto = tTextPropClass.prototype;
@@ -246,7 +271,7 @@ console.log('tFontScale=' + tFontScale);
     // Define TextActor
     var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor() {
       this.base();
-      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, false); // TODO: This feels like a hack...
       this.addProp(tShapeProp);
     };
     theatre.inherit(tTextActor, TextActor);
@@ -269,16 +294,20 @@ console.log('tFontScale=' + tFontScale);
   mHandlers['DefineEditText'] = function(pSWF, pStage, pParams, pEditText, pOptions) {
     var tDictionaryToActorMap = pParams.dictionaryToActorMap;
     // Define TextProp
-    var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight) {
-      this.base(pBackingContainer, pWidth, pHeight);
+    var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
+      this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
     }
     theatre.inherit(tTextPropClass, TextProp);
     var tProto = tTextPropClass.prototype;
     var tParams = new Object();
-    if (pEditText.useoutline && pEditText.font) {
-      tProto.draw = generateGlyphEditTextDrawFunction(pEditText, pSWF, tParams);
-    } else {
+    if (!pEditText.font) {
+      throw new Exception('No font info.');
+    }
+    var tDeviceText = !pEditText.useoutline;
+    if (tDeviceText) {
       tProto.draw = generateDeviceEditTextDrawFunction(pEditText, pSWF, tParams);
+    } else {
+      tProto.draw = generateGlyphEditTextDrawFunction(pEditText, pSWF, tParams);
     }
     var tTwipsWidth = tParams.width;
     var tTwipsHeight = tParams.height;
@@ -296,7 +325,7 @@ console.log('tFontScale=' + tFontScale);
     // Define TextActor
     var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor() {
       this.base();
-      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, tDeviceText); // TODO: This feels like a hack...
       this.addProp(tShapeProp);
     };
     theatre.inherit(tTextActor, TextActor);
