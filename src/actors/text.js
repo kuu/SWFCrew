@@ -132,7 +132,7 @@
   }
 
   function generateGlyphEditTextDrawFunction(pEditText, pSWF, pParams) {
-    var i, il, j, jl, tTextBounds = pEditText.bounds, 
+    var i, il, j, jl, tTextBounds = pEditText.bounds,
         tCurrX, tXBounds, tString = pParams.string || pEditText.initialtext,
         tFont = pSWF.fonts[pEditText.font],
         tBoundsWidth = pEditText.bounds.right - pEditText.bounds.left,
@@ -154,8 +154,13 @@
       var tDrawFunctions = new Array(), tPaddingList = new Array();
       for (i = 0, il = tString.length; i < il; i++) {
 
-        var tCharCode = tString.charCodeAt(i),
-            tFontInfo = tFont.lookupTable[tCharCode + ''],
+        var tCharCode = tString.charCodeAt(i);
+
+        if (tCharCode === 13) { // ignore newlines.
+          continue;
+        }
+
+        var tFontInfo = tFont.lookupTable[tCharCode + ''],
             tShape = tFontInfo.shape;
 
         tShape.bounds = {left: 0, right: 1024, top: -pEditText.fontheight, bottom: 1024 - pEditText.fontheight};
@@ -164,7 +169,7 @@
         tPaddingList.push({x: tCurrX / 20, y: 0});
         tCurrX += tFontInfo.advance;
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, 
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight,
         xScale: (tCurrX - tTextBounds.left) / tBoundsWidth, yScale: pEditText.fontheight / tBoundsHeight});
       tTwipsWidth = Math.max(tTwipsWidth, tCurrX - tTextBounds.left);
       tTwipsHeight += pEditText.fontheight;

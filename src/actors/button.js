@@ -23,7 +23,9 @@
     );
 
     return function(pTarget) {
-      pStage.actionScriptProgram.run(tId, pTarget);
+      pStage.scheduleScript(function() {
+        pStage.actionScriptProgram.run(tId, pTarget);
+      });
     }
   }
 

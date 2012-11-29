@@ -28,16 +28,11 @@
     }
   }
 
-  /**
-   * When a scene seeks backwards for a Sprite, we call this.
-   * @private
-   */
-  function onReverseStep() {
+  function applyTimelineCache(pActor, pCurrentStep) {
     var i, il;
+    var tActorsInStepMap = pActor.actorsInStepMap[pCurrentStep];
     var tLayerString, tLayer;
-    var tCurrentStep = this.currentStep;
-    var tFutureChildren = this.getActors();
-    var tActorsInStepMap = this.actorsInStepMap[tCurrentStep];
+    var tFutureChildren = pActor.getActors();
     var tPastChild, tFutureChild;
     var tPastChildActor;
 
@@ -54,18 +49,23 @@
       tPastChildActor = tPastChild.actor;
 
       if (tFutureChildren.indexOf(tPastChildActor) === -1) {
-        if ((tFutureChild = this.getActorAtLayer(tLayer)) !== null) {
+        if ((tFutureChild = pActor.getActorAtLayer(tLayer)) !== null) {
           tFutureChild.leave();
         }
 
-        this.addActor(tPastChildActor, tLayer);
-        tPastChildActor.gotoStep(0);
+        tPastChildActor._currentScene.currentStep = tPastChild.step;
+        tPastChildActor._currentScene.previousStep = tPastChild.step - 1;
+        pActor.addActor(tPastChildActor, tLayer, false);
       }
 
-      tPastChildActor.matrix = tPastChild.matrix;
+      if (tPastChildActor.isMatrixLocked === false) {
+        tPastChildActor.matrix = tPastChild.matrix;
+      }
       tPastChildActor.colorTransform = tPastChild.colorTransform;
       tPastChildActor.clipDepth = tPastChild.clipDepth;
       tPastChildActor.ratio = tPastChild.ratio;
+
+      tPastChildActor.invalidate();
 
       tNewChildren.push(tPastChildActor);
     }
@@ -78,10 +78,27 @@
     }
   }
 
+  /**
+   * @private
+   */
+  function onStartStep(pData) {
+    var tCurrentStep = pData.currentStep;
+    var tTargetStep = pData.targetStep;
+    var tActorsInStepMap = this.actorsInStepMap[tCurrentStep];
 
-  function onUpdate() {
+    if (tActorsInStepMap !== void 0) {
+      pData.stop();
+
+      if (tCurrentStep === tTargetStep) {
+        applyTimelineCache(this, tCurrentStep);
+      }
+    }
+  }
+
+  function onEndStep(pData) {
+    var tCurrentStep = pData.currentStep;
     var tChildren = this.getActors();
-    var tActorsInStepMap = this.actorsInStepMap[this.currentStep] = {};
+    var tActorsInStepMap = this.actorsInStepMap[tCurrentStep] = {};
     var tChild;
     var i, il;
 
@@ -92,7 +109,8 @@
         matrix: tChild.matrix.clone(),
         colorTransform: tChild.colorTransform ? tChild.colorTransform.clone() : null,
         clipDepth: tChild.clipDepth,
-        ratio: tChild.ratio
+        ratio: tChild.ratio,
+        step: tChild.currentStep
       };
     }
   }
@@ -100,8 +118,8 @@
   function SpriteActor() {
     this.base();
 
-    this.on('reversestep', onReverseStep);
-    this.on('update', onUpdate);
+    this.on('startstep', onStartStep);
+    this.on('endstep', onEndStep);
 
     var i, il, k, kl, tScripts;
     var tData = this.stepData;

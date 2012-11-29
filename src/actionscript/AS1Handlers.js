@@ -108,7 +108,7 @@
     if (this.target === null) {
       return;
     }
-    this.target.startActing(true);
+    this.target.startActing(false);
   };
 
   mHandlers.Stop = function() {
