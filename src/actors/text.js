@@ -21,10 +21,11 @@
   }
   theatre.inherit(TextActor, mSWFCrew.DisplayListActor);
 
-  function TextProp(pBackingCanvas, pWidth, pHeight) {
+  function TextProp(pBackingCanvas, pWidth, pHeight, pDeviceText) {
     this.base(pBackingCanvas, pWidth, pHeight);
     this.cacheDrawResult = true;
     this.cacheWithClass = true;
+    this.device = pDeviceText;
   }
   theatre.inherit(TextProp, theatre.crews.canvas.CanvasProp);
 
@@ -40,15 +41,14 @@
     var tActor = this.actor;
 
     tContext.save();
+
+    tContext.translate(tActor.bounds.left, tActor.bounds.top);
     tContext.scale(20, 20);
-//console.log('tContext.save();');
-//console.log('tContext.scale(20, 20);');
 
     var tWillDraw = mPreDrawBackup.call(this, pData);
 
     if (tWillDraw === false) {
       pData.context.restore();
-//console.log('tContext.restore();');
     }
 
     return tWillDraw;
@@ -58,32 +58,15 @@
     mPostDrawBackup.call(this, pData);
 
     pData.context.restore();
-//console.log('tContext.restore();');
   };
 
-  /**
-   * Handles SWF Texts.
-   * The 5 is the displayList code for texts in QuickSWF.
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
-   * @param {quickswf.Text} pText The Text to handle.
-   * @param {Object} pOptions Options to customize things.
-   */
-  mHandlers['DefineText'] = function(pSWF, pStage, pParams, pText, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
-    var tTwipsWidth = pText.bounds.right - pText.bounds.left;
-    var tTwipsHeight = pText.bounds.bottom - pText.bounds.top;
-
-    var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight) {
-      this.base(pBackingContainer, pWidth, pHeight);
-    }
-    theatre.inherit(tTextPropClass, TextProp);
-
-    var tProto = tTextPropClass.prototype;
+  function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
+//console.log(pText);
+    var tTwipsWidth = 0, tTwipsHeight = 0;
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
-        tTextLines = new Array(), tEMSquareX = 1024, tEMSquareY = 1024;
+        tTextLines = new Array();
 
     for (i = 0, il = tTextRecords.length; i < il; i++) {
       var tTextRecord = tTextRecords[i],
@@ -94,63 +77,201 @@
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
+//console.log(tFont);
+//console.log('---------------------');
+//console.log('pText.bounds=', pText.bounds);
+//console.log('tTextRecord[' + i + '].height=' + tTextRecord.height);
+//console.log('tTextRecord[' + i + '].offsetX=' + tTextRecord.x);
+//console.log('tTextRecord[' + i + '].offsetY=' + tTextRecord.y);
+      var tString = '';
 
       for (j = 0, jl = tGlyphList.length; j < jl; j++) {
         tGlyph = tGlyphList[j];
         tShape = tFont.shapes[tGlyph.index];
-        tShape.bounds = {left: 0, right: tEMSquareX, top: -(tEMSquareY / 2), bottom: tEMSquareY / 2};
+        if (tFont.codeTable && tFont.codeTable[tGlyph.index] !== void 0) {
+          tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
+        }
+        tShape.bounds = {left: 0, right: 1024, top: -tTextRecord.height, bottom: 1024 - tTextRecord.height};
         tShape.fillStyles[0].color = tTextRecord.color;
         tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
         tPaddingList.push({x: tXPadding / 20, y: 0});
         tXPadding += tGlyph.advance;
+//console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList});
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height});
+//console.log('Glyph width total=' + tXPadding);
+      tTwipsWidth = Math.max(tTwipsWidth, tXPadding);
+      tTwipsHeight += tTextRecord.height;
     }
-    tProto.draw = function (pData) {
+    pParams.width = tTwipsWidth;
+    pParams.height = tTwipsHeight;
+    pParams.string = tString;
+//console.log('tTwipsWidth=' + tTwipsWidth);
+//console.log('tTwipsHeight=' + tTwipsHeight);
+//console.log('tString=' + tString);
+
+    return function (pData) {
         var tContext = pData.context;
 
         for (i = 0, il = tTextLines.length; i < il; i++) {
           var tDrawList = tTextLines[i].draws;
           var tPadding = tTextLines[i].paddings;
+          var tFontScale = tTextLines[i].height / 1024;
           this.drawingContext.save();
-//console.log('tTempContext.save();');
-          //var tXScale = this.drawingCanvas.width * 20 / (tEMSquareX * tDrawList.length);
-          //var tYScale = this.drawingCanvas.height * 20 / tEMSquareY;
-          var tWidth = pText.bounds.right - pText.bounds.left;
-          var tHeight = pText.bounds.bottom - pText.bounds.top;
-          var tXScale =  tWidth / (tEMSquareX * tDrawList.length);
-          var tYScale = tHeight / tEMSquareY;
-          this.drawingContext.scale(tXScale, tYScale);
-//console.log('tTempContext.scale(', tXScale, tYScale, ');');
+          this.drawingContext.scale(tFontScale, tFontScale);
           for (j = 0, jl = tDrawList.length; j < jl; j++) {
             tContext.save();
-//console.log('tContext.save();');
             tContext.translate(tPadding[j].x, tPadding[j].y);
 //console.log('tContext.translate(', tPadding[j].x, tPadding[j].y, ');');
-//console.log(tDrawList[j]);
             tDrawList[j].call(this, pData);
             tContext.restore();
-//console.log('tContext.restore();');
           }
           this.drawingContext.restore();
-//console.log('tTempContext.restore();');
         }
       };
+  }
 
-    //
+  function generateGlyphEditTextDrawFunction(pEditText, pSWF, pParams) {
+    var i, il, j, jl, tTextBounds = pEditText.bounds, 
+        tCurrX, tXBounds, tString = pParams.string || pEditText.initialtext,
+        tFont = pSWF.fonts[pEditText.font],
+        tBoundsWidth = pEditText.bounds.right - pEditText.bounds.left,
+        tBoundsHeight = pEditText.bounds.bottom - pEditText.bounds.top,
+        tTwipsWidth = 0, tTwipsHeight = 0,
+        tTextLines = new Array();
+//console.log(pEditText);
+//console.log(tFont);
+
+    if (tFont.shiftJIS) {
+      // Not for now...
+      return new Function();
+    }
+
+    tCurrX = tTextBounds.left + pEditText.leftmargin;
+    tXBounds = tTextBounds.right - pEditText.rightmargin;
+
+    while (tCurrX <= tXBounds) {
+      var tDrawFunctions = new Array(), tPaddingList = new Array();
+      for (i = 0, il = tString.length; i < il; i++) {
+
+        var tCharCode = tString.charCodeAt(i),
+            tFontInfo = tFont.lookupTable[tCharCode + ''],
+            tShape = tFontInfo.shape;
+
+        tShape.bounds = {left: 0, right: 1024, top: -pEditText.fontheight, bottom: 1024 - pEditText.fontheight};
+        tShape.fillStyles[0].color = pEditText.textcolor;
+        tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
+        tPaddingList.push({x: tCurrX / 20, y: 0});
+        tCurrX += tFontInfo.advance;
+      }
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, 
+        xScale: (tCurrX - tTextBounds.left) / tBoundsWidth, yScale: pEditText.fontheight / tBoundsHeight});
+      tTwipsWidth = Math.max(tTwipsWidth, tCurrX - tTextBounds.left);
+      tTwipsHeight += pEditText.fontheight;
+      break;
+    }
+
+    pParams.width = tTwipsWidth;
+    pParams.height = tTwipsHeight;
+    pParams.string = tString;
+//console.log('tTwipsWidth=' + tTwipsWidth);
+//console.log('tTwipsHeight=' + tTwipsHeight);
+//console.log('tString=' + tString);
+
+    return function (pData) {
+        var tContext = pData.context;
+
+        for (i = 0, il = tTextLines.length; i < il; i++) {
+          var tDrawList = tTextLines[i].draws;
+          var tPadding = tTextLines[i].paddings;
+          var tFontScale = tTextLines[i].height / 1024;
+//console.log('tFontScale=' + tFontScale);
+          //var tXScale = tTextLines[i].xScale;
+          //var tYScale = tTextLines[i].yScale;
+//console.log('tXScale=' + tXScale);
+//console.log('tYScale=' + tYScale);
+          this.drawingContext.save();
+          this.drawingContext.scale(tFontScale, tFontScale);
+          for (j = 0, jl = tDrawList.length; j < jl; j++) {
+            tContext.save();
+            tContext.translate(tPadding[j].x, tPadding[j].y);
+//console.log('tContext.translate(', tPadding[j].x, tPadding[j].y, ');');
+            tDrawList[j].call(this, pData);
+            tContext.restore();
+          }
+          this.drawingContext.restore();
+        }
+      };
+  }
+
+  function generateDeviceTextDrawFunction(pText, pSWF) {
+    return new Function();
+  }
+
+  function generateDeviceEditTextDrawFunction(pEditText, pSWF, pParams) {
+//console.log('Device Text: ', pEditText);
+    var tColor = pEditText.textcolor;
+    var tString = pEditText.initialtext;
+    var tFont = pSWF.fonts[pEditText.font];
+    var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pEditText.fontheight + 'px ' + tFont.name;
+    var tBounds = pEditText.bounds;
+    var tXPos = 0, tYPos = 0, tWidth = tBounds.right - tBounds.left, tHeight = tBounds.bottom - tBounds.top;
+    var tCode = [
+        'var tContext = pData.context;',
+        'var tTempCanvas = this.drawingCanvas;',
+        'var tTempContext = this.drawingContext;',
+        'tTempContext.save();',
+        'tTempContext.globalCompositeOperation = \'xor\';',
+        'tTempContext.fillStyle = \'' + tColor.toString() + '\';',
+        'tTempContext.font = \'' + tFontString + '\';',
+        'tTempContext.textBaseline = \'top\';',
+        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
+        'tContext.drawImage(tTempCanvas, 0, 0);',
+        'tTempContext.restore();'
+      ];
+
+    pParams.width = tWidth;
+    pParams.height = tHeight;
+
+    return new Function('pData', tCode.join('\n'));
+  }
+
+  /**
+   * Handles SWF Texts (DefineText, DefineText2.)
+   * @param {quickswf.SWF} pSWF The SWF file.
+   * @param {theatre.Stage} pSage TheatreScript's Stage object.
+   * @param {Object} pParams An object containing a dictionary-actor map object.
+   * @param {quickswf.Text} pText The Text to handle.
+   * @param {Object} pOptions Options to customize things.
+   */
+  mHandlers['DefineText'] = function(pSWF, pStage, pParams, pText, pOptions) {
+    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+
+    // Define TextProp
+    var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
+      this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
+    }
+    theatre.inherit(tTextPropClass, TextProp);
+    var tProto = tTextPropClass.prototype;
+    var tParams = new Object();
+    tProto.draw = generateGlyphTextDrawFunction(pText, pSWF, tParams);
+    var tTwipsWidth = tParams.width;
+    var tTwipsHeight = tParams.height;
+
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
     tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
-    console.log('TextProp: Canvas size : w=' + tCanvas.width + ', h=' + tCanvas.height);
+    //console.log('TextProp: Canvas size : w=' + tCanvas.width + ', h=' + tCanvas.height);
+
     var tContext = tProto.drawingContext = tCanvas.getContext('2d');
     tContext.lineCap = 'round';
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
-//console.log('tTempContext.scale(0.05, 0.05);');
 
+    // Define TextActor
     var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor() {
       this.base();
-      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, false); // TODO: This feels like a hack...
       this.addProp(tShapeProp);
     };
     theatre.inherit(tTextActor, TextActor);
@@ -160,6 +281,59 @@
     tProto.twipsHeight = tTwipsHeight;
     tProto.bounds = pText.bounds;
     tProto.matrix = pText.matrix;
+  };
+
+  /**
+   * Handles SWF Texts (DefineEditText.)
+   * @param {quickswf.SWF} pSWF The SWF file.
+   * @param {theatre.Stage} pSage TheatreScript's Stage object.
+   * @param {Object} pParams An object containing a dictionary-actor map object.
+   * @param {quickswf.Text} pText The Text to handle.
+   * @param {Object} pOptions Options to customize things.
+   */
+  mHandlers['DefineEditText'] = function(pSWF, pStage, pParams, pEditText, pOptions) {
+    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+    // Define TextProp
+    var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
+      this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
+    }
+    theatre.inherit(tTextPropClass, TextProp);
+    var tProto = tTextPropClass.prototype;
+    var tParams = new Object();
+    if (!pEditText.font) {
+      throw new Exception('No font info.');
+    }
+    var tDeviceText = !pEditText.useoutline;
+    if (tDeviceText) {
+      tProto.draw = generateDeviceEditTextDrawFunction(pEditText, pSWF, tParams);
+    } else {
+      tProto.draw = generateGlyphEditTextDrawFunction(pEditText, pSWF, tParams);
+    }
+    var tTwipsWidth = tParams.width;
+    var tTwipsHeight = tParams.height;
+
+    var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
+    tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
+    tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
+    //console.log('TextProp: Canvas size : w=' + tCanvas.width + ', h=' + tCanvas.height);
+
+    var tContext = tProto.drawingContext = tCanvas.getContext('2d');
+    tContext.lineCap = 'round';
+    tContext.lineJoin = 'round';
+    tContext.scale(0.05, 0.05);
+
+    // Define TextActor
+    var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor() {
+      this.base();
+      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, tDeviceText); // TODO: This feels like a hack...
+      this.addProp(tShapeProp);
+    };
+    theatre.inherit(tTextActor, TextActor);
+    tProto = tTextActor.prototype;
+
+    tProto.twipsWidth = tTwipsWidth;
+    tProto.twipsHeight = tTwipsHeight;
+    tProto.bounds = pEditText.bounds;
   };
 
 }(this));
