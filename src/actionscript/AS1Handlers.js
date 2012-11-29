@@ -9,15 +9,14 @@
 
 
   mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
-    if (!pCurrentTarget) {
-      pCurrentTarget = this.target;
-    }
+    var i;
 
     if (!pPath) {
       return {
         target: pCurrentTarget,
         step: 0,
-        label: ''
+        label: '',
+        targetDepth: 0
       };
     }
 
@@ -38,8 +37,27 @@
       tPartsLength--;
     }
 
-    for (var i = 0; i < tPartsLength; i++) {
-      var tPart = tParts[i];
+    if (tFramePart !== void 0) {
+      var tTempStep = parseInt(tFramePart, 10);
+      if (tTempStep + '' === tFramePart) {
+        tStep = tTempStep;
+      } else {
+        tLabel = tFramePart;
+      }
+    }
+
+    if (tNewTarget === null) {
+      console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().name + '"');
+      return {
+        target: null,
+        step: tStep,
+        label: tLabel,
+        targetDepth: tPartsLength
+      };
+    }
+
+    for (i = 0; i < tPartsLength; i++) {
+      var tPart = tParts[i].toLowerCase();
       if (tPart === '.') {
         continue;
       } else if (tPart === '') {
@@ -54,49 +72,64 @@
         tNewTarget = tNewTarget.getActorByName(tPart);
       }
       if (tNewTarget === null) {
-        tNewTarget = pCurrentTarget;
-        break;
-      }
-    }
-
-    if (tFramePart !== void 0) {
-      var tTempStep = parseInt(tFramePart, 10);
-      if (tTempStep + '' === tFramePart) {
-        tStep = tTempStep;
-      } else {
-        tLabel = tFramePart;
+        console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().name + '"');
+        return {
+          target: null,
+          step: tStep,
+          label: tLabel,
+          targetDepth: tPartsLength
+        };
       }
     }
 
     return {
       target: tNewTarget,
       step: tStep,
-      label: tLabel
+      label: tLabel,
+      targetDepth: tPartsLength
     };
   }
 
   mHandlers.NextFrame = function() {
+    if (this.target === null) {
+      return;
+    }
     this.target.gotoStep(this.target.currentStep + 1);
   };
 
   mHandlers.PreviousFrame = function() {
+    if (this.target === null) {
+      return;
+    }
     this.target.gotoStep(this.target.currentStep - 1);
   };
 
   mHandlers.Play = function() {
-    this.target.startActing();
+    if (this.target === null) {
+      return;
+    }
+    this.target.startActing(true);
   };
 
   mHandlers.Stop = function() {
+    if (this.target === null) {
+      return;
+    }
     this.target.stopActing();
   };
 
   mHandlers.GoToFrame = function(pFrame) {
-    this.target.gotoStep(pFrame) || this.target.gotoStep(0);
+    if (this.target === null) {
+      return;
+    }
+    this.target.gotoStep(pFrame) !== false || this.target.gotoStep(0);
   };
 
   mHandlers.GoToLabel = function(pLabel) {
-    this.target.gotoLabel(pLabel) || this.target.gotoStep(this.target.numberOfSteps - 1);
+    if (this.target === null) {
+      return;
+    }
+    this.target.gotoLabel(pLabel) !== false || this.target.gotoStep(this.target.numberOfSteps - 1);
   };
 
   mHandlers.Trace = function(pMessage) {
@@ -104,46 +137,115 @@
   };
 
   mHandlers.Call = function(pFrame) {
-    var tCurrentTarget = this.target;
+    var tCurrentTarget = this.getLastValidTarget();
 
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
+    if (tData.target === null) {
+      console.warn('Target not found for Call: Target="' + pFrame + '" Base="' + this.getLastValidTarget().name + '"');
+      return;
+    } else {
+      tCurrentTarget = tData.target;
+    }
+
     if (tData.label !== '') {
-      var tStep = tData.target.getLabelStepFromScene('', tData.label);
+      var tStep = tCurrentTarget.getLabelStepFromScene('', tData.label);
       if (tStep !== null) {
-        tData.target.doScripts(tStep, tCurrentTarget);
+        tCurrentTarget.doScripts(tStep, tCurrentTarget);
       } else {
         console.error('Label in Call() did not exist');
       }
     } else {
-      tData.target.doScripts(tData.step, tCurrentTarget);
+      tCurrentTarget.doScripts(tData.step, tCurrentTarget);
     }
   };
 
-  mHandlers.GoToFrame2 = function(pFrame, pSceneBias) {
+  mHandlers.GoToFrame2 = function(pFrame, pSceneBias, pPlayFlag) {
     var tCurrentTarget = this.target;
+    var tResult;
+
+    if (tCurrentTarget === null) {
+      return;
+    }
 
     if (typeof pFrame === 'number') {
-      tCurrentTarget.gotoStep(pFrame + pSceneBias) || tCurrentTarget.gotoStep(0);
+      tCurrentTarget.gotoStep((pFrame - 1) + pSceneBias) !== false || tCurrentTarget.gotoStep(0);
+      if (pPlayFlag === 1) {
+        tCurrentTarget.startActing();
+      } else {
+        tCurrentTarget.stopActing();
+      }
       return;
     }
 
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
+
+    if (tData.target === null) {
+      console.warn('Target not found for GoToFrame2: Target="' + pFrame + '" Base="' + this.getLastValidTarget().name + '"');
+      return;
+    }
+
     if (tData.label !== '') {
-      return tData.target.gotoLabel(tData.label); // TODO: Support bias?
+      tData.target.gotoLabel(tData.label); // TODO: Support bias?
+
+      if (pPlayFlag === 1) {
+        tCurrentTarget.startActing();
+      } else {
+        tCurrentTarget.stopActing();
+      }
     } else {
-      return tData.target.gotoStep(tData.step + pSceneBias);
+      tData.target.gotoStep((tData.step - 1) + pSceneBias);
+
+      if (pPlayFlag === 1) {
+        tCurrentTarget.startActing();
+      } else {
+        tCurrentTarget.stopActing();
+      }
     }
   };
 
   mHandlers.SetVariable = function(pName, pValue) {
-    var tData = this.callMapped('GetTargetAndData', pName, this.target, true);
-    tData.target.variables[tData.label] = pValue;
+    var tLastValidTarget = this.getLastValidTarget();
+    var tData = this.callMapped('GetTargetAndData', pName, tLastValidTarget, true);
+
+    if (tData.target === null) {
+      if (tData.targetDepth > 0) {
+        return;
+      }
+    } else {
+      tLastValidTarget = tData.target;
+    }
+
+    tLastValidTarget.variables[tData.label] = pValue;
   };
 
   mHandlers.GetVariable = function(pName) {
-    var tData = this.callMapped('GetTargetAndData', pName, this.target, true);
-    return tData.target.variables[tData.label];
+    var tIsLength = false;
+
+    if (/:length$/.test(pName) === true) {
+      pName = pName.substr(0, pName.length - 7);
+      tIsLength = true;
+    }
+
+    var tLastValidTarget = this.getLastValidTarget();
+    var tData = this.callMapped('GetTargetAndData', pName, tLastValidTarget, true);
+    var tValue;
+
+    if (tData.target === null) {
+      if (tData.targetDepth > 0) {
+        return;
+      }
+    } else {
+      tLastValidTarget = tData.target;
+    }
+
+    tValue = tLastValidTarget.variables[tData.label];
+
+    if (tIsLength === true) {
+      return tValue.length;
+    }
+
+    return tValue;
   };
 
   mHandlers.FSCommand2 = function(pName, pArgs) {
@@ -152,7 +254,12 @@
   };
 
   mHandlers.SetProperty = function(pName, pProperty, pValue) {
-    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    var tTarget = this.callMapped('GetTargetAndData', pName, this.target).target;
+
+    if (tTarget === null) {
+      return;
+    }
+
     var tMatrix;
     var tFloat;
     var tColorTransform;
@@ -262,7 +369,12 @@
   };
 
   mHandlers.GetProperty = function(pName, pProperty) {
-    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    var tTarget = this.callMapped('GetTargetAndData', pName, this.target).target;
+
+    if (tTarget === null) {
+      return '';
+    }
+
     var tResult;
 
     switch (pProperty) {
@@ -350,9 +462,9 @@
   };
 
   mHandlers.CloneSprite = function(pNewName, pDepth, pOriginalName) {
-    var tOriginal = this.callMapped('GetTargetAndData', pOriginalName).target;
+    var tOriginal = this.callMapped('GetTargetAndData', pOriginalName, this.target).target;
 
-    if (!tOriginal) {
+    if (tOriginal === null) {
       console.warn('Could not find ' + pOriginalName + ' to clone.');
       return;
     }
@@ -383,7 +495,12 @@
   };
 
   mHandlers.RemoveSprite = function(pName) {
-    var tTarget = this.callMapped('GetTargetAndData', pName).target;
+    var tTarget = this.callMapped('GetTargetAndData', pName, this.target).target;
+
+    if (tTarget === null) {
+      return;
+    }
+
     tTarget.leave();
   };
 

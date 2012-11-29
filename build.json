@@ -72,11 +72,12 @@
             "compositor.js",
             "displaylistactor.js",
             "shape.js",
-            "sprite.js",
-            "canvassprite.js",
             "button.js",
             "text.js",
-            "morphshape.js"
+            "morphshape.js",
+            "sprite.js",
+            "canvassprite.js",
+            "webglsprite.js"
           ]
         },
 

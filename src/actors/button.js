@@ -11,6 +11,8 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
 
+  theatre.define('actors.ButtonActor', ButtonActor, mSWFCrew);
+
   function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
     var tId = pStage.actionScriptLoader.load(
       pStage.actionScriptProgram,

@@ -26,8 +26,8 @@
   function ShapeActor() {
     this.base();
 
-    var tWidth = this.width = this.twipsWidth / 20;
-    var tHeight = this.height = this.twipsHeight / 20;
+    this.width = (((this.twipsWidth / 20) >>> 0) || 0) + 1;
+    this.height = (((this.twipsHeight / 20) >>> 0) || 0) + 1;
   }
   theatre.inherit(ShapeActor, mSWFCrew.DisplayListActor);
 
@@ -94,8 +94,8 @@
     tProto.draw = mShapeUtils.generateDrawFunction(pSWF.images, pShape);
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
-    tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
-    tCanvas.height = ((tTwipsHeight / 20) >>> 0) || 1;
+    tCanvas.width = (((tTwipsWidth / 20) >>> 0) || 0) + 1;
+    tCanvas.height = (((tTwipsHeight / 20) >>> 0) || 0) + 1;
     var tContext = tProto.drawingContext = tCanvas.getContext('2d');
     tContext.lineCap = 'round';
     tContext.lineJoin = 'round';

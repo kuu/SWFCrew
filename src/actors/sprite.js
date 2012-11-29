@@ -10,6 +10,9 @@
 
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
+  var executeScripts = theatre.Actor.executeScripts;
+
+  theatre.define('actors.SpriteActor', SpriteActor, mSWFCrew);
 
   function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
     var tId = pStage.actionScriptLoader.load(
@@ -30,9 +33,67 @@
    * @private
    */
   function onReverseStep() {
+    var i, il;
+    var tLayerString, tLayer;
+    var tCurrentStep = this.currentStep;
+    var tFutureChildren = this.getActors();
+    var tActorsInStepMap = this.actorsInStepMap[tCurrentStep];
+    var tPastChild, tFutureChild;
+    var tPastChildActor;
+
+    var tNewChildren = [];
+
+    for (tLayerString in tActorsInStepMap) {
+      if (!tActorsInStepMap.hasOwnProperty(tLayerString)) {
+        continue;
+      }
+
+      tLayer = parseInt(tLayerString, 10);
+
+      tPastChild = tActorsInStepMap[tLayer];
+      tPastChildActor = tPastChild.actor;
+
+      if (tFutureChildren.indexOf(tPastChildActor) === -1) {
+        if ((tFutureChild = this.getActorAtLayer(tLayer)) !== null) {
+          tFutureChild.leave();
+        }
+
+        this.addActor(tPastChildActor, tLayer);
+        tPastChildActor.gotoStep(0);
+      }
+
+      tPastChildActor.matrix = tPastChild.matrix;
+      tPastChildActor.colorTransform = tPastChild.colorTransform;
+      tPastChildActor.clipDepth = tPastChild.clipDepth;
+      tPastChildActor.ratio = tPastChild.ratio;
+
+      tNewChildren.push(tPastChildActor);
+    }
+
+    for (i = 0, il = tFutureChildren.length; i < il; i++) {
+      var tFutureChild = tFutureChildren[i];
+      if (tNewChildren.indexOf(tFutureChild) === -1) {
+        tFutureChild.leave();
+      }
+    }
+  }
+
+
+  function onUpdate() {
     var tChildren = this.getActors();
-    for (var i = 0, il = tChildren.length; i < il; i++) {
-      tChildren[i].leave();
+    var tActorsInStepMap = this.actorsInStepMap[this.currentStep] = {};
+    var tChild;
+    var i, il;
+
+    for (i = 0, il = tChildren.length; i < il; i++) {
+      tChild = tChildren[i];
+      tActorsInStepMap[tChild.layer + ''] = {
+        actor: tChild,
+        matrix: tChild.matrix.clone(),
+        colorTransform: tChild.colorTransform ? tChild.colorTransform.clone() : null,
+        clipDepth: tChild.clipDepth,
+        ratio: tChild.ratio
+      };
     }
   }
 
@@ -40,9 +101,16 @@
     this.base();
 
     this.on('reversestep', onReverseStep);
+    this.on('update', onUpdate);
 
     var i, il, k, kl, tScripts;
     var tData = this.stepData;
+    var tTotalLength = Math.max(tData.length, this.stepScripts.length);
+
+    this.setSceneLength(tTotalLength);
+
+    var tActorsInStepMap = this.actorsInStepMap = new Array(tTotalLength);
+
     for (i = 0, il = tData.length; i < il; i++) {
       tScripts = tData[i];
       for (k = 0, kl = tScripts.length; k < kl; k++) {
@@ -94,6 +162,9 @@
     switch (pOptions.spriteType) {
       case 'dom':
         tSpriteActor.prototype.propClass = theatre.crews.dom.DOMProp;
+        break;
+      case 'webgl':
+        tSpriteActor.prototype.propClass = mSWFCrew.props.WebGLSpriteProp;
         break;
       case 'canvas':
       default:
