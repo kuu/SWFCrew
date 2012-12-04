@@ -62,7 +62,7 @@
 
   function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
 //console.log(pText);
-    var tTwipsWidth = 0, tTwipsHeight = 0;
+    var tTwipsHeight = 0;
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
@@ -72,11 +72,12 @@
       var tTextRecord = tTextRecords[i],
           tFont, tPrevFont, tShape, tGlyphList, tGlyph,
           tDrawFunctions = new Array(), tPaddingList = new Array(),
-          tXPadding = tTextRecord.x;
+          tYPadding = 0;
 
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
+      tYPadding = (tFont.ascent === null ? tTextRecord.y - tTextRecord.height: 0);
 //console.log(tFont);
 //console.log('---------------------');
 //console.log('pText.bounds=', pText.bounds);
@@ -91,21 +92,21 @@
         if (tFont.codeTable && tFont.codeTable[tGlyph.index] !== void 0) {
           tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
         }
-        tShape.bounds = {left: 0, right: 1024, top: -tTextRecord.height, bottom: 1024 - tTextRecord.height};
+        tShape.bounds = {left: 0, right: 1024, 
+            top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
+            bottom: (tFont.descent === null ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
         tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
-        tPaddingList.push({x: tXPadding / 20, y: 0});
-        tXPadding += tGlyph.advance;
+        tPaddingList.push({x: pText.xAdvance / 20, y: tYPadding / 20});
+        pText.xAdvance += tGlyph.advance;
 //console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
       tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height});
+      tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.height);
 //console.log('Glyph width total=' + tXPadding);
-      tTwipsWidth = Math.max(tTwipsWidth, tXPadding);
-      tTwipsHeight += tTextRecord.height;
     }
-    pParams.width = tTwipsWidth;
+    pParams.width = pText.xAdvance;
     pParams.height = tTwipsHeight;
-    pParams.string = tString;
 //console.log('tTwipsWidth=' + tTwipsWidth);
 //console.log('tTwipsHeight=' + tTwipsHeight);
 //console.log('tString=' + tString);
@@ -138,17 +139,15 @@
         tBoundsWidth = pEditText.bounds.right - pEditText.bounds.left,
         tBoundsHeight = pEditText.bounds.bottom - pEditText.bounds.top,
         tTwipsWidth = 0, tTwipsHeight = 0,
-        tTextLines = new Array();
-//console.log(pEditText);
-//console.log(tFont);
+        tTextLines = new Array(), tYPadding = 0;
 
     if (tFont.shiftJIS) {
       // Not for now...
       return new Function();
     }
 
-    tCurrX = tTextBounds.left + pEditText.leftmargin;
-    tXBounds = tTextBounds.right - pEditText.rightmargin;
+    tCurrX = pEditText.leftmargin;
+    tXBounds = tTextBounds.right - tTextBounds.left - pEditText.leftmargin - pEditText.rightmargin;
 
     while (tCurrX <= tXBounds) {
       var tDrawFunctions = new Array(), tPaddingList = new Array();
@@ -163,14 +162,16 @@
         var tFontInfo = tFont.lookupTable[tCharCode + ''],
             tShape = tFontInfo.shape;
 
-        tShape.bounds = {left: 0, right: 1024, top: -pEditText.fontheight, bottom: 1024 - pEditText.fontheight};
+        tShape.bounds = {left: 0, right: 1024, 
+            top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
+            bottom: (tFont.descent === null ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = pEditText.textcolor;
         tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
         tPaddingList.push({x: tCurrX / 20, y: 0});
-        tCurrX += tFontInfo.advance;
+//console.log('"' + tString[i] + '": x=' + tCurrX + ', w=' + tFontInfo.advance);
+        tCurrX += tFontInfo.advance / 2;
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight,
-        xScale: (tCurrX - tTextBounds.left) / tBoundsWidth, yScale: pEditText.fontheight / tBoundsHeight});
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: (tShape.bounds.bottom - tShape.bounds.top)});
       tTwipsWidth = Math.max(tTwipsWidth, tCurrX - tTextBounds.left);
       tTwipsHeight += pEditText.fontheight;
       break;
@@ -179,9 +180,6 @@
     pParams.width = tTwipsWidth;
     pParams.height = tTwipsHeight;
     pParams.string = tString;
-//console.log('tTwipsWidth=' + tTwipsWidth);
-//console.log('tTwipsHeight=' + tTwipsHeight);
-//console.log('tString=' + tString);
 
     return function (pData) {
         var tContext = pData.context;
@@ -189,8 +187,7 @@
         for (i = 0, il = tTextLines.length; i < il; i++) {
           var tDrawList = tTextLines[i].draws;
           var tPadding = tTextLines[i].paddings;
-          var tFontScale = tTextLines[i].height / 1024;
-//console.log('tFontScale=' + tFontScale);
+          var tFontScale = tTextLines[i].height / tTextLines[i].emHeight;
           //var tXScale = tTextLines[i].xScale;
           //var tYScale = tTextLines[i].yScale;
 //console.log('tXScale=' + tXScale);
@@ -282,6 +279,12 @@
     theatre.inherit(tTextActor, TextActor);
     tProto = tTextActor.prototype;
 
+    var tWidthDiff  = tTwipsWidth  - (pText.bounds.right  - pText.bounds.left);
+    var tHeightDiff = tTwipsHeight - (pText.bounds.bottom - pText.bounds.top);
+    pText.bounds.left   -= tWidthDiff  / 2;
+    pText.bounds.right  += tWidthDiff  / 2;
+    pText.bounds.top    -= tHeightDiff / 2;
+    pText.bounds.bottom += tHeightDiff / 2;
     tProto.twipsWidth = tTwipsWidth;
     tProto.twipsHeight = tTwipsHeight;
     tProto.bounds = pText.bounds;
@@ -336,6 +339,14 @@
     theatre.inherit(tTextActor, TextActor);
     tProto = tTextActor.prototype;
 
+    var tActualWidth  = (pEditText.bounds.right  - pEditText.bounds.left);
+    var tActualHeight = (pEditText.bounds.bottom - pEditText.bounds.top);
+    var tWidthDiff  = tTwipsWidth  - (pEditText.bounds.right  - pEditText.bounds.left);
+    var tHeightDiff = tTwipsHeight - (pEditText.bounds.bottom - pEditText.bounds.top);
+    pEditText.bounds.left   -= tWidthDiff  / 2;
+    pEditText.bounds.right  += tWidthDiff  / 2;
+    pEditText.bounds.top    -= tHeightDiff / 2;
+    pEditText.bounds.bottom += tHeightDiff / 2;
     tProto.twipsWidth = tTwipsWidth;
     tProto.twipsHeight = tTwipsHeight;
     tProto.bounds = pEditText.bounds;
