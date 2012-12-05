@@ -142,48 +142,52 @@
 
   function generateGlyphEditTextDrawFunction(pEditText, pSWF, pParams) {
     var i, il, j, jl, tTextBounds = pEditText.bounds,
-        tCurrX, tXBounds, tString = pParams.string || pEditText.initialtext,
+        tCurrX = pEditText.leftmargin, tXBounds,
+        tString = pParams.string || pEditText.initialtext || '',
         tFont = pSWF.fonts[pEditText.font],
-        tBoundsWidth = pEditText.bounds.right - pEditText.bounds.left,
-        tBoundsHeight = pEditText.bounds.bottom - pEditText.bounds.top,
-        tTwipsWidth = 0, tTwipsHeight = 0,
+        tTwipsWidth = 0, tTwipsHeight = 0, tEMHeight = 0,
         tTextLines = new Array(), tYPadding = 0;
 
-    if (tFont.shiftJIS) {
-      // Not for now...
-      return new Function();
-    }
-
-    tCurrX = pEditText.leftmargin;
     tXBounds = tTextBounds.right - tTextBounds.left - pEditText.leftmargin - pEditText.rightmargin;
 
-    while (tCurrX <= tXBounds) {
-      var tDrawFunctions = new Array(), tPaddingList = new Array();
-      for (i = 0, il = tString.length; i < il; i++) {
+    var tDrawFunctions = new Array(), tPaddingList = new Array();
 
-        var tCharCode = tString.charCodeAt(i);
+    for (i = 0, il = tString.length; i < il; i++) {
 
-        if (tCharCode === 13) { // ignore newlines.
-          continue;
-        }
+      var tCharCode = tString.charCodeAt(i),
+          tFontInfo = tFont.lookupTable[tCharCode + ''],
+          tShape = tFontInfo.shape;
 
-        var tFontInfo = tFont.lookupTable[tCharCode + ''],
-            tShape = tFontInfo.shape;
-
-        tShape.bounds = {left: 0, right: 1024, 
-            top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
-            bottom: (tFont.descent === null ? 0 : tFont.descent)};
-        tShape.fillStyles[0].color = pEditText.textcolor;
-        tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
-        tPaddingList.push({x: tCurrX / 20, y: 0});
-//console.log('"' + tString[i] + '": x=' + tCurrX + ', w=' + tFontInfo.advance);
-        tCurrX += tFontInfo.advance / 2;
+      if (tCharCode === 13 || tCurrX + tFontInfo.advance > tXBounds) {
+        // new line
+        tYPadding += (pEditText.leading + pEditText.fontheight);
+        tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: tEMHeight});
+        tTwipsWidth = Math.max(tTwipsWidth, tCurrX);
+        tDrawFunctions = new Array();
+        tPaddingList = new Array();
+        tCurrX = pEditText.leftmargin;
+        tEMHeight = 0;
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: (tShape.bounds.bottom - tShape.bounds.top)});
-      tTwipsWidth = Math.max(tTwipsWidth, tCurrX - tTextBounds.left);
-      tTwipsHeight += pEditText.fontheight;
-      break;
+
+      tShape.bounds = {left: 0, right: 1024, 
+        top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
+        bottom: (tFont.descent === null ? 0 : tFont.descent)};
+      tShape.fillStyles[0].color = pEditText.textcolor;
+      var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
+      var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape, tActualBounds);
+      if (tActualBounds.bottom > tShape.bounds.bottom) {
+        // The font's shape can exceed the EM square (1024 x 1024) downward.
+        tShape.bounds.bottom = tActualBounds.bottom;
+        tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape);
+      }
+      tDrawFunctions.push(tDrawFunc);
+      tPaddingList.push({x: tCurrX / 20, y: tYPadding / 20});
+      tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
+      tCurrX += tFontInfo.advance;
     }
+    tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: tEMHeight});
+    tTwipsWidth = Math.max(tTwipsWidth, tCurrX);
+    tTwipsHeight = tYPadding + pEditText.leading + pEditText.fontheight;
 
     pParams.width = tTwipsWidth;
     pParams.height = tTwipsHeight;
@@ -212,10 +216,6 @@
           this.drawingContext.restore();
         }
       };
-  }
-
-  function generateDeviceTextDrawFunction(pText, pSWF) {
-    return new Function();
   }
 
   function generateDeviceEditTextDrawFunction(pEditText, pSWF, pParams) {
