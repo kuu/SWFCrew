@@ -439,6 +439,21 @@
 
   Path.prototype.constructor = Path;
 
+  var mMinX, mMinY, mMaxX, mMaxY;
+  var mCalcBounds = false;
+  function initBounds() {
+    mMinX =  Number.MAX_VALUE;
+    mMinY =  Number.MAX_VALUE;
+    mMaxX = -Number.MAX_VALUE;
+    mMaxY = -Number.MAX_VALUE;
+  }
+  function updateBounds(pX, pY) {
+    mMinX = Math.min(mMinX, pX);
+    mMinY = Math.min(mMinY, pY);
+    mMaxX = Math.max(mMaxX, pX);
+    mMaxY = Math.max(mMaxY, pY);
+  }
+
   Path.prototype.draw = function(pCode, pDrawable) {
     var tRecords = this.records;
     var tRecord;
@@ -448,6 +463,7 @@
       'tTempContext.beginPath();',
       'tTempContext.moveTo(' + this.startX + ', ' + this.startY + ');'
     );
+    mCalcBounds && updateBounds(this.startX, this.startY);
 
     for (var i = 0, il = tRecords.length; i < il; i++) {
       tRecord = tRecords[i];
@@ -455,8 +471,10 @@
 
       if (tType === 'quadraticCurve') {
         pCode.push('tTempContext.quadraticCurveTo(' + tRecord.controlX + ', ' + tRecord.controlY + ', ' + tRecord.x + ', ' + tRecord.y + ');');
+        mCalcBounds && updateBounds(tRecord.x, tRecord.y);
       } else if (tType === 'line') {
         pCode.push('tTempContext.lineTo(' + tRecord.x + ', ' + tRecord.y + ');');
+        mCalcBounds && updateBounds(tRecord.x, tRecord.y);
       } else if (tType === 'close') {
         pCode.push('tTempContext.closePath();');
       } else if (tType === 'fill') {
@@ -518,7 +536,7 @@
 
   Drawable.prototype.constructor = Drawable;
 
-  Drawable.prototype.draw = function(pCode, pBounds, pImages, pSkipTranslate) {
+  Drawable.prototype.draw = function(pCode, pBounds, pImages) {
     var tPaths = this.paths;
 
     for (var i = 0, il = tPaths.length; i < il; i++) {
@@ -548,7 +566,7 @@
       pCode.push('tTempContext.fill();');
     };
 
-    Shape.prototype.draw = function(pCode, pBounds, pImages, pSkipTranslate) {
+    Shape.prototype.draw = function(pCode, pBounds, pImages) {
       var tStyleData = this.style;
       var tMatrix;
 
@@ -637,14 +655,14 @@
         pCode.push('tTempContext.fillStyle = tStyle;');
       }
 
-      pSuper.prototype.draw.call(this, pCode, pBounds, pImages, pSkipTranslate);
+      pSuper.prototype.draw.call(this, pCode, pBounds, pImages);
 
       if (tStyleData.bitmapId !== null && pImages[tStyleData.bitmapId] !== void 0) {
         pCode.push(
           'tTempContext.save();',
           'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
           'tTempContext.scale(.05, .05);',
-          pSkipTranslate ? '' : 'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');',
+          'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');',
           'tTempContext.transform(tPatternMatrix[0], tPatternMatrix[1], tPatternMatrix[2], tPatternMatrix[3], tPatternMatrix[4], tPatternMatrix[5]);',
           'tTempContext.globalCompositeOperation = \'source-in\';',
           'tTempContext.fillStyle = tPatternStyle;',
@@ -673,7 +691,7 @@
       pCode.push('tTempContext.stroke();');
     };
 
-    Line.prototype.draw = function(pCode, pBounds, pImages, pSkipTranslate) {
+    Line.prototype.draw = function(pCode, pBounds, pImages) {
       var tStyleData = this.style;
 
       pCode.push(
@@ -682,14 +700,14 @@
         'tTempContext.strokeStyle = \'' + tStyleData.color.toString() + '\';'
       );
 
-      pSuper.prototype.draw.call(this, pCode, pBounds, pImages, pSkipTranslate);
+      pSuper.prototype.draw.call(this, pCode, pBounds, pImages);
     };
 
     return Line;
   })(Drawable);
 
 
-  var getShapeDrawFunction = mShape.getShapeDrawFunction = function(pShapes, pBounds, pImages, pSkipTranslate) {
+  var getShapeDrawFunction = mShape.getShapeDrawFunction = function(pShapes, pBounds, pImages) {
     var tWidth = Math.ceil((pBounds.right - pBounds.left) / 20);
     var tHeight = Math.ceil((pBounds.bottom - pBounds.top) / 20);
     // TODO: Account for the very small offset created by this scale.
@@ -702,7 +720,7 @@
       'var tTempCanvas = this.drawingCanvas;',
       'var tTempContext = this.drawingContext;',
       'tTempContext.save();',
-      pSkipTranslate ? '' : 'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');'
+      'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');'
     ];
 
     for (i = 0, il = pShapes.length; i < il; i++) {
@@ -714,7 +732,7 @@
       );
 
       tShape = pShapes[i];
-      tShape.draw(tCode, pBounds, pImages, pSkipTranslate);
+      tShape.draw(tCode, pBounds, pImages);
 
       tCode.push(
         //'console.log(tTempCanvas.width, tTempCanvas.height, ' + tWidth + ', ' + tHeight + ');',
@@ -731,8 +749,21 @@
   /**
    * Generates a new function for drawing a given shape.
    */
-  mShape.generateDrawFunction = function(pImages, pShape, pSkipTranslate) {
-    return getShapeDrawFunction(getResolvedDrawables(pShape), pShape.bounds, pImages, pSkipTranslate);
+  mShape.generateDrawFunction = function(pImages, pShape, pActualBounds) {
+    if (pActualBounds) {
+      mCalcBounds = true;
+      initBounds();
+    }
+    var tDrawFunc = getShapeDrawFunction(getResolvedDrawables(pShape), pShape.bounds, pImages);
+
+    if (pActualBounds) {
+      mCalcBounds = false;
+      pActualBounds.left   = mMinX;
+      pActualBounds.right  = mMaxX;
+      pActualBounds.top    = mMinY;
+      pActualBounds.bottom = mMaxY;
+    }
+    return tDrawFunc;
   }
 
 

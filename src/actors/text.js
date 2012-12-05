@@ -72,7 +72,7 @@
       var tTextRecord = tTextRecords[i],
           tFont, tPrevFont, tShape, tGlyphList, tGlyph,
           tDrawFunctions = new Array(), tPaddingList = new Array(),
-          tYPadding = 0;
+          tYPadding = 0, tEMHeight = 0;
 
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
@@ -96,12 +96,20 @@
             top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
             bottom: (tFont.descent === null ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
-        tDrawFunctions.push(mShapeUtils.generateDrawFunction(pSWF.images, tShape));
+        var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
+        var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape, tActualBounds);
+        if (tActualBounds.bottom > tShape.bounds.bottom) {
+          // The font's shape can exceed the EM square (1024 x 1024) downward.
+          tShape.bounds.bottom = tActualBounds.bottom;
+          tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape);
+        }
+        tDrawFunctions.push(tDrawFunc);
         tPaddingList.push({x: pText.xAdvance / 20, y: tYPadding / 20});
         pText.xAdvance += tGlyph.advance;
+        tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
 //console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
-      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height});
+      tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height, emHeight: tEMHeight});
       tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.height);
 //console.log('Glyph width total=' + tXPadding);
     }
@@ -117,7 +125,7 @@
         for (i = 0, il = tTextLines.length; i < il; i++) {
           var tDrawList = tTextLines[i].draws;
           var tPadding = tTextLines[i].paddings;
-          var tFontScale = tTextLines[i].height / 1024;
+          var tFontScale = tTextLines[i].height / tTextLines[i].emHeight;
           this.drawingContext.save();
           this.drawingContext.scale(tFontScale, tFontScale);
           for (j = 0, jl = tDrawList.length; j < jl; j++) {
