@@ -153,12 +153,10 @@
     var tDrawFunctions = new Array(), tPaddingList = new Array();
 
     for (i = 0, il = tString.length; i < il; i++) {
-
       var tCharCode = tString.charCodeAt(i),
-          tFontInfo = tFont.lookupTable[tCharCode + ''],
-          tShape = tFontInfo.shape;
+          tFontInfo = tFont.lookupTable[tCharCode + ''];
 
-      if (tCharCode === 13 || tCurrX + tFontInfo.advance > tXBounds) {
+      if (tCharCode === 13 || (tFontInfo && tCurrX + tFontInfo.advance > tXBounds)) {
         // new line
         tYPadding += (pEditText.leading + pEditText.fontheight);
         tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: tEMHeight});
@@ -168,7 +166,10 @@
         tCurrX = pEditText.leftmargin;
         tEMHeight = 0;
       }
-
+      if (tCharCode === 13 || !tFontInfo) {
+        continue;
+      }
+      var tShape = tFontInfo.shape;
       tShape.bounds = {left: 0, right: 1024, 
         top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
         bottom: (tFont.descent === null ? 0 : tFont.descent)};
