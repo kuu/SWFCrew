@@ -70,8 +70,11 @@
     var tRoot = new tDictionaryToActorMap[0]();
     tRoot.name = 'root';
     tRoot.__isRoot = true;
-
     tCompositor.addActor(tRoot, 0);
+
+    tStage.open();
+
+    tCompositor.invalidate();
 
     return tStage;
   };

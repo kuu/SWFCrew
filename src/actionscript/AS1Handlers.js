@@ -40,7 +40,7 @@
     if (tFramePart !== void 0) {
       var tTempStep = parseInt(tFramePart, 10);
       if (tTempStep + '' === tFramePart) {
-        tStep = tTempStep;
+        tStep = tTempStep - 1;
       } else {
         tLabel = tFramePart;
       }
@@ -470,6 +470,7 @@
     }
 
     var tNewActor = new tOriginal.constructor();
+    tNewActor.isNonTimeline = true;
 
     var tOriginalColorTransform = tOriginal.colorTransform;
     if (tOriginalColorTransform !== null) {
@@ -497,7 +498,7 @@
   mHandlers.RemoveSprite = function(pName) {
     var tTarget = this.callMapped('GetTargetAndData', pName, this.target).target;
 
-    if (tTarget === null) {
+    if (tTarget === null || tTarget.isNonTimeline === false) {
       return;
     }
 

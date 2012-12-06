@@ -25,8 +25,6 @@
       tNewActor.name = pData.name;
     }
 
-    pSpriteActor.addActor(tNewActor, pData.layer);
-
     if (pData.matrix !== null) {
       var tMatrix = tNewActor.matrix;
       var tDataMatrix = pData.matrix;
@@ -37,6 +35,8 @@
       tMatrix.e = tDataMatrix[4];
       tMatrix.f = tDataMatrix[5];
     }
+
+    pSpriteActor.addActor(tNewActor, pData.layer);
   };
 
   mActions.replace = function(pSpriteActor, pParams, pData) {
@@ -58,8 +58,10 @@
     if (pData.name) {
       tNewActor.name = pData.name;
     }
-    pSpriteActor.addActor(tNewActor, pData.layer);
+
     tNewActor.matrix = tMatrix;
+
+    pSpriteActor.addActor(tNewActor, pData.layer);
   };
 
   mActions.move = function(pSpriteActor, pParams, pData) {

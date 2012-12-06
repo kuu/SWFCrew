@@ -72,6 +72,11 @@
 
     for (i = 0, il = tFutureChildren.length; i < il; i++) {
       var tFutureChild = tFutureChildren[i];
+
+      if (tFutureChildren.isNonTimeline === true) {
+        continue;
+      }
+
       if (tNewChildren.indexOf(tFutureChild) === -1) {
         tFutureChild.leave();
       }
@@ -92,6 +97,8 @@
       if (tCurrentStep === tTargetStep) {
         applyTimelineCache(this, tCurrentStep);
       }
+    } else if (pData.delta !== 1 && tCurrentStep - 1 >= 0 && this.actorsInStepMap[tCurrentStep - 1] !== void 0) {
+      applyTimelineCache(this, tCurrentStep - 1);
     }
   }
 
@@ -104,6 +111,11 @@
 
     for (i = 0, il = tChildren.length; i < il; i++) {
       tChild = tChildren[i];
+
+      if (tChild.isNonTimeline === true) {
+        continue;
+      }
+
       tActorsInStepMap[tChild.layer + ''] = {
         actor: tChild,
         matrix: tChild.matrix.clone(),
