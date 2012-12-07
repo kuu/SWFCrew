@@ -215,8 +215,7 @@
     } else {
       tLastValidTarget = tData.target;
     }
-
-    tLastValidTarget.variables[tData.label] = pValue;
+    tLastValidTarget.setVariable(tData.label, pValue);
   };
 
   mHandlers.GetVariable = function(pName) {
@@ -239,7 +238,7 @@
       tLastValidTarget = tData.target;
     }
 
-    tValue = tLastValidTarget.variables[tData.label];
+    tValue = tLastValidTarget.getVariable(tData.label);
 
     if (tIsLength === true) {
       return tValue.length;

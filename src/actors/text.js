@@ -15,24 +15,22 @@
 
   function TextActor() {
     this.base();
-
-    var tWidth = this.width = this.twipsWidth / 20;
-    var tHeight = this.height = this.twipsHeight / 20;
+    this.width  = (this.bounds.right  - this.bounds.left) / 20;
+    this.height = (this.bounds.bottom - this.bounds.top ) / 20;
   }
   theatre.inherit(TextActor, mSWFCrew.DisplayListActor);
 
-  function TextProp(pBackingCanvas, pWidth, pHeight, pDeviceText) {
+  function TextProp(pBackingCanvas, pWidth, pHeight) {
     this.base(pBackingCanvas, pWidth, pHeight);
     this.cacheDrawResult = true;
     this.cacheWithClass = true;
-    this.device = pDeviceText;
   }
   theatre.inherit(TextProp, theatre.crews.canvas.CanvasProp);
 
   var mPreDrawBackup = theatre.crews.canvas.CanvasProp.prototype.preDraw;
   var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
 
-  TextProp.prototype.preDraw = function(pData) {
+  var mTextPreDrawBackup = TextProp.prototype.preDraw = function(pData) {
     if (this.actor.isVisible === false) {
       return false;
     }
@@ -140,15 +138,15 @@
       };
   }
 
-  function generateGlyphEditTextDrawFunction(pEditText, pSWF, pParams) {
-    var i, il, j, jl, tTextBounds = pEditText.bounds,
-        tCurrX = pEditText.leftmargin, tXBounds,
-        tString = pParams.string || pEditText.initialtext || '',
-        tFont = pSWF.fonts[pEditText.font],
+  function generateGlyphEditTextDrawFunction(pActor, pParams) {
+    var i, il, j, jl, tTextBounds = pActor.bounds,
+        tCurrX = pActor.leftmargin, tXBounds,
+        tString = pActor.text || '',
+        tFont = pActor.font,
         tTwipsWidth = 0, tTwipsHeight = 0, tEMHeight = 0,
         tTextLines = new Array(), tYPadding = 0;
 
-    tXBounds = tTextBounds.right - tTextBounds.left - pEditText.leftmargin - pEditText.rightmargin;
+    tXBounds = tTextBounds.right - tTextBounds.left - pActor.leftmargin - pActor.rightmargin;
 
     var tDrawFunctions = new Array(), tPaddingList = new Array();
 
@@ -158,12 +156,12 @@
 
       if (tCharCode === 13 || (tFontInfo && tCurrX + tFontInfo.advance > tXBounds)) {
         // new line
-        tYPadding += (pEditText.leading + pEditText.fontheight);
-        tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: tEMHeight});
+        tYPadding += (pActor.leading + pActor.fontheight);
+        tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
         tTwipsWidth = Math.max(tTwipsWidth, tCurrX);
         tDrawFunctions = new Array();
         tPaddingList = new Array();
-        tCurrX = pEditText.leftmargin;
+        tCurrX = pActor.leftmargin;
         tEMHeight = 0;
       }
       if (tCharCode === 13 || !tFontInfo) {
@@ -173,22 +171,22 @@
       tShape.bounds = {left: 0, right: 1024, 
         top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
         bottom: (tFont.descent === null ? 0 : tFont.descent)};
-      tShape.fillStyles[0].color = pEditText.textcolor;
+      tShape.fillStyles[0].color = pActor.textcolor;
       var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
-      var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape, tActualBounds);
+      var tDrawFunc = mShapeUtils.generateDrawFunction(null, tShape, tActualBounds);
       if (tActualBounds.bottom > tShape.bounds.bottom) {
         // The font's shape can exceed the EM square (1024 x 1024) downward.
         tShape.bounds.bottom = tActualBounds.bottom;
-        tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape);
+        tDrawFunc = mShapeUtils.generateDrawFunction(null, tShape);
       }
       tDrawFunctions.push(tDrawFunc);
       tPaddingList.push({x: tCurrX / 20, y: tYPadding / 20});
       tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
       tCurrX += tFontInfo.advance;
     }
-    tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pEditText.fontheight, emHeight: tEMHeight});
+    tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
     tTwipsWidth = Math.max(tTwipsWidth, tCurrX);
-    tTwipsHeight = tYPadding + pEditText.leading + pEditText.fontheight;
+    tTwipsHeight = tYPadding + pActor.leading + pActor.fontheight;
 
     pParams.width = tTwipsWidth;
     pParams.height = tTwipsHeight;
@@ -313,6 +311,7 @@
     // Define TextProp
     var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
       this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
+      this.rebuildGlyph = true;
     }
     theatre.inherit(tTextPropClass, TextProp);
     var tProto = tTextPropClass.prototype;
@@ -321,13 +320,35 @@
       throw new Exception('No font info.');
     }
     var tDeviceText = !pEditText.useoutline;
-    if (tDeviceText) {
-      tProto.draw = generateDeviceEditTextDrawFunction(pEditText, pSWF, tParams);
-    } else {
-      tProto.draw = generateGlyphEditTextDrawFunction(pEditText, pSWF, tParams);
-    }
-    var tTwipsWidth = tParams.width;
-    var tTwipsHeight = tParams.height;
+    tProto.preDraw = function(pData) {
+        if (this.rebuildGlyph) {
+          var tParams = new Object();
+          if (tDeviceText) {
+            tProto.draw = generateDeviceEditTextDrawFunction(pEditText, pSWF, tParams);
+          } else {
+            tProto.draw = generateGlyphEditTextDrawFunction(this.actor, tParams);
+          }
+          this.rebuildGlyph = false;
+        }
+        var tWillDraw = mTextPreDrawBackup.call(this, pData);
+
+/*
+        var tBounds = this.actor.bounds;
+        var tWidth  = tBounds.right  - tBounds.left;
+        var tHeight = tBounds.bottom - tBounds.top;
+        var tWidthDiff  = tParams.width  - tWidth;
+        var tHeightDiff = tParams.height - tHeight;
+        tBounds.left   -= tWidthDiff  / 2;
+        tBounds.right  += tWidthDiff  / 2;
+        tBounds.top    -= tHeightDiff / 2;
+        tBounds.bottom += tHeightDiff / 2;
+*/
+
+        return tWillDraw;
+      };
+    var tBounds = pEditText.bounds;
+    var tTwipsWidth  = tBounds.right  - tBounds.left;
+    var tTwipsHeight = tBounds.bottom - tBounds.top;
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
@@ -342,23 +363,52 @@
     // Define TextActor
     var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor() {
       this.base();
-      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, tDeviceText); // TODO: This feels like a hack...
-      this.addProp(tShapeProp);
+
+      // Copy necesary data.
+      this.text = pEditText.initialtext;
+      this.bounds = pEditText.bounds;
+      this.leftmargin = pEditText.leftmargin;
+      this.rightmargin = pEditText.rightmargin;
+      this.textcolor = pEditText.textcolor;
+      this.fontheight = pEditText.fontheight;
+      this.leading = pEditText.leading;
+      this.font = pSWF.fonts[pEditText.font],
+      this.isDeviceText = tDeviceText;
+
+      // Creates Prop objects.
+      var tTextProp = this.prop = new tTextPropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      this.addProp(tTextProp);
+
+      // Sets up variable accessor methods.
+      var tVarName = pEditText.variablename;
+      if (tVarName) {
+        var tThis = this;
+        this.varName = tVarName;
+        this.on('enter', function () {
+            // Registers the accessor methods.
+            tThis.parent.hookVariable(tVarName, function () {
+console.log('getter called!!!');
+                return this.text;
+              }, 'getter');
+            tThis.parent.hookVariable(tVarName, function (pValue) {
+console.log('setter called!!!');
+                // need some escape ?
+                tThis.text = pValue;
+                tTextProp.clearCache();
+                tTextProp.rebuildGlyph = true;
+                tThis.invalidate();
+              }, 'setter');
+          });
+        this.on('leave', function () {
+            // Unregisters the accessor methods.
+            if (this.varName && this.parent) {
+              this.parent.unhookVariable(this.varName);
+            }
+          });
+      }
     };
     theatre.inherit(tTextActor, TextActor);
-    tProto = tTextActor.prototype;
-
-    var tActualWidth  = (pEditText.bounds.right  - pEditText.bounds.left);
-    var tActualHeight = (pEditText.bounds.bottom - pEditText.bounds.top);
-    var tWidthDiff  = tTwipsWidth  - (pEditText.bounds.right  - pEditText.bounds.left);
-    var tHeightDiff = tTwipsHeight - (pEditText.bounds.bottom - pEditText.bounds.top);
-    pEditText.bounds.left   -= tWidthDiff  / 2;
-    pEditText.bounds.right  += tWidthDiff  / 2;
-    pEditText.bounds.top    -= tHeightDiff / 2;
-    pEditText.bounds.bottom += tHeightDiff / 2;
-    tProto.twipsWidth = tTwipsWidth;
-    tProto.twipsHeight = tTwipsHeight;
-    tProto.bounds = pEditText.bounds;
+    tTextActor.prototype.bounds = pEditText.bounds;
   };
 
 }(this));
