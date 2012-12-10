@@ -217,15 +217,26 @@
       };
   }
 
-  function generateDeviceEditTextDrawFunction(pEditText, pSWF, pParams) {
-//console.log('Device Text: ', pEditText);
-    var tColor = pEditText.textcolor;
-    var tString = pEditText.initialtext;
-    var tFont = pSWF.fonts[pEditText.font];
-    var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pEditText.fontheight + 'px ' + tFont.name;
-    var tBounds = pEditText.bounds;
-    var tXPos = 0, tYPos = 0, tWidth = tBounds.right - tBounds.left, tHeight = tBounds.bottom - tBounds.top;
-    var tCode = [
+  function generateDeviceEditTextDrawFunction(pActor, pParams) {
+    var tColor = pActor.textcolor;
+    var tStringList = pActor.text.split(String.fromCharCode(10)); // split by CR
+    var tRows = [];
+    var tFont = pActor.font;
+    var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pActor.fontheight + 'px ' + tFont.name;
+    var tBounds = pActor.bounds;
+    var tXPos = pActor.leftmargin, tYPos = 0, tWidth = tBounds.right - tBounds.left - pActor.leftmargin - pActor.rightmargin, tHeight = tBounds.bottom - tBounds.top;
+    var tAlign = '\'left\'';
+
+    if (pActor.align === 1) {
+      tAlign = '\'right\'';
+      tXPos += tWidth;
+    } else if (pActor.align === 2) {
+      tAlign = '\'center\'';
+      tXPos += tWidth / 2;
+    }
+
+    for (var i = 0, il = tStringList.length; i < il; i++) {
+      var tCode = [
         'var tContext = pData.context;',
         'var tTempCanvas = this.drawingCanvas;',
         'var tTempContext = this.drawingContext;',
@@ -234,15 +245,24 @@
         'tTempContext.fillStyle = \'' + tColor.toString() + '\';',
         'tTempContext.font = \'' + tFontString + '\';',
         'tTempContext.textBaseline = \'top\';',
-        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
+        'tTempContext.textAlign = ' + tAlign + ';',
+        'tTempContext.fillText(\'' + tStringList[i] + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
         'tContext.drawImage(tTempCanvas, 0, 0);',
         'tTempContext.restore();'
       ];
+      tRows.push(new Function('pData', tCode.join('\n')));
+      tYPos += (pActor.leading + pActor.fontheight);
+    }
 
     pParams.width = tWidth;
     pParams.height = tHeight;
 
-    return new Function('pData', tCode.join('\n'));
+    return function (pData) {
+        for (i = 0, il = tRows.length; i < il; i++) {
+          var tDrawFunc = tRows[i];
+          tDrawFunc.call(this, pData);
+        }
+      };
   }
 
   /**
@@ -324,7 +344,7 @@
         if (this.rebuildGlyph) {
           var tParams = new Object();
           if (tDeviceText) {
-            tProto.draw = generateDeviceEditTextDrawFunction(pEditText, pSWF, tParams);
+            tProto.draw = generateDeviceEditTextDrawFunction(this.actor, tParams);
           } else {
             tProto.draw = generateGlyphEditTextDrawFunction(this.actor, tParams);
           }
@@ -369,6 +389,7 @@
       this.bounds = pEditText.bounds;
       this.leftmargin = pEditText.leftmargin;
       this.rightmargin = pEditText.rightmargin;
+      this.align = pEditText.align;
       this.textcolor = pEditText.textcolor;
       this.fontheight = pEditText.fontheight;
       this.leading = pEditText.leading;
