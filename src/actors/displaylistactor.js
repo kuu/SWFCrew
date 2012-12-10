@@ -26,6 +26,8 @@
     // -1 means auto.
     this._width = -1;
     this._height = -1;
+
+    this.accessors = {};
   }
   theatre.inherit(DisplayListActor, theatre.Actor)
 
@@ -45,5 +47,59 @@
 
     return tSize;
   }
+
+  /** 
+   * Registers callback function to be invoked when the variable is accessed.
+   * @param {string} pVariableName The name of variable.
+   * @param {function} pFunction The callback function to be invoked when reading/writing the variable.
+   *                    Read (getter) function must take no argument and returns a value.
+   *                    Write(setter) function must take an argument and returns no value.
+   * @param {string} pType 'getter' or 'setter'
+   */
+  DisplayListActor.prototype.hookVariable = function (pVariableName, pFunction, pType) {
+    var tAccessor = this.accessors[pVariableName];
+    if (tAccessor) {
+      if (tAccessor[pType]) {
+        console.warn('AS variable accessor is overwritten: ' + pVariableName + '#' + pType);
+      }
+    } else {
+      tAccessor = this.accessors[pVariableName] = {};
+    }
+    tAccessor[pType] = pFunction;
+  };
+
+  /** 
+   * Unregisters callback function to be invoked when the variable is accessed.
+   * @param {string} pVariableName The name of variable.
+   * @param {string} pType 'getter' or 'setter', if avoided, both.
+   */
+  DisplayListActor.prototype.unhookVariable = function (pVariableName, pType) {
+    var tAccessor = this.accessors[pVariableName];
+    if (tAccessor) {
+      if (pType) {
+        delete tAccessor[pType];
+      } else {
+        delete this.accessors[pVariableName];
+      }
+    }
+  };
+
+  DisplayListActor.prototype.getVariable = function (pName) {
+    var tAccessor = this.accessors[pName];
+    if (tAccessor && tAccessor.getter) {
+      return tAccessor.getter();
+    } else {
+      return this.variables[pName];
+    }
+  };
+
+  DisplayListActor.prototype.setVariable = function (pName, pValue) {
+    var tAccessor = this.accessors[pName];
+    if (tAccessor && tAccessor.setter) {
+      tAccessor.setter(pValue);
+    } else {
+      this.variables[pName] = pValue;
+    }
+  };
 
 }(this));
