@@ -27,7 +27,7 @@
     this._width = -1;
     this._height = -1;
 
-    this.accessors = [];
+    this.accessors = {};
   }
   theatre.inherit(DisplayListActor, theatre.Actor)
 
@@ -62,10 +62,10 @@
       if (tAccessor[pType]) {
         console.warn('AS variable accessor is overwritten: ' + pVariableName + '#' + pType);
       }
-      tAccessor[pType] = pFunction;
     } else {
-      this.accessors[pVariableName] = {pType : pFunction};
+      tAccessor = this.accessors[pVariableName] = {};
     }
+    tAccessor[pType] = pFunction;
   };
 
   /** 

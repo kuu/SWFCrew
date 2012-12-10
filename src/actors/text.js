@@ -382,15 +382,15 @@
       // Sets up variable accessor methods.
       var tVarName = pEditText.variablename;
       if (tVarName) {
-        var tThis = this;
         this.varName = tVarName;
         this.on('enter', function () {
+            var tThis = this;
             // Registers the accessor methods.
-            tThis.parent.hookVariable(tVarName, function () {
+            this.parent.hookVariable(tVarName, function () {
 console.log('getter called!!!');
-                return this.text;
+                return tThis.text;
               }, 'getter');
-            tThis.parent.hookVariable(tVarName, function (pValue) {
+            this.parent.hookVariable(tVarName, function (pValue) {
 console.log('setter called!!!');
                 // need some escape ?
                 tThis.text = pValue;
