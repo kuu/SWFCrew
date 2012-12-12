@@ -341,7 +341,7 @@
     }
     var tDeviceText = !pEditText.useoutline;
     tProto.preDraw = function(pData) {
-        if (this.rebuildGlyph) {
+        if (this.rebuildGlyph && this.actor.text) {
           var tParams = new Object();
           if (tDeviceText) {
             tProto.draw = generateDeviceEditTextDrawFunction(this.actor, tParams);

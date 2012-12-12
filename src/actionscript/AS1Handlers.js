@@ -532,5 +532,14 @@
 
   };
 
+  var mPushStrings = [];
+
+  mHandlers.SetPushStrings = function(pStringList) {
+    mPushStrings = pStringList;
+  };
+
+  mHandlers.GetPushString = function(pId) {
+    return mPushStrings[pId + ''] || null;
+  };
 
 }(this));

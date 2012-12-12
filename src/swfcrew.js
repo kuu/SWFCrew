@@ -33,6 +33,7 @@
 
     tStage.stepRate = 1000 / pSWF.frameRate;
     tStage.backingContainer = pAttachTo;
+    swfcrew.ASHandlers.SetPushStrings(pSWF.asyncStr);
     tStage.actionScriptProgram = AlphabetJS.createProgram(tASType, swfcrew.ASHandlers);
     tStage.actionScriptLoader = AlphabetJS.createLoader(tASType);
 
