@@ -37,6 +37,11 @@ section {
   bottom: 0;
 }
 
+#tools.popup {
+  width: auto;
+  position: static;
+}
+
 #tools * {
   box-sizing: border-box;
 }

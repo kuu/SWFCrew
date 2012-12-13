@@ -10,12 +10,12 @@
     data: null,
     stage: null,
     play: true,
-    target: null,
+    targets: [],
     root: null
   };
 
-  function $(pId) {
-    return document.getElementById(pId);
+  function $(pId, pContext) {
+    return (pContext ? pContext : document).getElementById(pId);
   }
 
   var mLastFPSTime = -1;
@@ -33,8 +33,6 @@
   var mLoadButton;
   var mPlayStopButton;
   var mResetButton;
-  var mGotoInput;
-  var mGotoButton;
   var mSPSDefaultCheckbox;
   var mSPSInput;
   var mSPSView;
@@ -43,16 +41,8 @@
   var mTargetEnabled;
   var mTargetInput;
   var mTargetList;
-  var mTargetPlayStopButton;
-  var mTargetNameView;
-  var mTargetLayerView;
-  var mTargetParentNameView;
-  var mTargetCurrentStepView;
-  var mTargetMatrixView;
-  var mTargetIsVisibleView;
-  var mTargetVariablesView;
-  var mTargetInfo;
-  var mTargetError;
+  var mTargetTrackButton;
+  var mTargetTemplate;
 
   document.addEventListener('DOMContentLoaded', onLoad, false);
 
@@ -72,8 +62,6 @@
     mPlayStopButton = $('playstop-button');
     mResetButton = $('reset-button');
 
-    mGotoInput = $('goto-input');
-    mGotoButton = $('goto-button');
 
     mSPSDefaultCheckbox = $('sps-default-checkbox');
     mSPSInput = $('sps-input');
@@ -85,16 +73,9 @@
     mTargetEnabled = $('target-enabled');
     mTargetInput = $('target-input');
     mTargetList = $('target-list');
-    mTargetPlayStopButton = $('target-playstop-button');
-    mTargetNameView = $('target-name-view');
-    mTargetLayerView = $('target-layer-view');
-    mTargetParentNameView = $('target-parent-name-view');
-    mTargetCurrentStepView = $('target-currentstep-view');
-    mTargetMatrixView = $('target-matrix-view');
-    mTargetIsVisibleView = $('target-isvisible-view');
-    mTargetVariablesView = $('target-variables-view');
-    mTargetError = $('target-error');
-    mTargetInfo = $('target-info');
+
+    mTargetTrackButton = $('target-track-button');
+    mTargetTemplate = $('target-template');
   }
 
   function cancel(e) {
@@ -119,11 +100,19 @@
 
     mPlayStopButton.addEventListener('click', onPlayStopClick, false);
     mResetButton.addEventListener('click', onResetClick, false);
-    mGotoButton.addEventListener('click', onGotoClick, false);
     mSPSDefaultCheckbox.addEventListener('change', onSPSDefaultChange, false);
     mSPSInput.addEventListener('change', onSPSInputChange, false);
 
-    mTargetPlayStopButton.addEventListener('click', onTargetPlayStopClick, false);
+    mTargetTrackButton.addEventListener('click', onTrackClick, false);
+  }
+
+  function onTrackClick() {
+    if (!mTargetEnabled.checked) {
+      return;
+    }
+
+    var tTargetPath = mTargetInput.value;
+    mApp.targets.push(new Target(tTargetPath));
   }
 
   function reset() {
@@ -140,7 +129,6 @@
     mApp.parser = null;
     mApp.stage = null;
     mApp.data = null;
-    mApp.target = null;
     mApp.root = null;
   }
 
@@ -205,10 +193,10 @@
                       .getActorByName('__compositor__')
                       .getActorByName('root');
 
-        mStage.on('leavestep', updateTarget);
+        mStage.on('leavestep', updateTargets);
         mStage.on('leavestep', updateSPS);
 
-        updateTarget();
+        updateTargets();
         updateFPS();
       },
       function(pError) {
@@ -301,41 +289,74 @@
     return (pString + '').replace(/[&<>]/g, replaceTag);
   }
 
-  function updateTargetList(pPrefix, pParent) {
-    var tActors = pParent.getActors();
-    var tList = mTargetList;
-    var tOption;
+  /**
+   * @constructor
+   */
+  function Target(pPath) {
+    this.path = pPath;
+    this.target = null;
 
-    if (!pPrefix || pPrefix[pPrefix.length - 1] !== '/') {
-      pPrefix = pPrefix + '/';
-    }
+    var tWindow = this.window = global.open('about:blank', pPath, 'width=210,height=500,menubar=0,location=0,resizable=1,scrollbars=1,status=0,toolbar=0,personalbar=0');
 
-    tList.innerHTML = '';
+    var tContainer = mTargetTemplate.cloneNode(true);
+    var tSelf = this;
 
-    for (var i = 0, il = tActors.length; i < il; i++) {
-      tOption = document.createElement('option');
-      tOption.value = pPrefix + tActors[i].name;
-      tList.appendChild(tOption);
-    }
+    var tCSS = tWindow.document.createElement('link');
+    tCSS.type = 'text/css';
+    tCSS.rel = 'stylesheet';
+    tCSS.href = 'swfcrew-tester.css';
+
+    tWindow.document.head.appendChild(document.head.querySelector('link[type="text/css"]').cloneNode(true));
+
+    tWindow.document.body.appendChild(tContainer);
+
+    this.targetError = $('target-error', tWindow.document);
+    this.targetInfo = $('target-info', tWindow.document);
+    this.targetPlayStopButton = $('target-playstop-button', tWindow.document);
+    this.targetNameView = $('target-name-view', tWindow.document);
+    this.targetLayerView = $('target-layer-view', tWindow.document);
+    this.targetParentNameView = $('target-parent-name-view', tWindow.document);
+    this.targetCurrentStepView = $('target-currentstep-view', tWindow.document);
+    this.targetMatrixView = $('target-matrix-view', tWindow.document);
+    this.targetIsVisibleView = $('target-isvisible-view', tWindow.document);
+    this.targetVariablesView = $('target-variables-view', tWindow.document);
+
+    this.targetGotoInput = $('target-goto-input', tWindow.document);
+    this.targetGotoButton = $('target-goto-button', tWindow.document);
+
+    this.targetPlayStopButton.addEventListener('click', function() {
+      tSelf.playStop();
+    }, false);
+
+    this.targetGotoButton.addEventListener('click', function() {
+      tSelf.goto();
+    }, false);
+
+    this.update();
+
+    tContainer.id = 'tools';
+    tContainer.style.display = 'inherit';
   }
 
-  function updateTarget() {
-    if (!mTargetEnabled.checked) {
-      return;
-    }
+  Target.prototype.error = function(pError) {
+    this.targetInfo.style.display = 'none';
+    this.targetError.textContent = pError;
+    this.targetError.style.display = 'inherit';
+    this.target = null;
+  };
 
-    var tTargetPath = mTargetInput.value;
+  Target.prototype.update = function() {
+    var tTargetPath = this.path;
     var tTarget = mApp.root;
     var tParent = tTarget;
     var tPart, tParts;
     var i, il, k, tIndex;
     var tVariables, tTargetVariables, tVariableNames;
-    var tScrollTop, tScrollLeft;
     var tElement, tElementsToRemove, tChildren;
 
     if (!tTarget) {
-      targetError('Target does not exist');
-      return false;
+      this.error('Target does not exist');
+      return;
     }
 
     tParts = tTargetPath.split('/');
@@ -350,35 +371,34 @@
         tTarget = tParent.getActorByName(tPart);
 
         if (tTarget === null) {
-          targetError('Target does not exist');
-          updateTargetList(tParts.slice(0, i).join('/'), tParent);
-          return false;
+          this.error('Target does not exist');
+          return;
         }
       }
     }
 
-    updateTargetList(tParts.slice(0, i).join('/'), tTarget);
+    this.target = tTarget;
 
-    if (mTargetError.style.display !== 'none') {
-      mTargetError.style.display = 'none';
-      mTargetInfo.style.display = 'inherit';
+    if (this.targetError.style.display !== 'none') {
+      this.targetError.style.display = 'none';
+      this.targetInfo.style.display = 'inherit';
     }
 
-    mTargetPlayStopButton.textContent = tTarget.isActing ? 'Stop' : 'Play';
+    this.targetPlayStopButton.textContent = tTarget.isActing ? 'Stop' : 'Play';
 
-    mTargetNameView.textContent = tTarget.name;
-    mTargetLayerView.textContent = tTarget.layer;
-    mTargetParentNameView.textContent = tTarget.parent ? tTarget.parent.name : 'NO PARENT';
-    mTargetCurrentStepView.textContent = tTarget.currentStep + ' / ' + tTarget.numberOfSteps;
-    mTargetMatrixView.textContent = tTarget.matrix.toString();
-    mTargetIsVisibleView.textContent = tTarget.isVisible ? 'Yes' : 'No';
+    this.targetNameView.textContent = tTarget.name;
+    this.targetLayerView.textContent = tTarget.layer;
+    this.targetParentNameView.textContent = tTarget.parent ? tTarget.parent.name : 'NO PARENT';
+    this.targetCurrentStepView.textContent = tTarget.currentStep + ' / ' + (tTarget.numberOfSteps - 1);
+    this.targetMatrixView.textContent = tTarget.matrix.toString();
+    this.targetIsVisibleView.textContent = tTarget.isVisible ? 'Yes' : 'No';
 
     tTargetVariables = tTarget.variables;
     tVariableNames = Object.keys(tTargetVariables);
 
     tElementsToRemove = [];
 
-    tChildren = mTargetVariablesView.children;
+    tChildren = this.targetVariablesView.children;
 
     for (i = 0, il = tChildren.length; i < il; i++) {
       tElement = tChildren[i];
@@ -400,23 +420,109 @@
 
     for (i = 0, il = tVariableNames.length; i < il; i++) {
       k = tVariableNames[i];
-      tElement = document.createElement('p');
+      tElement = this.window.document.createElement('p');
       tElement.classList.add('info');
       tElement.innerHTML = '<b>' + k + '</b><br/>' + safeTagsReplace(tTargetVariables[k]);
       tElement.dataset.name = k;
       tElement.dataset.value = tTargetVariables[k];
       mTargetVariablesView.appendChild(tElement);
     }
+  };
 
-    mApp.target = tTarget;
+  Target.prototype.playStop = function() {
+    var tTarget = this.target;
 
-    return true;
+    if (!tTarget) {
+      return;
+    }
+
+    if (tTarget.isActing) {
+      tTarget.stopActing();
+    } else {
+      tTarget.startActing(false);
+    }
+  };
+
+  Target.prototype.goto = function() {
+    var tStep = parseInt(this.targetGotoInput.value, 10);
+    var tTarget = this.target;
+
+    if (mStage.isOpen) {
+      tTarget.gotoStep(tStep);
+    } else {
+      mStage.open();
+      tTarget.gotoStep(tStep);
+      tTarget.startActing(false);
+      mStage.schedule(function() {
+        this.close();
+      });
+    }
+  };
+
+  Target.prototype.close = function() {
+    this.window.close();
+  };
+
+  function updateTargetList(pPrefix, pParent) {
+    var tActors = pParent.getActors();
+    var tList = mTargetList;
+    var tOption;
+
+    if (!pPrefix || pPrefix[pPrefix.length - 1] !== '/') {
+      pPrefix = pPrefix + '/';
+    }
+
+    tList.innerHTML = '';
+
+    for (var i = 0, il = tActors.length; i < il; i++) {
+      tOption = document.createElement('option');
+      tOption.value = pPrefix + tActors[i].name;
+      tList.appendChild(tOption);
+    }
   }
 
-  function targetError(pError) {
-    mTargetInfo.style.display = 'none';
-    mTargetError.textContent = pError;
-    mTargetError.style.display = 'inherit';
+  function updateTargets() {
+    var tTargets = mApp.targets;
+
+    if (!mTargetEnabled.checked) {
+      return;
+    }
+
+    var tTargetPath = mTargetInput.value;
+    var tTarget = mApp.root;
+    var tParent = tTarget;
+    var tPart, tParts;
+    var i, il;
+    var tVariables, tTargetVariables, tVariableNames;
+    var tElement, tElementsToRemove, tChildren;
+
+    if (!tTarget) {
+      return false;
+    }
+
+    tParts = tTargetPath.split('/');
+
+    for (i = 0, il = tParts.length; i < il; i++) {
+      tPart = tParts[i];
+
+      if (tPart === '') {
+        continue;
+      } else {
+        tParent = tTarget;
+        tTarget = tParent.getActorByName(tPart);
+
+        if (tTarget === null) {
+          updateTargetList(tParts.slice(0, i).join('/'), tParent);
+          return false;
+        }
+      }
+    }
+
+    updateTargetList(tParts.slice(0, i).join('/'), tTarget);
+
+    for (i = 0, il = tTargets.length; i < il; i++) {
+      tTargets[i].update();
+    }
   }
 
   function onFileChange() {
@@ -448,20 +554,6 @@
     }
   }
 
-  function onTargetPlayStopClick() {
-    var tTarget = mApp.target;
-
-    if (!tTarget) {
-      return;
-    }
-
-    if (tTarget.isActing) {
-      tTarget.stopActing();
-    } else {
-      tTarget.startActing(false);
-    }
-  }
-
   function onPlayStopClick() {
     var tPlay = mApp.play = !(mApp.play ^ false);
 
@@ -489,27 +581,6 @@
     reset();
 
     loadData(tData);
-  }
-
-  function onGotoClick() {
-    if (!mStage) {
-      error('Load a file first');
-      return;
-    }
-
-    var tStep = parseInt(mGotoInput.value, 10);
-    var tTarget = mApp.target;
-
-    if (mStage.isOpen) {
-      tTarget.gotoStep(tStep);
-    } else {
-      mStage.open();
-      tTarget.gotoStep(tStep);
-      tTarget.startActing(false);
-      mStage.schedule(function() {
-        this.close();
-      });
-    }
   }
 
   function onSPSDefaultChange() {

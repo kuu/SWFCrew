@@ -67,35 +67,37 @@
 
           <label><input type="checkbox" id="target-enabled" />Enable tracking</label>
           <input type="text" id="target-input" value="/" list="target-list" style="width:100%" />
+          <button id="target-track-button">Track</button>
           <datalist id="target-list"></datalist>
         </section>
 
-        <section>
-          <h4>Timeline</h4>
-
-          <button id="target-playstop-button">Stop</button>
-          <p class="info">
-            <input type="number" id="goto-input" min="0" style="width:100%" />
-            <button id="goto-button" style="width:97%">Goto</button>
-          </p>
-        </section>
-
-        <section>
-          <h4>Information</h4>
-
+        <div id="target-template" class="popup" style="display:none">
           <p id="target-error" class="info error">Target does not exist</p>
+          <section id="target-info" style="display:none">
+            <section>
+              <h4>Timeline</h4>
 
-          <div id="target-info" class="column" style="display:none">
-            <p class="info">Name: <span id="target-name-view"></span></p>
-            <p class="info">Layer: <span id="target-layer-view"></span></p>
-            <p class="info">Parent: <span id="target-parent-name-view"></span></p>
-            <p class="info">Step: <span id="target-currentstep-view"></span></p>
-            <p class="info">Matrix: <span id="target-matrix-view"></span></p>
-            <p class="info">Visible: <span id="target-isvisible-view"></span></p>
-            <h5>Variables</h5>
-            <div id="target-variables-view"></div>
-          </div>
-        </section>
+              <button id="target-playstop-button">Stop</button>
+              <p class="info">
+                <input type="number" id="target-goto-input" min="0" style="width:100%" />
+                <button id="target-goto-button" style="width:97%">Goto</button>
+              </p>
+            </section>
+
+            <section >
+              <h4>Information</h4>
+
+              <p class="info">Name: <span id="target-name-view"></span></p>
+              <p class="info">Layer: <span id="target-layer-view"></span></p>
+              <p class="info">Parent: <span id="target-parent-name-view"></span></p>
+              <p class="info">Step: <span id="target-currentstep-view"></span></p>
+              <p class="info">Matrix: <span id="target-matrix-view"></span></p>
+              <p class="info">Visible: <span id="target-isvisible-view"></span></p>
+              <h5>Variables</h5>
+              <div id="target-variables-view"></div>
+            </section>
+          </section>
+        </div>
       </section>
 
     </section>
