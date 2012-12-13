@@ -1,127 +1,103 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset="UTF-8">
+    <meta http-equiv="Content-Type" content='text/html charset="UTF-8"' />
     <title>Animator Test</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=yes,target-densitydpi=medium-dpi" />
-    <style type="text/css">
-      body{margin:0 auto;padding:0;image-rendering:optimizespeed;}
-      #container{margin:0 auto;position:absolute;top:0;bottom:0;left:0;right:0}
-      #container2{margin:0 auto;}
-      #c{position:absolute;bottom:0;left:0;z-index:9999999}
-    </style>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=yes" />
+    <link type="text/css" rel="stylesheet" href="swfcrew-tester.css" />
     <script type="text/javascript" src="../bin/swfcrew.js" charset="UTF-8"></script>
-    <script type="text/javascript">
-
-      var parser = null;
-      var stage = null;
-
-      function onAjax(e) {
-        if (e) {
-          e.preventDefault();
-        }
-
-        var container = document.getElementById("container");
-
-        if (stage !== null) {
-          stage.close();
-        }
-        if (parser !== null) {
-          parser.swf.destroy();
-        }
-        container.width = container.width;
-
-        var tXhr = new XMLHttpRequest();
-        tXhr.addEventListener('load', function(e) {
-          var tData = new Uint8Array(this.response);
-          parser = new quickswf.Parser(tData);
-          console.time('Parse');
-          parser.parse(
-            function(pSWF) {
-              console.timeEnd('Parse');
-              container.width = pSWF.width;
-              container.height = pSWF.height;
-              console.time('Convert');
-              var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                spriteType: "canvas"
-              });
-              console.timeEnd('Convert');
-            },
-            function(pError) {
-              console.error(pError);
-            }
-          );
-        }, false);
-
-        tXhr.addEventListener('error', function(e) {
-          console.log(e);
-        }, false);
-
-        tXhr.open('GET', document.getElementById('url').value, true);
-        tXhr.responseType = 'arraybuffer';
-        tXhr.send(null);
-      }
-
-      function onFile(e) {
-        e.preventDefault();
-
-        var container = document.getElementById("container");
-        if (stage !== null) {
-          stage.close();
-          parser.swf.destroy();
-        }
-        container.width = container.width;
-
-        var fr = new FileReader();
-        var file = document.getElementById("file").files[0];
-
-        fr.onload = function(e) {
-          var tData = new Uint8Array(e.target.result);
-          parser = new quickswf.Parser(tData);
-          console.time('Parse');
-          parser.parse(
-            function(pSWF) {
-              console.timeEnd('Parse');
-              container.width = pSWF.width;
-              container.height = pSWF.height;
-              console.time('Convert');
-              var tStage = stage = theatre.crews.swf.create(pSWF, container, {
-                spriteType: "canvas"
-              });
-              console.timeEnd('Convert');
-            },
-            function(pError) {
-              console.error(pError);
-            }
-          );
-        };
-
-        fr.readAsArrayBuffer(file);
-      }
-
-      document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById("goajax").addEventListener("click", onAjax, false);
-        document.getElementById("gofile").addEventListener("click", onFile, false);
-
-        if (window.location.hash.length > 1) {
-          document.getElementById('url').value = window.location.hash.substring(1);
-          onAjax();
-        }
-
-        window.addEventListener('hashchange', function() {
-          document.getElementById('url').value = window.location.hash.substring(1);
-          onAjax();
-        }, false);
-      }, false);
-    </script>
+    <script type="text/javascript" src="swfcrew-tester.js" charset="UTF-8"></script>
   </head>
   <body>
-    <canvas id="container"></canvas>
-    <div id="options" style="position:absolute;z-index:999999999999;bottom:0;left:0">
-      <input type="text" id="url" />
-      <input type="submit" id="goajax" value="Go Ajax" />
-      <input type="file" id="file" name="file" />
-      <input type="submit" id="gofile" value="Go File" />
-    </div>
+    <section id="container"></section>
+    <section id="tools">
+      <section>
+        <h3>Load</h3>
+
+        <section>
+          <h4>File</h4>
+
+          <button class="rel half">Choose File<input type="file" id="file-input" /></button>
+          <button id="url-button" class="half">Enter URL</button>
+          <input type="url" id="url-input" value="Choose an option above" disabled="disabled" style="width:100%" />
+        </section>
+
+        <section>
+          <h4>Options</h4>
+
+          <label><input type="checkbox" id="flash-player-check" /> Load Flash Player</label>
+        </section>
+
+        <section>
+          <button id="load-button">Load</button>
+        </section>
+      </section>
+
+      <section>
+        <h3>Player</h3>
+
+        <section>
+          <h4>Control</h4>
+
+          <button id="playstop-button" class="half">Stop</button>
+          <button id="reset-button" class="half">Reset</button>
+        </section>
+
+        <section>
+          <h4>Steps Per Second</h4>
+          <label><input type="checkbox" id="sps-default-checkbox" checked="checked" />Default</label>
+          <div>
+            <input type="range" id="sps-input" min="1" max="100" value="1" style="width:115px" disabled="disabled" />
+            <span id="sps-view" class="info">Default</span>
+          </div>
+          <p id="sps-actual-view" class="info">0</p>
+        </section>
+
+        <section>
+          <h4>Frames Per Second</h4>
+          <p id="fps-view" class="info">0</p>
+        </section>
+      </section>
+
+      <section>
+        <h3>Actors</h3>
+
+        <section>
+          <h4>Target</h4>
+
+          <label><input type="checkbox" id="target-enabled" />Enable tracking</label>
+          <input type="text" id="target-input" value="/" list="target-list" style="width:100%" />
+          <datalist id="target-list"></datalist>
+        </section>
+
+        <section>
+          <h4>Timeline</h4>
+
+          <button id="target-playstop-button">Stop</button>
+          <p class="info">
+            <input type="number" id="goto-input" min="0" style="width:100%" />
+            <button id="goto-button" style="width:97%">Goto</button>
+          </p>
+        </section>
+
+        <section>
+          <h4>Information</h4>
+
+          <p id="target-error" class="info error">Target does not exist</p>
+
+          <div id="target-info" class="column" style="display:none">
+            <p class="info">Name: <span id="target-name-view"></span></p>
+            <p class="info">Layer: <span id="target-layer-view"></span></p>
+            <p class="info">Parent: <span id="target-parent-name-view"></span></p>
+            <p class="info">Step: <span id="target-currentstep-view"></span></p>
+            <p class="info">Matrix: <span id="target-matrix-view"></span></p>
+            <p class="info">Visible: <span id="target-isvisible-view"></span></p>
+            <h5>Variables</h5>
+            <div id="target-variables-view"></div>
+          </div>
+        </section>
+      </section>
+
+    </section>
   </body>
 </html>

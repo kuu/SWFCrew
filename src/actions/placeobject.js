@@ -36,6 +36,8 @@
       tMatrix.f = tDataMatrix[5];
     }
 
+    tNewActor.stepAdded = pSpriteActor.currentStep;
+
     pSpriteActor.addActor(tNewActor, pData.layer);
   };
 
@@ -60,6 +62,7 @@
     }
 
     tNewActor.matrix = tMatrix;
+    tNewActor.stepAdded = pSpriteActor.currentStep;
 
     pSpriteActor.addActor(tNewActor, pData.layer);
   };

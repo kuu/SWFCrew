@@ -1,0 +1,153 @@
+html {
+  height:100%;
+  margin:0;
+  padding:0;
+}
+
+body {
+  margin:0 auto;
+  padding:0;
+  image-rendering:optimizespeed;
+  width:auto;
+  height:100%;
+}
+
+section {
+}
+
+#container {
+  margin-right: 202px;
+}
+
+#container.error {
+  font-size: 32pt;
+  color: red;
+  text-align: center;
+}
+
+#tools {
+  width:200px;
+  background-color:#CCC;
+  border-left:solid 2px black;
+  overflow: auto;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#tools * {
+  box-sizing: border-box;
+}
+
+#tools > section {
+  border:solid #56789A;
+  border-width:5px 0;
+}
+
+#tools > section > section {
+  padding:0 0 5px 0;
+  border-style:solid;
+  border-color:#00BB88 #5FF1A8;
+  border-width:2px 1px;
+  border-radius:2px 2px 5px 5px;
+  margin:5px;
+}
+
+#tools > section > section > :first {
+  margin-top:-5px;
+}
+
+h3 {
+  background-color:#999;
+  width: 100%;
+  padding:5px;
+  margin:0;
+  border-bottom:solid 1px #0022FF;
+}
+
+h4 {
+  background-color:#BBB;
+  width: 100%;
+  padding:3px;
+  margin:0 0 5px 0;
+  border-bottom:solid 1px #0088FF;
+}
+
+h5 {
+  background-color:#CCC;
+  width: 100%;
+  padding:3px;
+  margin:0 0 5px 0;
+  border-bottom:solid 1px #0088FF;
+}
+
+input[type="file"] {
+  width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  opacity:0;
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+}
+
+label {
+  background-color:#EEF;
+  border-radius:3px;
+  padding:1px;
+  border:solid 1px #EEE;
+  width: auto;
+  height:auto;
+  display: block;
+}
+
+button {
+  background-color:#DDF;
+  border-radius:3px;
+  padding:3px;
+  margin:2px;
+  border:solid 1px #EEE;
+  height:auto;
+  width: 98%;
+}
+
+button:hover {
+  background-color:#EEEEFF;
+}
+
+button.half {
+  width: 46%;
+}
+
+div {
+  margin-top:5px;
+}
+
+.rel {
+  position:relative;
+}
+
+.info {
+  padding: 2px 5px;
+  margin: 0px;
+  background-color: white;
+  border-radius: 3px;
+}
+
+p.info {
+  margin-top:5px;
+  overflow: auto;
+}
+
+p.error {
+  color: red;
+  text-align: center;
+}
+
+.column {
+}
