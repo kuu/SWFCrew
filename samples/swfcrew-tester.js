@@ -425,7 +425,7 @@
       tElement.innerHTML = '<b>' + k + '</b><br/>' + safeTagsReplace(tTargetVariables[k]);
       tElement.dataset.name = k;
       tElement.dataset.value = tTargetVariables[k];
-      mTargetVariablesView.appendChild(tElement);
+      this.targetVariablesView.appendChild(tElement);
     }
   };
 
