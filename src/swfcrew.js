@@ -33,7 +33,7 @@
 
     tStage.stepRate = 1000 / pSWF.frameRate;
     tStage.backingContainer = pAttachTo;
-    swfcrew.ASHandlers.SetPushStrings(pSWF.asyncStr);
+    swfcrew.ASHandlers.SetLiteralTable(255, pSWF.asyncStr); // Set the asynchronously converted multibyte strings.
     tStage.actionScriptProgram = AlphabetJS.createProgram(tASType, swfcrew.ASHandlers);
     tStage.actionScriptLoader = AlphabetJS.createLoader(tASType);
 

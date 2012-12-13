@@ -544,14 +544,28 @@
 
   };
 
-  var mPushStrings = [];
+  var mLiteralTables = {};
 
-  mHandlers.SetPushStrings = function(pStringList) {
-    mPushStrings = pStringList;
+  mHandlers.SetLiteralTable = function(pType, pTable) {
+    mLiteralTables[pType + ''] = pTable;
   };
 
-  mHandlers.GetPushString = function(pId) {
-    return mPushStrings[pId + ''] || null;
+  mHandlers.GetLiteral = function(pType, pReader) {
+    var tTable, tValue;
+
+    if ((tTable = mLiteralTables[pType + '']) === void 0) {
+      return null;
+    }
+
+    switch (pType) {
+    case 255: // Multibyte string
+      var tLength = pReader.sl();;
+      var tUint8Array = pReader.sub(pReader.tell(), tLength);
+      var tBase64String = global.btoa(global.String.fromCharCode.apply(null, tUint8Array));
+      pReader.seek(tLength + 1);
+      tValue = tTable[tBase64String];
+    }
+    return tValue || null;
   };
 
 }(this));
