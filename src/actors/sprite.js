@@ -53,8 +53,8 @@
           tFutureChild.leave();
         }
 
-        tPastChildActor._currentScene.currentStep = tPastChild.step;
-        tPastChildActor._currentScene.previousStep = tPastChild.step - 1;
+        //tPastChildActor._currentScene.currentStep = tPastChild.step;
+        //tPastChildActor._currentScene.previousStep = tPastChild.step - 1;
         pActor.addActor(tPastChildActor, tLayer, false);
       }
 
@@ -73,7 +73,7 @@
     for (i = 0, il = tFutureChildren.length; i < il; i++) {
       var tFutureChild = tFutureChildren[i];
 
-      if (tFutureChildren.isNonTimeline === true) {
+      if (tFutureChild.isNonTimeline === true) {
         continue;
       }
 

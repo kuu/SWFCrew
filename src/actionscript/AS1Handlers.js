@@ -129,7 +129,7 @@
     if (this.target === null) {
       return;
     }
-    this.target.gotoLabel(pLabel) !== false || this.target.gotoStep(this.target.numberOfSteps - 1);
+    this.target.gotoLabel(pLabel);
   };
 
   mHandlers.Trace = function(pMessage) {
@@ -490,6 +490,18 @@
     tMatrix.f = tOriginalMatrix.f;
 
     tNewActor.name = pNewName;
+
+    var tOldActor = tOriginal.parent.getActorAtLayer(pDepth);
+
+    if (tOldActor !== null) {
+      tOldActor.leave();
+    }
+
+    tOldActor = tOriginal.parent.getActorByName(pNewName);
+
+    if (tOldActor !== null) {
+      tOldActor.leave();
+    }
 
     tOriginal.parent.addActor(tNewActor, pDepth);
     tNewActor.invalidate();

@@ -21,6 +21,7 @@
     this.isVisible = true;
     this.isMatrixLocked = false;
     this.isNonTimeline = false;
+    this.stepAdded = -1;
     this.ratio = 0;
 
     // -1 means auto.
