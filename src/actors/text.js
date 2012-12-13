@@ -236,6 +236,7 @@
     }
 
     for (var i = 0, il = tStringList.length; i < il; i++) {
+      var tString = tStringList[i].replace(/(?!\\)'/, '\\\'');
       var tCode = [
         'var tContext = pData.context;',
         'var tTempCanvas = this.drawingCanvas;',
@@ -246,7 +247,7 @@
         'tTempContext.font = \'' + tFontString + '\';',
         'tTempContext.textBaseline = \'top\';',
         'tTempContext.textAlign = ' + tAlign + ';',
-        'tTempContext.fillText(\'' + tStringList[i] + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
+        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
         'tContext.drawImage(tTempCanvas, 0, 0);',
         'tTempContext.restore();'
       ];
