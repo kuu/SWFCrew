@@ -496,12 +496,6 @@
       tOldActor.leave();
     }
 
-    tOldActor = tOriginal.parent.getActorByName(pNewName);
-
-    if (tOldActor !== null) {
-      tOldActor.leave();
-    }
-
     tOriginal.parent.addActor(tNewActor, pDepth);
     tNewActor.invalidate();
   };
