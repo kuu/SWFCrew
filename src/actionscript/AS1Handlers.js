@@ -171,7 +171,7 @@
     if (typeof pFrame === 'number') {
       tCurrentTarget.gotoStep((pFrame - 1) + pSceneBias) !== false || tCurrentTarget.gotoStep(0);
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing();
+        tCurrentTarget.startActing(false);
       } else {
         tCurrentTarget.stopActing();
       }
@@ -185,19 +185,21 @@
       return;
     }
 
+    tCurrentTarget = tData.target;
+
     if (tData.label !== '') {
-      tData.target.gotoLabel(tData.label); // TODO: Support bias?
+      tCurrentTarget.gotoLabel(tData.label); // TODO: Support bias?
 
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing();
+        tCurrentTarget.startActing(false);
       } else {
         tCurrentTarget.stopActing();
       }
     } else {
-      tData.target.gotoStep((tData.step - 1) + pSceneBias);
+      tCurrentTarget.gotoStep((tData.step - 1) + pSceneBias);
 
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing();
+        tCurrentTarget.startActing(false);
       } else {
         tCurrentTarget.stopActing();
       }
@@ -496,7 +498,7 @@
       tOldActor.leave();
     }
 
-    tOriginal.parent.addActor(tNewActor, pDepth);
+    tOriginal.parent.addActor(tNewActor, pDepth, true);
     tNewActor.invalidate();
   };
 

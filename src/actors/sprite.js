@@ -37,6 +37,7 @@
     var tPastChildActor;
 
     var tNewChildren = [];
+    var tActorsToAdd = [];
 
     for (tLayerString in tActorsInStepMap) {
       if (!tActorsInStepMap.hasOwnProperty(tLayerString)) {
@@ -53,9 +54,7 @@
           tFutureChild.leave();
         }
 
-        //tPastChildActor._currentScene.currentStep = tPastChild.step;
-        //tPastChildActor._currentScene.previousStep = tPastChild.step - 1;
-        pActor.addActor(tPastChildActor, tLayer, false);
+        tActorsToAdd.push([tPastChildActor, tLayer]);
       }
 
       if (tPastChildActor.isMatrixLocked === false) {
@@ -69,6 +68,20 @@
 
       tNewChildren.push(tPastChildActor);
     }
+
+    tActorsToAdd.sort(function(a, b) {
+      if (b[1] >= a[1]) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
+
+    for (i = 0, il = tActorsToAdd.length; i < il; i++) {
+      pActor.addActor(tActorsToAdd[i][0], tActorsToAdd[i][1]);
+    }
+
+    tActorsToAdd.length = 0;
 
     for (i = 0, il = tFutureChildren.length; i < il; i++) {
       var tFutureChild = tFutureChildren[i];

@@ -7,6 +7,7 @@
 (function(global) {
 
   var theatre = global.theatre;
+  var swfcrew = theatre.crews.swf;
   var mActions = theatre.define('theatre.crews.swf.actions');
 
   /**
@@ -23,6 +24,10 @@
     var tNewActor = new tDictionary[pData.id]();
     if (pData.name) {
       tNewActor.name = pData.name;
+    } else {
+      tNewActor.name = tNewActor instanceof swfcrew.actors.SpriteActor ?
+                        'instance' + (++pSpriteActor.stage.spriteInstanceCounter) :
+                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
     }
 
     if (pData.matrix !== null) {
@@ -59,6 +64,10 @@
     var tNewActor = new tDictionary[pData.id]();
     if (pData.name) {
       tNewActor.name = pData.name;
+    } else {
+      tNewActor.name = tNewActor instanceof swfcrew.actors.SpriteActor ?
+                        'instance' + (++pSpriteActor.stage.spriteInstanceCounter) :
+                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
     }
 
     tNewActor.matrix = tMatrix;

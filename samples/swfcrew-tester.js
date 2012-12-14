@@ -463,31 +463,7 @@
     this.window.close();
   };
 
-  function updateTargetList(pPrefix, pParent) {
-    var tActors = pParent.getActors();
-    var tList = mTargetList;
-    var tOption;
-
-    if (!pPrefix || pPrefix[pPrefix.length - 1] !== '/') {
-      pPrefix = pPrefix + '/';
-    }
-
-    tList.innerHTML = '';
-
-    for (var i = 0, il = tActors.length; i < il; i++) {
-      tOption = document.createElement('option');
-      tOption.value = pPrefix + tActors[i].name;
-      tList.appendChild(tOption);
-    }
-  }
-
-  function updateTargets() {
-    var tTargets = mApp.targets;
-
-    if (!mTargetEnabled.checked) {
-      return;
-    }
-
+  function updateTargetList() {
     var tTargetPath = mTargetInput.value;
     var tTarget = mApp.root;
     var tParent = tTarget;
@@ -512,13 +488,39 @@
         tTarget = tParent.getActorByName(tPart);
 
         if (tTarget === null) {
-          updateTargetList(tParts.slice(0, i).join('/'), tParent);
-          return false;
+          tTarget = tParent;
+          break;
         }
       }
     }
 
-    updateTargetList(tParts.slice(0, i).join('/'), tTarget);
+    var tPrefix = tParts.slice(0, i).join('/');
+
+    var tActors = tTarget.getActors();
+    var tList = mTargetList;
+    var tOption;
+
+    if (!tPrefix || tPrefix[tPrefix.length - 1] !== '/') {
+      tPrefix = tPrefix + '/';
+    }
+
+    tList.innerHTML = '';
+
+    for (var i = 0, il = tActors.length; i < il; i++) {
+      tOption = document.createElement('option');
+      tOption.value = tPrefix + tActors[i].name;
+      tList.appendChild(tOption);
+    }
+  }
+
+  function updateTargets() {
+    var tTargets = mApp.targets;
+
+    if (!mTargetEnabled.checked) {
+      return;
+    }
+
+    updateTargetList();
 
     for (i = 0, il = tTargets.length; i < il; i++) {
       tTargets[i].update();
