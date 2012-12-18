@@ -6,7 +6,7 @@
  */
 (function(global) {
   var mHandlers = global.theatre.crews.swf.ASHandlers;
-
+  var utils = global.theatre.crews.swf.utils;
 
   mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
     var i;
@@ -533,10 +533,84 @@
   };
 
   mHandlers.GetURL = function(pURL, pTarget) {
-
+    var tDelay = utils.ajax.get(pURL);
+    tDelay.then(function (pResponse) {
+      if (pTarget) {
+        // iframe
+        if ('frames' in global) {
+          global.frames[pTarget].document.body.innerHTML = pResponse.responseText;
+        }
+      } else {
+        // Current window
+        if ('document' in global) {
+          global.document.body.innerHTML = pResponse.responseText;
+        }
+      }
+    }).or(function (pError) {
+      // An error occurred. Nop.
+      console.log('GetURL: Ajax failed:', pError);
+    });
   };
 
   mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
+
+    var tLastValidTarget = this.getLastValidTarget(), tOptions, tDelay, tSelf = this;
+
+    if (pSendVarsMethod === 0) {
+      // Don't send any data.
+      tDelay = utils.ajax.get(pURL, tOptions);
+    } else if (pSendVarsMethod === 1) {
+      // Send the variables in the current movie clip via GET.
+      tOptions = {
+          queryString : tLastValidTarget.getAllVariables()
+        };
+      tDelay = utils.ajax.get(pURL, tOptions);
+    } else {
+      // Send the variables in the current movie clip via POST.
+      tOptions = {
+          queryString : tLastValidTarget.getAllVariables()
+        };
+      tDelay = utils.ajax.post(pURL, tOptions);
+    }
+
+    // Process the response.
+    tDelay.then(function (pResponse) {
+      var tData, tTarget, tQueryStrings;
+
+      if (pLoadTargetFlag) {
+        // pTarget is a path to a sprite. The path can be in slash or dot syntax. 
+        tData = tSelf.callMapped('GetTargetAndData', pTarget, tLastValidTarget, true);
+        tTarget = tData.target;
+        if (pLoadVariablesFlag) {
+          // The response is variables
+          tQueryStrings = pResponse.responseText.split('&');
+          for (var i = 0, il = tQueryStrings.length; i < il; i++) {
+            var tKeyValuePair = tQueryStrings[i].split('=');
+            tTarget.setVariable(tKeyValuePair[0], tKeyValuePair[1]);
+          }
+        } else {
+          // The response is SWF
+          // TODO: Merge assets in the SWF file into the target.
+          console.log('The response is SWF.');
+        }
+      } else {
+        // The target is a browser window.
+        if (pTarget) {
+          // iframe
+          if ('frames' in global) {
+            global.frames[pTarget].document.body.innerHTML = pResponse.responseText;
+          }
+        } else {
+          // Current window
+          if ('document' in global) {
+            global.document.body.innerHTML = pResponse.responseText;
+          }
+        }
+      }
+    }).or(function (pError) {
+      // An error occurred. Nop.
+      console.log('GetURL2: Ajax failed:', pError);
+    });
 
   };
 

@@ -184,6 +184,32 @@
   }
   theatre.inherit(SpriteActor, mSWFCrew.DisplayListActor);
 
+  /** 
+   * Returns all the variables in this movie clip.
+   * @return {Object} An object containing all variable names and values.
+   */
+  SpriteActor.prototype.getAllVariables = function () {
+
+    var tAccessors = this.accessors,
+        tVariables = this.variables,
+        tKeyValueList = {}, k, tGetter;
+
+    for (k in tAccessors) {
+      var v;
+      tGetter = accessors[k].getter;
+      if (typeof tGetter === 'function') {
+        v = tGetter();
+      }
+      tKeyValueList[k] = v;
+    }
+
+    for (k in tVariables) {
+      tKeyValueList[k] = tVariables[k];
+    }
+
+    return tKeyValueList;
+  };
+
   /**
    * Handles SWF Sprites.
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
