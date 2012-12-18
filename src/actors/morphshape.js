@@ -31,8 +31,8 @@
   /**
    * @constructor
    */
-  function MorphShapeActor() {
-    this.base();
+  function MorphShapeActor(pPlayer) {
+    this.base(pPlayer);
   }
   theatre.inherit(MorphShapeActor, mActors.ShapeActor);
 
@@ -311,14 +311,10 @@
 
   /**
    * Handles SWF MorphShapes.
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {theatre.Stage} pStage The stage.
-   * @param {Object} pParams An obect containing a dictionary-actor map object.
    * @param {quickswf.structs.MorphShape} pMorphShape The MorphShape to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineMorphShape'] = function(pSWF, pStage, pParams, pMorphShape, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+  mHandlers['DefineMorphShape'] = function(pMorphShape) {
+    var tDictionaryToActorMap = this.actorMap;
     var tProto;
     var tMaxTwipsWidth = Math.max(
       pMorphShape.startBounds.right - pMorphShape.startBounds.left,
@@ -335,7 +331,7 @@
     theatre.inherit(tMorphShapePropClass, MorphShapeProp);
 
     tProto = tMorphShapePropClass.prototype;
-    tProto.images = pSWF.images;
+    tProto.images = this.swf.images;
     tProto.morphShape = pMorphShape;
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
@@ -346,10 +342,10 @@
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
 
-    var tMorphShapeActor = tDictionaryToActorMap[pMorphShape.id] = function BuiltinMorphShapeActor() {
-      this.base();
+    var tMorphShapeActor = tDictionaryToActorMap[pMorphShape.id] = function BuiltinMorphShapeActor(pPlayer) {
+      this.base(pPlayer);
 
-      var tMorphShapeProp = new tMorphShapePropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tMorphShapeProp = new tMorphShapePropClass(pPlayer.backingContainer, this.width, this.height); // TODO: This feels like a hack...
 
       this.addProp(tMorphShapeProp);
     };

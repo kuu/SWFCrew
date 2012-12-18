@@ -11,11 +11,10 @@
   /**
    * Set's the background colour of the stage.
    * @param {theatre.Actor} pSpriteActor Ignored..
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {Object} pData The data to use to know what to add.
    */
-  mActions.background = function(pSpriteActor, pParams, pData) {
-    pSpriteActor.backingContainer.style.backgroundColor = pData.color.toString();
+  mActions.background = function(pSpriteActor, pData) {
+    pSpriteActor.player.backingContainer.style.backgroundColor = pData.color.toString();
   }
 
 }(this));

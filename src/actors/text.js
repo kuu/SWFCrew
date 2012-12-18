@@ -13,8 +13,8 @@
   var mShapeUtils = mSWFCrew.utils.shape;
   var ShapeActor = mSWFCrew.actors.ShapeActor;
 
-  function TextActor() {
-    this.base();
+  function TextActor(pPlayer) {
+    this.base(pPlayer);
     this.width  = (this.bounds.right  - this.bounds.left) / 20;
     this.height = (this.bounds.bottom - this.bounds.top ) / 20;
   }
@@ -90,8 +90,8 @@
         if (tFont.codeTable && tFont.codeTable[tGlyph.index] !== void 0) {
           tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
         }
-        tShape.bounds = {left: 0, right: 1024, 
-            top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
+        tShape.bounds = {left: 0, right: 1024,
+            top: (tFont.ascent === null ? -1024 : -tFont.ascent),
             bottom: (tFont.descent === null ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
         var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
@@ -168,8 +168,8 @@
         continue;
       }
       var tShape = tFontInfo.shape;
-      tShape.bounds = {left: 0, right: 1024, 
-        top: (tFont.ascent === null ? -1024 : -tFont.ascent), 
+      tShape.bounds = {left: 0, right: 1024,
+        top: (tFont.ascent === null ? -1024 : -tFont.ascent),
         bottom: (tFont.descent === null ? 0 : tFont.descent)};
       tShape.fillStyles[0].color = pActor.textcolor;
       var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
@@ -268,14 +268,10 @@
 
   /**
    * Handles SWF Texts (DefineText, DefineText2.)
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {theatre.Stage} pSage TheatreScript's Stage object.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Text} pText The Text to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineText'] = function(pSWF, pStage, pParams, pText, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+  mHandlers['DefineText'] = function(pText) {
+    var tDictionaryToActorMap = this.actorMap;
 
     // Define TextProp
     var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
@@ -284,7 +280,7 @@
     theatre.inherit(tTextPropClass, TextProp);
     var tProto = tTextPropClass.prototype;
     var tParams = new Object();
-    tProto.draw = generateGlyphTextDrawFunction(pText, pSWF, tParams);
+    tProto.draw = generateGlyphTextDrawFunction(pText, this.swf, tParams);
     var tTwipsWidth = tParams.width;
     var tTwipsHeight = tParams.height;
 
@@ -299,9 +295,9 @@
     tContext.scale(0.05, 0.05);
 
     // Define TextActor
-    var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor() {
-      this.base();
-      var tShapeProp = new tTextPropClass(pStage.backingContainer, this.width, this.height, false); // TODO: This feels like a hack...
+    var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor(pPlayer) {
+      this.base(pPlayer);
+      var tShapeProp = new tTextPropClass(pPlayer.backingContainer, this.width, this.height, false); // TODO: This feels like a hack...
       this.addProp(tShapeProp);
     };
     theatre.inherit(tTextActor, TextActor);
@@ -321,14 +317,11 @@
 
   /**
    * Handles SWF Texts (DefineEditText.)
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {theatre.Stage} pSage TheatreScript's Stage object.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Text} pText The Text to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineEditText'] = function(pSWF, pStage, pParams, pEditText, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+  mHandlers['DefineEditText'] = function(pEditText) {
+    var tDictionaryToActorMap = this.actorMap;
+    var tFonts = this.swf.fonts;
     // Define TextProp
     var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
       this.base(pBackingContainer, pWidth, pHeight, pDeviceText);
@@ -382,8 +375,8 @@
     tContext.scale(0.05, 0.05);
 
     // Define TextActor
-    var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor() {
-      this.base();
+    var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor(pPlayer) {
+      this.base(pPlayer);
 
       // Copy necesary data.
       this.text = pEditText.initialtext;
@@ -394,11 +387,11 @@
       this.textcolor = pEditText.textcolor;
       this.fontheight = pEditText.fontheight;
       this.leading = pEditText.leading;
-      this.font = pSWF.fonts[pEditText.font],
+      this.font = tFonts[pEditText.font],
       this.isDeviceText = tDeviceText;
 
       // Creates Prop objects.
-      var tTextProp = this.prop = new tTextPropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tTextProp = this.prop = new tTextPropClass(pPlayer.backingContainer, this.width, this.height); // TODO: This feels like a hack...
       this.addProp(tTextProp);
 
       // Sets up variable accessor methods.

@@ -13,15 +13,14 @@
   /**
    * Sets up adding an Actor to the Stage.
    * @param {theatre.Actor} pSpriteActor The Sprite Actor to add to.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {Object} pData The data to use to know what to add.
    */
-  mActions.add = function(pSpriteActor, pParams, pData) {
-    var tDictionary = pParams.dictionaryToActorMap;
-    if (!(pData.id in tDictionary)) {
+  mActions.add = function(pSpriteActor, pData) {
+    var tNewActor = pSpriteActor.player.newFromId(pData.id);
+    if (tNewActor === null) {
       return;
     }
-    var tNewActor = new tDictionary[pData.id]();
+
     if (pData.name) {
       tNewActor.name = pData.name;
     } else {
@@ -46,22 +45,22 @@
     pSpriteActor.addActor(tNewActor, pData.layer);
   };
 
-  mActions.replace = function(pSpriteActor, pParams, pData) {
-    var tDictionary = pParams.dictionaryToActorMap;
+  mActions.replace = function(pSpriteActor, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
-      console.error('Could not move non-existent Actor at layer ' + pData.layer);
+      console.error('Could not replace non-existent Actor at layer ' + pData.layer);
       return;
     }
     var tMatrix = tActor.matrix;
 
     tActor.leave();
 
-    if (!(pData.id in tDictionary)) {
+    var tNewActor = pSpriteActor.player.newFromId(pData.id);
+
+    if (tNewActor === null) {
       return;
     }
 
-    var tNewActor = new tDictionary[pData.id]();
     if (pData.name) {
       tNewActor.name = pData.name;
     } else {
@@ -76,7 +75,7 @@
     pSpriteActor.addActor(tNewActor, pData.layer);
   };
 
-  mActions.move = function(pSpriteActor, pParams, pData) {
+  mActions.move = function(pSpriteActor, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
       console.error('Could not move non-existent Actor at layer ' + pData.layer);
@@ -101,7 +100,7 @@
     }
   };
 
-  mActions.clip = function(pSpriteActor, pParams, pData) {
+  mActions.clip = function(pSpriteActor, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
       console.error('Could not clip non-existent Actor at layer ' + pData.layer);
@@ -113,7 +112,7 @@
     tActor.invalidate();
   };
 
-  mActions.colorTransform = function(pSpriteActor, pParams, pData) {
+  mActions.colorTransform = function(pSpriteActor, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
       console.error('Could not color transform non-existent Actor at layer ' + pData.layer);
@@ -125,7 +124,7 @@
     tActor.invalidate();
   };
 
-  mActions.ratio = function(pSpriteActor, pParams, pData) {
+  mActions.ratio = function(pSpriteActor, pData) {
     var tActor = pSpriteActor.getActorAtLayer(pData.layer);
     if (tActor === null) {
       console.error('Could not color transform non-existent Actor at layer ' + pData.layer);

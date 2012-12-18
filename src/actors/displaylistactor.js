@@ -13,8 +13,9 @@
   /**
    * @constructor
    */
-  function DisplayListActor() {
+  function DisplayListActor(pPlayer) {
     this.base();
+    this.player = pPlayer;
     this.variables = {};
     this.colorTransform = null;
     this.clipDepth = 0;
@@ -49,7 +50,7 @@
     return tSize;
   }
 
-  /** 
+  /**
    * Registers callback function to be invoked when the variable is accessed.
    * @param {string} pVariableName The name of variable.
    * @param {function} pFunction The callback function to be invoked when reading/writing the variable.
@@ -69,7 +70,7 @@
     tAccessor[pType] = pFunction;
   };
 
-  /** 
+  /**
    * Unregisters callback function to be invoked when the variable is accessed.
    * @param {string} pVariableName The name of variable.
    * @param {string} pType 'getter' or 'setter', if avoided, both.

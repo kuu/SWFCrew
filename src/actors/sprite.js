@@ -14,9 +14,9 @@
 
   theatre.define('actors.SpriteActor', SpriteActor, mSWFCrew);
 
-  function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
-    var tId = pStage.actionScriptLoader.load(
-      pStage.actionScriptProgram,
+  function createLoaderWrapper(pActionScriptLoader, pActionScriptProgram, pScripts, pSWFVersion) {
+    var tId = pActionScriptLoader.load(
+      pActionScriptProgram,
       pScripts,
       {
         version: pSWFVersion
@@ -24,7 +24,7 @@
     );
 
     return function() {
-      pStage.actionScriptProgram.run(tId, this);
+      pActionScriptProgram.run(tId, this);
     }
   }
 
@@ -140,8 +140,8 @@
     }
   }
 
-  function SpriteActor() {
-    this.base();
+  function SpriteActor(pPlayer) {
+    this.base(pPlayer);
 
     this.on('startstep', onStartStep);
     this.on('endstep', onEndStep);
@@ -180,29 +180,25 @@
       this.setLabelInScene('', tName, tLabels[tName]);
     }
 
-    this.addProp(new this.propClass(this.backingContainer));
+    this.addProp(new this.propClass(pPlayer.backingContainer));
   }
   theatre.inherit(SpriteActor, mSWFCrew.DisplayListActor);
 
   /**
    * Handles SWF Sprites.
-   * The 1 is the displayList code for sprites in QuickSWF.
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineSprite'] = function(pSWF, pStage, pParams, pSprite, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+  mHandlers['DefineSprite'] = function(pSprite) {
+    var tDictionaryToActorMap = this.actorMap;
     var tActions = mSWFCrew.actions;
-    var tSpriteActor = tDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor() {
-      this.base();
+    var tSpriteActor = tDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor(pPlayer) {
+      this.base(pPlayer);
     };
     theatre.inherit(tSpriteActor, SpriteActor);
 
     tSpriteActor.prototype.labels = pSprite.frameLabels;
 
-    switch (pOptions.spriteType) {
+    switch (this.options.spriteType) {
       case 'dom':
         tSpriteActor.prototype.propClass = theatre.crews.dom.DOMProp;
         break;
@@ -214,8 +210,6 @@
         tSpriteActor.prototype.propClass = mSWFCrew.props.CanvasSpriteProp;
         break;
     }
-
-    tSpriteActor.prototype.backingContainer = pStage.backingContainer;
 
     var tStepData = tSpriteActor.prototype.stepData = new Array();
     var tStepScripts = tSpriteActor.prototype.stepScripts = new Array();
@@ -235,7 +229,7 @@
         var tType = tData.type;
 
         if (tType === 'script') {
-          tStepScripts[i].push(createLoaderWrapper(pStage, tData.script, pSWF.version));
+          tStepScripts[i].push(createLoaderWrapper(this.actionScriptLoader, this.actionScriptProgram, tData.script, this.swf.version));
           continue;
         }
 
@@ -257,12 +251,12 @@
           }
         }
 
-        tStepData[i].push((function(pAction, pParams, pData) {
+        tStepData[i].push((function(pAction, pData) {
           return function() {
             // this is in this case is the Sprite instance.
-            pAction(this, pParams, pData);
+            pAction(this, pData);
           };
-        })(tActions[tType], pParams, tConvertedData));
+        })(tActions[tType], tConvertedData));
       }
     }
   };

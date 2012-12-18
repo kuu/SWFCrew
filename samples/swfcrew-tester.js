@@ -6,12 +6,11 @@
 
   var mApp = global.app = {
     mode: 'none',
-    parser: null,
     data: null,
-    stage: null,
+    player: null,
     play: true,
     targets: [],
-    root: null
+    flash: null
   };
 
   function $(pId, pContext) {
@@ -22,7 +21,6 @@
   var mLastSPSTime = -1;
 
   var mStage;
-  var mParser;
 
   var mTools;
   var mContainer;
@@ -120,16 +118,16 @@
       mStage.close();
     }
 
-    if (mParser && mParser.swf) {
-      mParser.swf.destroy();
+    if (mApp.player && mApp.player.loader.swf) {
+      mApp.player.loader.swf.destroy();
     }
 
     mContainer.innerHTML = '';
 
-    mApp.parser = null;
-    mApp.stage = null;
+    mApp.player = null;
     mApp.data = null;
     mApp.root = null;
+    mApp.flash = null;
   }
 
   function error(pError) {
@@ -145,64 +143,66 @@
     mContainer.innerHTML = '';
   }
 
-  function loadData(pData) {
-    var tFlash = null;
+  function setupLoader(pLoader) {
+    pLoader.on('parsestart', function() {
+      mApp.data = this.data;
 
-    mApp.data = pData;
-
-    if (mFlashPlayerCheck.checked) {
-      tFlash = quickswf.polyfills.createMedia(null, pData, 'application/x-shockwave-flash');
-      mContainer.insertBefore(tFlash.data, mContainer.firstChild);
-    }
-
-    mParser = mApp.parser = new quickswf.Parser(pData);
-
-    console.time('Parse');
-
-    mParser.parse(
-      function(pSWF) {
-        console.timeEnd('Parse');
-
-        var tCanvas = global.document.createElement('canvas');
-        tCanvas.width = pSWF.width;
-        tCanvas.height = pSWF.height;
-
-        if (tFlash !== null) {
-          tFlash.data.width = pSWF.width;
-          tFlash.data.height = pSWF.height;
-        }
-
-        mContainer.appendChild(tCanvas);
-
-        console.time('Convert');
-
-        mStage = mApp.stage = theatre.crews.swf.create(pSWF, tCanvas, {
-          spriteType: "canvas"
-        });
-
-        console.timeEnd('Convert');
-
-        if (!mSPSDefaultCheckbox.checked) {
-          mStage.stepRate = 1000 / parseInt(mSPSInput.value, 10);
-        } else {
-          mSPSInput.value = mSPSView.textContent = mParser.swf.frameRate;
-        }
-
-        mApp.root = mStage
-                      .stageManager
-                      .getActorByName('__compositor__')
-                      .getActorByName('root');
-
-        mStage.on('leavestep', updateTargets);
-        mStage.on('leavestep', updateSPS);
-
-        updateTargets();
-        updateFPS();
-      },
-      function(pError) {
-        error(pError);
+      if (mFlashPlayerCheck.checked) {
+        mApp.flash = quickswf.polyfills.createMedia(null, pData, 'application/x-shockwave-flash');
+        mContainer.insertBefore(mApp.flash.data, mContainer.firstChild);
       }
-    );
+
+      console.time('Parse');
+    });
+
+    pLoader.on('parsecomplete', function() {
+      console.timeEnd('Parse');
+
+      var tSWF = this.swf;
+
+      var tCanvas = global.document.createElement('canvas');
+      tCanvas.width = tSWF.width;
+      tCanvas.height = tSWF.height;
+      tCanvas.id = 'canvas';
+
+      if (mApp.flash !== null) {
+        mApp.flash.data.width = tSWF.width;
+        mApp.flash.data.height = tSWF.height;
+      }
+
+      mContainer.appendChild(tCanvas);
+    });
+
+    pLoader.on('loadstart', function() {
+      console.time('Convert');
+    });
+
+    pLoader.on('loadcomplete', function() {
+      console.timeEnd('Convert');
+
+      var tPlayer = mApp.player = new theatre.crews.swf.Player(this);
+      mStage = tPlayer.stage;
+
+      if (!mSPSDefaultCheckbox.checked) {
+        mStage.stepRate = 1000 / parseInt(mSPSInput.value, 10);
+      } else {
+        mSPSInput.value = mSPSView.textContent = this.swf.frameRate;
+      }
+
+      tPlayer.takeCentreStage($('canvas'));
+
+      mStage.on('leavestep', updateTargets);
+      mStage.on('leavestep', updateSPS);
+
+      updateTargets();
+      updateFPS();
+    });
+  }
+
+  function loadData(pData) {
+    var tDataLoader = new theatre.crews.swf.DataLoader();
+    setupLoader(tDataLoader);
+    tDataLoader.load(pData);
   }
 
   function loadFile() {
@@ -222,19 +222,9 @@
   }
 
   function loadUrl() {
-    var tXhr = new XMLHttpRequest();
-    tXhr.addEventListener('load', function() {
-      var tData = new Uint8Array(this.response);
-      loadData(tData);
-    }, false);
-
-    tXhr.addEventListener('error', function(e) {
-      error(e);
-    }, false);
-
-    tXhr.open('GET', mUrlInput.value, true);
-    tXhr.responseType = 'arraybuffer';
-    tXhr.send(null);
+    var tURLLoader = new theatre.crews.swf.URLLoader();
+    setupLoader(tURLLoader);
+    tURLLoader.load(mUrlInput.value);
   }
 
   function updateSPS() {
@@ -243,7 +233,7 @@
     if (mLastSPSTime !== -1) {
       var tDiff = ((1000 / (tNewTime - mLastSPSTime)) + .5) | 0;
       mSPSActualView.textContent = tDiff;
-      if (tDiff < mParser.swf.frameRate) {
+      if (tDiff < mApp.player.loader.swf.frameRate) {
         mSPSActualView.style.color = 'red';
       } else {
         mSPSActualView.style.color = 'black';
@@ -263,7 +253,7 @@
     if (mLastFPSTime !== -1) {
       var tDiff = ((1000 / (tNewTime - mLastFPSTime)) + .5) | 0;
       mFPSView.textContent = tDiff;
-      if (tDiff < mParser.swf.frameRate) {
+      if (tDiff < mApp.player.loader.swf.frameRate) {
         mFPSView.style.color = 'red';
       } else {
         mFPSView.style.color = 'black';
@@ -347,7 +337,7 @@
 
   Target.prototype.update = function() {
     var tTargetPath = this.path;
-    var tTarget = mApp.root;
+    var tTarget = mApp.player.root;
     var tParent = tTarget;
     var tPart, tParts;
     var i, il, k, tIndex;
@@ -465,7 +455,7 @@
 
   function updateTargetList() {
     var tTargetPath = mTargetInput.value;
-    var tTarget = mApp.root;
+    var tTarget = mApp.player.root;
     var tParent = tTarget;
     var tPart, tParts;
     var i, il;
@@ -588,13 +578,13 @@
   function onSPSDefaultChange() {
     if (mSPSDefaultCheckbox.checked) {
       mSPSInput.disabled = true;
-      mSPSView.textContent = mParser ? mParser.swf.frameRate : 'Default';
+      mSPSView.textContent = mApp.player ? mApp.player.loader.swf.frameRate : 'Default';
 
       if (!mStage) {
         return;
       }
 
-      mStage.stepRate = 1000 / mParser.swf.frameRate;
+      mStage.stepRate = 1000 / mApp.player.loader.swf.frameRate;
     } else {
       mSPSInput.disabled = false;
       mSPSView.textContent = mSPSInput.value;

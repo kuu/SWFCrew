@@ -55,7 +55,9 @@
           "type": "files",
           "root": "src",
           "files": [
-            "swfcrew.js"
+            "swfcrew.js",
+            "Loaders.js",
+            "Player.js"
           ]
         },
 

@@ -14,9 +14,10 @@
 
   function Compositor(pSWF, pAttachTo, pOptions) {
     this.base();
-    this.swf = pSWF;
     this.width = pSWF.width;
     this.height = pSWF.height;
+
+    pSWF = null;
 
     var tCompositingProp;
     var tContext;
@@ -33,7 +34,7 @@
         tCompositingProp = new theatre.crews.dom.DOMProp(pAttachTo);
         break;
       case 'webgl':
-        tCompositingProp = new theatre.crews.webgl.WebGLProp(pAttachTo, pSWF.width, pSWF.height);
+        tCompositingProp = new theatre.crews.webgl.WebGLProp(pAttachTo, this.width, this.height);
         tContext = pAttachTo.getContext('experimental-webgl');
 
         tContext.viewport(0, 0, this.width, this.height);
@@ -130,7 +131,7 @@
         break;
       case 'canvas':
       default:
-        tCompositingProp = new theatre.crews.canvas.CanvasProp(pAttachTo, pSWF.width, pSWF.height);
+        tCompositingProp = new theatre.crews.canvas.CanvasProp(pAttachTo, this.width, this.height);
         tCompositingProp.cacheDrawResult = false;
         tCompositingProp.cacheWithClass = false;
 

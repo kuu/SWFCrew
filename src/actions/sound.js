@@ -13,13 +13,12 @@
   /**
    * Sets up playing back event sounds.
    * @param {theatre.Actor} pSpriteActor The Sprite Actor the sound belongs to.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {Object} pData The data to use to know haw to play back the sound.
    */
-  mActions.startSound = function(pSpriteActor, pParams, pData) {
+  mActions.startSound = function(pSpriteActor, pData) {
     var tId = pData.soundId,
         tInfo = pData.soundInfo,
-        tSound = pParams.eventSounds[tId + ''],
+        tSound = pSpriteActor.player.eventSounds[tId + ''],
         tProps = pSpriteActor.getProps('Audio'), tAudioProp;
 
     console.log('StartSound: id=' + tId);
@@ -56,7 +55,7 @@
    * @param {Object} pData The audio data.
    */
   mActions.soundStreamBlock = function(pSpriteActor, pParams, pData) {
-    var tMetadata = pParams.soundStreamHead,
+    var tMetadata = pSpriteActor.player.soundStreamHead,
         tSound = pData.soundData;
 
     console.log('SoundStreamBlock:');

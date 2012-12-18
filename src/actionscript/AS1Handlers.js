@@ -470,7 +470,7 @@
       return;
     }
 
-    var tNewActor = new tOriginal.constructor();
+    var tNewActor = new tOriginal.constructor(tOriginal.player);
     tNewActor.isNonTimeline = true;
 
     var tOriginalColorTransform = tOriginal.colorTransform;

@@ -13,9 +13,9 @@
 
   theatre.define('actors.ButtonActor', ButtonActor, mSWFCrew);
 
-  function createLoaderWrapper(pStage, pScripts, pSWFVersion) {
-    var tId = pStage.actionScriptLoader.load(
-      pStage.actionScriptProgram,
+  function createLoaderWrapper(pActionScriptLoader, pActionScriptProgram, pScripts, pSWFVersion) {
+    var tId = pActionScriptLoader.load(
+      pActionScriptProgram,
       pScripts,
       {
         version: pSWFVersion
@@ -23,9 +23,7 @@
     );
 
     return function(pTarget) {
-      pStage.scheduleScript(function() {
-        pStage.actionScriptProgram.run(tId, pTarget);
-      });
+      pActionScriptProgram.run(tId, pTarget);
     }
   }
 
@@ -63,8 +61,8 @@
     return tKeyCode;
   };
 
-  function ButtonActor() {
-    this.base();
+  function ButtonActor(pPlayer) {
+    this.base(pPlayer);
 
     var tCondActions = this.condActions;
     var tRecords = this.records;
@@ -95,7 +93,7 @@
       var tRecord = tRecords[i];
       //console.log('** record=', tRecord);
       if (tRecord.state.up) { // Initial state is ButtonUp.
-        var tActor = new tRecord.actor();
+        var tActor = pPlayer.newFromId(tRecord.id);
         tActor.colorTransform = tRecord.colorTransform;
         this.colorTransform = tRecord.colorTransform;
         this.addActor(tActor);
@@ -106,16 +104,12 @@
 
   /**
    * Handles SWF Buttons.
-   * The 1 is the displayList code for sprites in QuickSWF.
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {Object} pParams An object containing a dictionary-actor map object.
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineButton'] = function(pSWF, pStage, pParams, pButton, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
-    var tButtonActor = tDictionaryToActorMap[pButton.id] = function BuiltinButtonActor() {
-      this.base();
+  mHandlers['DefineButton'] = function(pButton) {
+    var tDictionaryToActorMap = this.actorMap;
+    var tButtonActor = tDictionaryToActorMap[pButton.id] = function BuiltinButtonActor(pPlayer) {
+      this.base(pPlayer);
     };
     theatre.inherit(tButtonActor, ButtonActor);
 
@@ -129,7 +123,7 @@
       var tRawCondAction = tRawCondActions[i];
       tCondActions.push({
           cond: tRawCondAction.cond,
-          script: createLoaderWrapper(pStage, tRawCondAction.action, pSWF.version)
+          script: createLoaderWrapper(this.actionScriptLoader, this.actionScriptProgram, tRawCondAction.action, this.swf.version)
       });
     }
     // Map the button shapes' Actor class.
@@ -137,11 +131,7 @@
       var tRawRecord = tRawRecords[i],
           tRecord = {};
       for (var k in tRawRecord) {
-        if (k === 'id') {
-          tRecord['actor'] = tDictionaryToActorMap[tRawRecord.id];
-        } else {
-          tRecord[k] = tRawRecord[k];
-        }
+        tRecord[k] = tRawRecord[k];
       }
       tRecords.push(tRecord);
     }

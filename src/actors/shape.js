@@ -23,8 +23,8 @@
    * @type {theatre.crews.swf.actors.ShapeActor}
    * @extends {theatre.Actor}
    */
-  function ShapeActor() {
-    this.base();
+  function ShapeActor(pPlayer) {
+    this.base(pPlayer);
 
     this.width = (((this.twipsWidth / 20) >>> 0) || 0) + 1;
     this.height = (((this.twipsHeight / 20) >>> 0) || 0) + 1;
@@ -71,14 +71,10 @@
 
   /**
    * Handles SWF Shapes.
-   * @param {quickswf.SWF} pSWF The SWF file.
-   * @param {theatre.Stage} pStage The stage.
-   * @param {Object} pParams An obect containing a dictionary-actor map object.
    * @param {quickswf.structs.Shape} pShape The Shape to handle.
-   * @param {Object} pOptions Options to customize things.
    */
-  mHandlers['DefineShape'] = function(pSWF, pStage, pParams, pShape, pOptions) {
-    var tDictionaryToActorMap = pParams.dictionaryToActorMap;
+  mHandlers['DefineShape'] = function(pShape) {
+    var tDictionaryToActorMap = this.actorMap;
     var tProto;
     var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
     var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
@@ -90,8 +86,8 @@
 
     tProto = tShapePropClass.prototype;
 
-    tProto.images = pSWF.images;
-    tProto.draw = mShapeUtils.generateDrawFunction(pSWF.images, pShape);
+    tProto.images = this.swf.images;
+    tProto.draw = mShapeUtils.generateDrawFunction(this.swf.images, pShape);
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = (((tTwipsWidth / 20) >>> 0) || 0) + 1;
@@ -101,10 +97,10 @@
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
 
-    var tShapeActor = tDictionaryToActorMap[pShape.id] = function BuiltinShapeActor() {
-      this.base();
+    var tShapeActor = tDictionaryToActorMap[pShape.id] = function BuiltinShapeActor(pPlayer) {
+      this.base(pPlayer);
 
-      var tShapeProp = new tShapePropClass(pStage.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      var tShapeProp = new tShapePropClass(pPlayer.backingContainer, this.width, this.height);
 
       this.addProp(tShapeProp);
     };
@@ -115,7 +111,6 @@
     tProto.twipsWidth = tTwipsWidth;
     tProto.twipsHeight = tTwipsHeight;
     tProto.bounds = pShape.bounds;
-
   };
 
 }(this));
