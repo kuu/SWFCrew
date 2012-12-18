@@ -154,7 +154,7 @@
       var tCharCode = tString.charCodeAt(i),
           tFontInfo = tFont.lookupTable[tCharCode + ''];
 
-      if (tCharCode === 13 || (tFontInfo && tCurrX + tFontInfo.advance > tXBounds)) {
+      if (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tFontInfo.advance > tXBounds)) {
         // new line
         tYPadding += (pActor.leading + pActor.fontheight);
         tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
@@ -164,7 +164,7 @@
         tCurrX = pActor.leftmargin;
         tEMHeight = 0;
       }
-      if (tCharCode === 13 || !tFontInfo) {
+      if (tCharCode === 10 || tCharCode === 13 || !tFontInfo) {
         continue;
       }
       var tShape = tFontInfo.shape;
@@ -219,7 +219,7 @@
 
   function generateDeviceEditTextDrawFunction(pActor, pParams) {
     var tColor = pActor.textcolor;
-    var tStringList = pActor.text.split(String.fromCharCode(10)); // split by CR
+    var tStringList = pActor.text.split(/[\n\r]/g); // split lines
     var tRows = [];
     var tFont = pActor.font;
     var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pActor.fontheight + 'px ' + tFont.name;
