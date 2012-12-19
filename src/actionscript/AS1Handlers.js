@@ -533,32 +533,59 @@
   };
 
   mHandlers.GetURL = function(pURL, pTarget) {
-    var tDelay = utils.ajax.get(pURL);
-    tDelay.on('success', function (pMessage) {
-      var tResponse = pMessage.data;
-      if (pTarget) {
-        // iframe
-        if ('frames' in global) {
-          global.frames[pTarget].document.body.innerHTML = tResponse.responseText;
-        }
-      } else {
-        // Current window
-        if ('document' in global) {
-          global.document.body.innerHTML = tResponse.responseText;
-        }
+
+    var tWindow = null;
+
+    // The coresponding API calls are:
+    //        getURL({URL});
+    //        getURL({URL}, {target});
+
+    if (pTarget) {
+      if ('frames' in global) {
+        tWindow = global.frames[pTarget];
       }
-    });
-    tDelay.on('error', function (pMessage) {
-      // An error occurred. Nop.
-      console.log('GetURL: Ajax failed:', pMessage.data);
-    });
+    }
+    if (!tWindow) {
+      tWindow = global;
+    }
+    tWindow.location.href = pURL;
   };
 
   mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
+//console.log('GetURL2: ', pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag);
 
-    var tLastValidTarget = this.getLastValidTarget(), tOptions, tDelay, tSelf = this;
-tLastValidTarget.setVariable('this-is', 'test')
-tLastValidTarget.setVariable('that-is', 'test-too')
+    var tLastValidTarget = this.getLastValidTarget(), 
+        tUrl, tWindow, tOptions, tDelay, tSelf = this;
+
+    // The coresponding API calls are:
+    //        getURL({URL}, {target}, "GET");
+    //        getURL({URL}, {target}, "POST");
+    //        loadVariables({URL}, {target});
+    //        loadVariables({URL}, {target}, "GET");
+    //        loadVariables({URL}, {target}, "POST");
+    //        loadMovie({URL}, {target});
+    //        loadMovie({URL}, {target}, "GET");
+    //        loadMovie({URL}, {target}, "POST");
+
+
+    // We don't use Ajax for getURL({URL}, {target}, "GET");
+    if (!pLoadTargetFlag && pSendVarsMethod !== 2) {
+
+      tUrl = utils.ajax.buildURL(pURL, tLastValidTarget.getAllVariables());
+
+      if (pTarget) {
+        if ('frames' in global) {
+          tWindow = global.frames[pTarget];
+        }
+      }
+      if (!tWindow) {
+        tWindow = global;
+      }
+      tWindow.location.href = tUrl;
+      return;
+    }
+
+    // In other cases, make an Ajax request.
     if (pSendVarsMethod === 0) {
       // Don't send any data.
       tDelay = utils.ajax.get(pURL, tOptions);
@@ -600,16 +627,14 @@ tLastValidTarget.setVariable('that-is', 'test-too')
       } else {
         // The target is a browser window.
         if (pTarget) {
-          // iframe
           if ('frames' in global) {
-            global.frames[pTarget].document.body.innerHTML = tResponse.responseText;
-          }
-        } else {
-          // Current window
-          if ('document' in global) {
-            global.document.body.innerHTML = tResponse.responseText;
+            tWindow = global.frames[pTarget];
           }
         }
+        if (!tWindow) {
+          tWindow = global;
+        }
+        tWindow.document.body.innerHTML = tResponse.responseText;
       }
     });
     tDelay.on('error', function (pMessage) {
@@ -619,16 +644,14 @@ tLastValidTarget.setVariable('that-is', 'test-too')
 
   };
 
-  var mLiteralTables = {};
-
   mHandlers.SetLiteralTable = function(pType, pTable) {
-    mLiteralTables[pType + ''] = pTable;
+    this.literalTables[pType + ''] = pTable;
   };
 
   mHandlers.GetLiteral = function(pType, pReader) {
     var tTable, tValue;
 
-    if ((tTable = mLiteralTables[pType + '']) === void 0) {
+    if ((tTable = this.literalTables[pType + '']) === void 0) {
       return null;
     }
 

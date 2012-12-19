@@ -70,6 +70,23 @@
     },
 
     /**
+     * Build a URL with a query string.
+     * @param {string} pUrl URL to which the query string is append.
+     * @param {Object} pQueryData An object with properties containing URL parameters name/value pairs.
+     * @return {string} URL with a query string.
+     */
+    buildURL: function(pUrl, pQueryData) {
+
+      var tUrlMatch = pUrl.match(ajax.urlRegex),
+          tQuery = ajax.queryify(pQueryData, tUrlMatch[4]),
+          tUrl =  
+            (tUrlMatch[1] || '') + (tUrlMatch[2] || '') +
+            (tUrlMatch[3] || '') + tQuery + (tUrlMatch[5] || '');
+
+      return tUrl;
+    },
+
+    /**
      * Sends an Ajax request.
      * @param {string} pUrl URL to send to
      * @param {Object} [pOpts] An object with the following properties:<br>
