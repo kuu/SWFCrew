@@ -619,16 +619,14 @@ tLastValidTarget.setVariable('that-is', 'test-too')
 
   };
 
-  var mLiteralTables = {};
-
   mHandlers.SetLiteralTable = function(pType, pTable) {
-    mLiteralTables[pType + ''] = pTable;
+    this.literalTables[pType + ''] = pTable;
   };
 
   mHandlers.GetLiteral = function(pType, pReader) {
     var tTable, tValue;
 
-    if ((tTable = mLiteralTables[pType + '']) === void 0) {
+    if ((tTable = this.literalTables[pType + '']) === void 0) {
       return null;
     }
 
