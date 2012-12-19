@@ -70,38 +70,12 @@
     },
 
     /**
-     * Converts a form's elements to a queryifyable object.
-     * @param {HTMLFormElement} pForm
-     * @return {Object}
-     * @private
-     */
-    convertFormToObject: function(pForm) {
-      var tRet = new Object();
-      pForm.elements.forEach(function(pElement) {
-        var tName = pElement.name;
-        if (tName === '') return;
-        var tValues = tRet[tName];
-        if (tValues === void 0) {
-          tRet[tName] = pElement.value;
-        } else {
-          if (tValues.__proto__ === Array.prototype) {
-            tValues.push(pElement.value);
-          } else {
-            tRet[tName] = [tValues, pElement.value];
-          }
-        }
-      });
-      return tRet;
-    },
-
-    /**
      * Sends an Ajax request.
      * @param {string} pUrl URL to send to
      * @param {Object} [pOpts] An object with the following properties:<br>
      *      - method: {string} GET/POST<br>
      *      - headers: {object} An object with properties containing HTTP request header/value pairs.<br>
      *      - timeout: {number} timeout value in millisec<br>
-     *      - data: {HTMLFormElement}<br> 
      *      - queryData: {object} An object with properties containing URL parameters name/value pairs.<br>
      *      - overrideMimeType: {string} MIME type
      * @default pOpts={method: 'GET'}
@@ -124,30 +98,20 @@
       tMethod = (pOpts.method || 'GET').toUpperCase(),
       tHeaders = pOpts.headers || null,
       tTimeout = pOpts.timeout || null,
-      tData = pOpts.data || null,
       tQueryData = pOpts.queryData || null,
+      tFormData,
       tOverrideMimeType = pOpts.overrideMimeType || null;
 
-      if (tData !== null) {
-        if (tMethod === 'GET') {
-          if (tData instanceof HTMLFormElement) {
-            tQueryData = Object.mixin(tQueryData, ajax.convertFormToObject(tData));
-          }
-        } else if (tMethod === 'POST') {
-          if ('FormData' in global === false) {
-            alert('Need to support old browsers for posting forms!');
-          }
-          if (tData instanceof HTMLFormElement) {
-            tData = new FormData(tData);
-          }
-          if (tQueryData) {
-            for (var k in tQueryData) {
-              tData.append(k, tQueryData[k]);
-            }
-            tQueryData = null;
-          }
+      if (tMethod === 'POST' && tQueryData !== null) {
+        if ('FormData' in global === false) {
+          alert('Need to support old browsers for posting forms!');
         }
-      };
+        tFormData = new FormData();
+        for (var k in tQueryData) {
+          tFormData.append(k, tQueryData[k]);
+        }
+        tQueryData = null;
+      }
 
       if (tXhr.addEventListener === void 0) {
         // Check to see how old browsers are now-a-days.
@@ -198,7 +162,6 @@
           (tUrlMatch[1] || '') + (tUrlMatch[2] || '') +
           (tUrlMatch[3] || '') + tQuery + (tUrlMatch[5] || '');
       }
-
       tXhr.open(tMethod, pUrl, true);
 
       tXhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -213,7 +176,7 @@
         tXhr.overrideMimeType(tOverrideMimeType);
       }
 
-      tXhr.send(tData);
+      tXhr.send(tFormData);
 
       return tDelay;
     },
