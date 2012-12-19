@@ -427,9 +427,9 @@
     }
 
     if (tTarget.isActing) {
-      tTarget.stopActing();
+      tTarget.stop();
     } else {
-      tTarget.startActing(false);
+      tTarget.startNextStep();
     }
   };
 
@@ -438,11 +438,11 @@
     var tTarget = this.target;
 
     if (mStage.isOpen) {
-      tTarget.gotoStep(tStep);
+      tTarget.goto(tStep);
     } else {
       mStage.open();
-      tTarget.gotoStep(tStep);
-      tTarget.startActing(false);
+      tTarget.goto(tStep);
+      tTarget.startNextStep();
       mStage.schedule(function() {
         this.close();
       });

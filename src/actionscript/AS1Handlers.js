@@ -61,13 +61,13 @@
       if (tPart === '.') {
         continue;
       } else if (tPart === '') {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // Right?
+        tNewTarget = tNewTarget.player.root; // Right?
       } else if (tPart === '..') {
         tNewTarget = tNewTarget.parent;
       } else if (tPart === '_root') {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // Right?
+        tNewTarget = tNewTarget.player.root; // Right?
       } else if (tPart.indexOf('_level') === 0) {
-        tNewTarget = tNewTarget.stage.stageManager.getActorAtLayer(0).getActorAtLayer(0); // TODO: Implement this properly.
+        tNewTarget = tNewTarget.player.root; // TODO: Implement this properly.
       } else {
         tNewTarget = tNewTarget.getActorByName(tPart);
       }
@@ -94,35 +94,35 @@
     if (this.target === null) {
       return;
     }
-    this.target.gotoStep(this.target.currentStep + 1);
+    this.target.goto(this.target.currentStep + 1);
   };
 
   mHandlers.PreviousFrame = function() {
     if (this.target === null) {
       return;
     }
-    this.target.gotoStep(this.target.currentStep - 1);
+    this.target.goto(this.target.currentStep - 1);
   };
 
   mHandlers.Play = function() {
     if (this.target === null) {
       return;
     }
-    this.target.startActing(false);
+    this.target.startNextStep();
   };
 
   mHandlers.Stop = function() {
     if (this.target === null) {
       return;
     }
-    this.target.stopActing();
+    this.target.stop();
   };
 
   mHandlers.GoToFrame = function(pFrame) {
     if (this.target === null) {
       return;
     }
-    this.target.gotoStep(pFrame) !== false || this.target.gotoStep(0);
+    this.target.goto(pFrame) !== false || this.target.goto(0);
   };
 
   mHandlers.GoToLabel = function(pLabel) {
@@ -149,7 +149,7 @@
     }
 
     if (tData.label !== '') {
-      var tStep = tCurrentTarget.getLabelStepFromScene('', tData.label);
+      var tStep = tCurrentTarget.getLabelStep(tData.label);
       if (tStep !== null) {
         tCurrentTarget.doScripts(tStep, tCurrentTarget);
       } else {
@@ -169,11 +169,11 @@
     }
 
     if (typeof pFrame === 'number') {
-      tCurrentTarget.gotoStep((pFrame - 1) + pSceneBias) !== false || tCurrentTarget.gotoStep(0);
+      tCurrentTarget.goto((pFrame - 1) + pSceneBias) !== false || tCurrentTarget.goto(0);
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing(false);
+        tCurrentTarget.startNextStep();
       } else {
-        tCurrentTarget.stopActing();
+        tCurrentTarget.stop();
       }
       return;
     }
@@ -191,17 +191,17 @@
       tCurrentTarget.gotoLabel(tData.label); // TODO: Support bias?
 
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing(false);
+        tCurrentTarget.startNextStep();
       } else {
-        tCurrentTarget.stopActing();
+        tCurrentTarget.stop();
       }
     } else {
-      tCurrentTarget.gotoStep((tData.step - 1) + pSceneBias);
+      tCurrentTarget.goto((tData.step - 1) + pSceneBias);
 
       if (pPlayFlag === 1) {
-        tCurrentTarget.startActing(false);
+        tCurrentTarget.startNextStep();
       } else {
-        tCurrentTarget.stopActing();
+        tCurrentTarget.stop();
       }
     }
   };
@@ -291,7 +291,7 @@
         tTarget.invalidate();
         break;
       case 4: // currentFrame
-        tTarget.gotoStep(this.toInt(pValue) - 1);
+        tTarget.goto(this.toInt(pValue) - 1);
         break;
       case 5: // totalFrames
         console.warn('Set Property totalFrames.');

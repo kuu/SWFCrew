@@ -177,7 +177,7 @@
 
     var tLabels = this.labels;
     for (var tName in tLabels) {
-      this.setLabelInScene('', tName, tLabels[tName]);
+      this.setLabel(tName, tLabels[tName]);
     }
 
     this.addProp(new this.propClass(pPlayer.backingContainer));

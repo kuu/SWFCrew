@@ -70,7 +70,7 @@
 
   /**
    * @class
-   * @extends {Loader}
+   * @extends Loader
    */
   var DataLoader = (function(pSuper) {
     function DataLoader() {
@@ -106,7 +106,7 @@
 
   /**
    * @class
-   * @extends {DataLoader}
+   * @extends DataLoader
    */
   var URLLoader = (function(pSuper) {
     function URLLoader() {
