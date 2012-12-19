@@ -557,20 +557,21 @@
   mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
 
     var tLastValidTarget = this.getLastValidTarget(), tOptions, tDelay, tSelf = this;
-
+tLastValidTarget.setVariable('this-is', 'test')
+tLastValidTarget.setVariable('that-is', 'test-too')
     if (pSendVarsMethod === 0) {
       // Don't send any data.
       tDelay = utils.ajax.get(pURL, tOptions);
     } else if (pSendVarsMethod === 1) {
       // Send the variables in the current movie clip via GET.
       tOptions = {
-          queryString : tLastValidTarget.getAllVariables()
+          queryData: tLastValidTarget.getAllVariables()
         };
       tDelay = utils.ajax.get(pURL, tOptions);
     } else {
       // Send the variables in the current movie clip via POST.
       tOptions = {
-          queryString : tLastValidTarget.getAllVariables()
+          queryData: tLastValidTarget.getAllVariables()
         };
       tDelay = utils.ajax.post(pURL, tOptions);
     }
