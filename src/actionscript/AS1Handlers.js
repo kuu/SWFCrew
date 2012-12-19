@@ -557,8 +557,7 @@
   mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
 
     var tLastValidTarget = this.getLastValidTarget(), tOptions, tDelay, tSelf = this;
-tLastValidTarget.setVariable('this-is', 'test')
-tLastValidTarget.setVariable('that-is', 'test-too')
+
     if (pSendVarsMethod === 0) {
       // Don't send any data.
       tDelay = utils.ajax.get(pURL, tOptions);
