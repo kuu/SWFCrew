@@ -534,21 +534,23 @@
 
   mHandlers.GetURL = function(pURL, pTarget) {
     var tDelay = utils.ajax.get(pURL);
-    tDelay.then(function (pResponse) {
+    tDelay.on('success', function (pMessage) {
+      var tResponse = pMessage.data;
       if (pTarget) {
         // iframe
         if ('frames' in global) {
-          global.frames[pTarget].document.body.innerHTML = pResponse.responseText;
+          global.frames[pTarget].document.body.innerHTML = tResponse.responseText;
         }
       } else {
         // Current window
         if ('document' in global) {
-          global.document.body.innerHTML = pResponse.responseText;
+          global.document.body.innerHTML = tResponse.responseText;
         }
       }
-    }).or(function (pError) {
+    });
+    tDelay.on('error', function (pMessage) {
       // An error occurred. Nop.
-      console.log('GetURL: Ajax failed:', pError);
+      console.log('GetURL: Ajax failed:', pMessage.data);
     });
   };
 
@@ -574,8 +576,9 @@
     }
 
     // Process the response.
-    tDelay.then(function (pResponse) {
-      var tData, tTarget, tQueryStrings;
+    tDelay.on('success', function (pMessage) {
+      var tResponse = pMessage.data,
+          tData, tTarget, tQueryStrings;
 
       if (pLoadTargetFlag) {
         // pTarget is a path to a sprite. The path can be in slash or dot syntax. 
@@ -583,7 +586,7 @@
         tTarget = tData.target;
         if (pLoadVariablesFlag) {
           // The response is variables
-          tQueryStrings = pResponse.responseText.split('&');
+          tQueryStrings = tResponse.responseText.split('&');
           for (var i = 0, il = tQueryStrings.length; i < il; i++) {
             var tKeyValuePair = tQueryStrings[i].split('=');
             tTarget.setVariable(tKeyValuePair[0], tKeyValuePair[1]);
@@ -598,18 +601,19 @@
         if (pTarget) {
           // iframe
           if ('frames' in global) {
-            global.frames[pTarget].document.body.innerHTML = pResponse.responseText;
+            global.frames[pTarget].document.body.innerHTML = tResponse.responseText;
           }
         } else {
           // Current window
           if ('document' in global) {
-            global.document.body.innerHTML = pResponse.responseText;
+            global.document.body.innerHTML = tResponse.responseText;
           }
         }
       }
-    }).or(function (pError) {
+    });
+    tDelay.on('error', function (pMessage) {
       // An error occurred. Nop.
-      console.log('GetURL2: Ajax failed:', pError);
+      console.log('GetURL2: Ajax failed:', pMessage.data);
     });
 
   };

@@ -5,7 +5,9 @@
 
 (function(global) {
 
-  var utils = global.theatre.crews.swf.utils;
+  var theatre = global.theatre;
+  var utils = theatre.crews.swf.utils;
+  var PersistentCueListener = theatre.PersistentCueListener;
 
   /**
    * Functions for sending XMLHttpRequests (Ajax).
@@ -103,21 +105,21 @@
      *      - queryData: {object} An object with properties containing URL parameters name/value pairs.<br>
      *      - overrideMimeType: {string} MIME type
      * @default pOpts={method: 'GET'}
-     * @return {utils.Delay} A Delay object.<br>
+     * @return {PersistentCueListener} A Delay object.<br>
      *    Clients are notified of the loaded event by setting a callback 
-     *        via {@link utils.Delay#then} on the returned object.<br>
+     *        via {@link PersistentCueListener#on}('success', callback) on the returned object.<br>
      *    Clients are notified of the error event by setting a callback 
-     *        via {@link  utils.Delay#or} on the returned object.<br>
+     *        via {@link  PersistentCueListener#on}('error', callback) on the returned object.<br>
      *    Clients are notified of the progress events by setting a callback 
-     *        via {@link utils.Delay#on}('progress', callback) on the returned object.<br>
+     *        via {@link PersistentCueListener#on}('progress', callback) on the returned object.<br>
      *    Each callback takes the following object as a single parameter:<br>
      *      - loaded:   An object with properties of {status, statusText, responseType, response, responseXML}<br>
      *      - error:    An object with properties of {event, options, xhr}<br>
      *      - progress: An object with properties of {percent, options, xhr}<br>
-     * @see utils.Delay
+     * @see PersistentCueListener
      */
     send: function(pUrl, pOpts) {
-      var tDelay = new utils.Delay(),
+      var tDelay = new PersistentCueListener(),
       tXhr = new XMLHttpRequest(),
       tMethod = (pOpts.method || 'GET').toUpperCase(),
       tHeaders = pOpts.headers || null,
@@ -154,27 +156,27 @@
       } else {
         tXhr.addEventListener('progress', function(e) {
           if (e.lengthComputable) {
-            tDelay.notify('progress', {percent: e.loaded / e.total, options: pOpts, xhr: this});
+            tDelay.cue('progress', {percent: e.loaded / e.total, options: pOpts, xhr: this});
           } else {
-            tDelay.notify('progress', {percent: NaN, options: pOpts, xhr: this});
+            tDelay.cue('progress', {percent: NaN, options: pOpts, xhr: this});
           }
         }, false);
 
         tXhr.addEventListener('abort', function(e) {
-          tDelay.fail({event: e, options: pOpts, xhr: this});
+          tDelay.cue('error', {event: e, options: pOpts, xhr: this});
         }, false);
 
         tXhr.addEventListener('error', function(e) {
-          tDelay.fail({event: e, options: pOpts, xhr: this});
+          tDelay.cue('error', {event: e, options: pOpts, xhr: this});
         }, false);
 
         tXhr.addEventListener('timeout', function(e) {
-          tDelay.fail({event: e, options: pOpts, xhr: this});
+          tDelay.cue('error', {event: e, options: pOpts, xhr: this});
         }, false);
 
         tXhr.addEventListener('load', function(e) {
           if (this.status === 200) {
-            tDelay.resolve({
+            tDelay.cue('success', {
               status: this.status,
               statusText: this.statusText,
               responseType: this.responseType,
@@ -183,7 +185,7 @@
               responseXML: this.responseType === 'xml' ? this.responseXML : null
             });
           } else {
-            tDelay.fail({event: e, options: pOpts, xhr: this});
+            tDelay.cue('success', {event: e, options: pOpts, xhr: this});
           }
         }, false);
       }
@@ -222,7 +224,7 @@
      * @param {string} pUrl The URL to send to.
      * @param {Object} [pOpts] Options to customize the request.
      * @default pOpts={method: 'GET'}
-     * @return {utils.Delay} A Delay object.
+     * @return {PersistentCueListener} A Delay object.
      * @see utils.ajax#send
      */
     get: function(pUrl, pOpts) {
@@ -237,7 +239,7 @@
      * @param {string} pUrl The URL to send to.
      * @param {Object} [pOpts] Options to customize the request.
      * @default pOpts={method: 'POST'}
-     * @return {utils.Delay} A Delay object.
+     * @return {PersistentCueListener} A Delay object.
      * @see utils.ajax#send
      */
     post: function(pUrl, pOpts) {
