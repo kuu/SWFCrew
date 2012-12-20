@@ -21,8 +21,7 @@
     this.compositor = null;
     this.root = null;
 
-    this.eventSounds = pLoader.eventSounds;
-    this.streamSoundMetadata = pLoader.streamSoundMetadata;
+    this.media = pLoader.media;
 
     this.actionScriptLoader = pLoader.actionScriptLoader;
     this.actionScriptProgram = pLoader.actionScriptProgram;

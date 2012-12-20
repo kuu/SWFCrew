@@ -661,7 +661,7 @@
       var tUint8Array = pReader.sub(pReader.tell(), tLength);
       var tBase64String = global.btoa(global.String.fromCharCode.apply(null, tUint8Array));
       pReader.seek(tLength + 1);
-      tValue = tTable[tBase64String];
+      tValue = tTable.get('text', tBase64String);
     }
     return tValue || null;
   };

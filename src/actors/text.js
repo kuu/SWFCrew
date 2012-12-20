@@ -95,11 +95,11 @@
             bottom: (tFont.descent === null ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
         var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
-        var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape, tActualBounds);
+        var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape, tActualBounds);
         if (tActualBounds.bottom > tShape.bounds.bottom) {
           // The font's shape can exceed the EM square (1024 x 1024) downward.
           tShape.bounds.bottom = tActualBounds.bottom;
-          tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape);
+          tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape);
         }
         tDrawFunctions.push(tDrawFunc);
         tPaddingList.push({x: pText.xAdvance / 20, y: tYPadding / 20});
@@ -375,11 +375,16 @@
     tContext.scale(0.05, 0.05);
 
     // Define TextActor
+    var tMedia = this.swf.mediaLoader;
     var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor(pPlayer) {
       this.base(pPlayer);
 
       // Copy necesary data.
-      this.text = pEditText.initialtext;
+      if (pEditText.sjis && pEditText.initialtext) {
+        this.text = tMedia.get('text', pEditText.initialtext);
+      } else {
+        this.text = pEditText.initialtext;
+      }
       this.bounds = pEditText.bounds;
       this.leftmargin = pEditText.leftmargin;
       this.rightmargin = pEditText.rightmargin;

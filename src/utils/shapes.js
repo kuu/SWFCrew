@@ -641,12 +641,12 @@
           console.warn('Focal radient detected. Showing it as red.');
           pCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
         } else if (tStyleData.type === 0x40 || tStyleData.type === 0x41) { // repeating bitmap or clipped bitmap
-          if (pImages[tStyleData.bitmapId] === void 0) {
+          if (pImages.get(tStyleData.bitmapId) === void 0) {
             pCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
           } else {
             pCode.push(
               'var tPatternMatrix = [' + tMatrix[0] + ', ' + tMatrix[1] + ', ' + tMatrix[2] + ', ' + tMatrix[3] + ', ' + tMatrix[4] + ', ' + tMatrix[5] + '];',
-              'var tPatternStyle = tTempContext.createPattern(this.images[' + tStyleData.bitmapId + '], \'' + (tStyleData.type === 0x40 ? 'repeat' : 'no-repeat') + '\');',
+              'var tPatternStyle = tTempContext.createPattern(this.images.get(\'image\',' + tStyleData.bitmapId + '), \'' + (tStyleData.type === 0x40 ? 'repeat' : 'no-repeat') + '\');',
               'var tStyle = \'rgba(0, 255, 0, 1)\';'
             );
           }
@@ -657,7 +657,7 @@
 
       pSuper.prototype.draw.call(this, pCode, pBounds, pImages);
 
-      if (tStyleData.bitmapId !== null && pImages[tStyleData.bitmapId] !== void 0) {
+      if (tStyleData.bitmapId !== null && pImages.get(tStyleData.bitmapId) !== void 0) {
         pCode.push(
           'tTempContext.save();',
           'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
