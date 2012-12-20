@@ -196,7 +196,7 @@
 
     for (k in tAccessors) {
       var v;
-      tGetter = accessors[k].getter;
+      tGetter = tAccessors[k].getter;
       if (typeof tGetter === 'function') {
         v = tGetter();
       }
