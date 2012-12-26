@@ -60,6 +60,7 @@
 
   function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
 //console.log(pText);
+    var tTwipsWidth = 0;
     var tTwipsHeight = 0;
 
     // Override Prop#draw function to display text records.
@@ -75,7 +76,7 @@
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
-      tYPadding = (tFont.ascent === null ? tTextRecord.y - tTextRecord.height: 0);
+      tYPadding = tTextRecord.y - tTextRecord.height;
 //console.log(tFont);
 //console.log('---------------------');
 //console.log('pText.bounds=', pText.bounds);
@@ -102,16 +103,17 @@
           tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape);
         }
         tDrawFunctions.push(tDrawFunc);
-        tPaddingList.push({x: pText.xAdvance / 20, y: tYPadding / 20});
-        pText.xAdvance += tGlyph.advance;
+        tPaddingList.push({x: tTextRecord.xAdvance / 20, y: tYPadding / 20});
+        tTextRecord.xAdvance += tGlyph.advance;
         tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
 //console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
       tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height, emHeight: tEMHeight});
-      tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.height);
+      tTwipsWidth = Math.max(tTwipsWidth, tTextRecord.xAdvance);
+      tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.y);
 //console.log('Glyph width total=' + tXPadding);
     }
-    pParams.width = pText.xAdvance;
+    pParams.width = tTwipsWidth;
     pParams.height = tTwipsHeight;
 //console.log('tTwipsWidth=' + tTwipsWidth);
 //console.log('tTwipsHeight=' + tTwipsHeight);
