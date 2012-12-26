@@ -61,7 +61,8 @@
   function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
 //console.log(pText);
     var tTwipsWidth = 0;
-    var tTwipsHeight = 0;
+    var tY0 = 1000000;
+    var tY1 = -1000000;
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
@@ -76,7 +77,10 @@
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
-      tYPadding = tTextRecord.y - tTextRecord.height;
+      var tFontScale = tTextRecord.height / 1024;
+      var tAscent = ((tFont.ascent === null) ? 880 : tFont.ascent) * tFontScale;
+      var tDescent = ((tFont.descent === null) ? 144 : tFont.descent) * tFontScale;
+      tYPadding = tTextRecord.y - tAscent;
 //console.log(tFont);
 //console.log('---------------------');
 //console.log('pText.bounds=', pText.bounds);
@@ -110,11 +114,12 @@
       }
       tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height, emHeight: tEMHeight});
       tTwipsWidth = Math.max(tTwipsWidth, tTextRecord.xAdvance);
-      tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.y);
+      tY0 = Math.min(tY0, tTextRecord.y - tAscent);
+      tY1 = Math.max(tY1, tTextRecord.y + tDescent);
 //console.log('Glyph width total=' + tXPadding);
     }
     pParams.width = tTwipsWidth;
-    pParams.height = tTwipsHeight;
+    pParams.height = tY1 - tY0;
 //console.log('tTwipsWidth=' + tTwipsWidth);
 //console.log('tTwipsHeight=' + tTwipsHeight);
 //console.log('tString=' + tString);
