@@ -78,8 +78,8 @@
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
       var tFontScale = tTextRecord.height / 1024;
-      var tAscent = ((tFont.ascent === null) ? 880 : tFont.ascent) * tFontScale;
-      var tDescent = ((tFont.descent === null) ? 144 : tFont.descent) * tFontScale;
+      var tAscent = ((tFont.ascent === 0) ? 880 : tFont.ascent) * tFontScale;
+      var tDescent = ((tFont.descent === 0) ? 144 : tFont.descent) * tFontScale;
       tYPadding = tTextRecord.y - tAscent;
 //console.log(tFont);
 //console.log('---------------------');
@@ -96,8 +96,8 @@
           tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
         }
         tShape.bounds = {left: 0, right: 1024,
-            top: (tFont.ascent === null ? -1024 : -tFont.ascent),
-            bottom: (tFont.descent === null ? 0 : tFont.descent)};
+            top: (tFont.ascent === 0 ? -1024 : -tFont.ascent),
+            bottom: (tFont.descent === 0 ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
         var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
         var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape, tActualBounds);
@@ -176,8 +176,8 @@
       }
       var tShape = tFontInfo.shape;
       tShape.bounds = {left: 0, right: 1024,
-        top: (tFont.ascent === null ? -1024 : -tFont.ascent),
-        bottom: (tFont.descent === null ? 0 : tFont.descent)};
+        top: (tFont.ascent === 0 ? -1024 : -tFont.ascent),
+        bottom: (tFont.descent === 0 ? 0 : tFont.descent)};
       tShape.fillStyles[0].color = pActor.textcolor;
       var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
       var tDrawFunc = mShapeUtils.generateDrawFunction(null, tShape, tActualBounds);
