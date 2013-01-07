@@ -86,8 +86,8 @@
 
     tProto = tShapePropClass.prototype;
 
-    tProto.images = this.swf.images;
-    tProto.draw = mShapeUtils.generateDrawFunction(this.swf.images, pShape);
+    tProto.images = this.swf.mediaLoader;
+    tProto.draw = mShapeUtils.generateDrawFunction(this.swf.mediaLoader, pShape);
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = (((tTwipsWidth / 20) >>> 0) || 0) + 1;

@@ -331,7 +331,7 @@
     theatre.inherit(tMorphShapePropClass, MorphShapeProp);
 
     tProto = tMorphShapePropClass.prototype;
-    tProto.images = this.swf.images;
+    tProto.images = this.swf.mediaLoader;
     tProto.morphShape = pMorphShape;
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');

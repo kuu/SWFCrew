@@ -23,8 +23,7 @@
     this.actionScriptProgram = null;
     this.actorMap = [];
     this.actorNameMap = {};
-    this.eventSounds = null;
-    this.streamSoundMetadata = null;
+    this.media = null;
   }
 
   swfcrew.Loader = Loader;
@@ -40,12 +39,11 @@
     var tActionScriptProgram = this.actionScriptProgram = AlphabetJS.createProgram(tASType, swfcrew.ASHandlers);
     var tActionScriptLoader = this.actionScriptLoader = AlphabetJS.createLoader(tASType);
 
-    tActionScriptProgram.callMapped('SetLiteralTable', 255, pSWF.asyncStr); // Set the asynchronously converted multibyte strings.
+    tActionScriptProgram.callMapped('SetLiteralTable', 255, pSWF.mediaLoader); // Set the asynchronously converted multibyte strings.
 
     var tActorTypes = swfcrew.actors;
 
-    this.eventSounds = pSWF.eventSounds;
-    this.streamSoundMetadata = pSWF.streamSoundMetadata;
+    this.media = pSWF.mediaLoader;
 
     var tDictionaryToActorMap = this.actorMap;
     var k;

@@ -18,7 +18,7 @@
   mActions.startSound = function(pSpriteActor, pData) {
     var tId = pData.soundId,
         tInfo = pData.soundInfo,
-        tSound = pSpriteActor.player.eventSounds[tId + ''],
+        tSound = pSpriteActor.player.media.get('audio', tId + ''),
         tProps = pSpriteActor.getProps('Audio'), tAudioProp;
 
     console.log('StartSound: id=' + tId);

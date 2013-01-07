@@ -60,7 +60,9 @@
 
   function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
 //console.log(pText);
-    var tTwipsHeight = 0;
+    var tTwipsWidth = 0;
+    var tY0 = 1000000;
+    var tY1 = -1000000;
 
     // Override Prop#draw function to display text records.
     var i, il, j, jl, tTextRecords = pText.textrecords || [],
@@ -75,7 +77,10 @@
       // Convert each glyph index into a draw function.
       tGlyphList = tTextRecord.glyphs;
       tPrevFont = tFont = tTextRecord.id === null ? tPrevFont : pSWF.fonts[tTextRecord.id];
-      tYPadding = (tFont.ascent === null ? tTextRecord.y - tTextRecord.height: 0);
+      var tFontScale = tTextRecord.height / 1024;
+      var tAscent = ((tFont.ascent === 0) ? 880 : tFont.ascent) * tFontScale;
+      var tDescent = ((tFont.descent === 0) ? 144 : tFont.descent) * tFontScale;
+      tYPadding = tTextRecord.y - tAscent;
 //console.log(tFont);
 //console.log('---------------------');
 //console.log('pText.bounds=', pText.bounds);
@@ -91,28 +96,30 @@
           tString += String.fromCharCode(tFont.codeTable[tGlyph.index]);
         }
         tShape.bounds = {left: 0, right: 1024,
-            top: (tFont.ascent === null ? -1024 : -tFont.ascent),
-            bottom: (tFont.descent === null ? 0 : tFont.descent)};
+            top: (tFont.ascent === 0 ? -1024 : -tFont.ascent),
+            bottom: (tFont.descent === 0 ? 0 : tFont.descent)};
         tShape.fillStyles[0].color = tTextRecord.color;
         var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
-        var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape, tActualBounds);
+        var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape, tActualBounds);
         if (tActualBounds.bottom > tShape.bounds.bottom) {
           // The font's shape can exceed the EM square (1024 x 1024) downward.
           tShape.bounds.bottom = tActualBounds.bottom;
-          tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.images, tShape);
+          tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape);
         }
         tDrawFunctions.push(tDrawFunc);
-        tPaddingList.push({x: pText.xAdvance / 20, y: tYPadding / 20});
-        pText.xAdvance += tGlyph.advance;
+        tPaddingList.push({x: tTextRecord.xAdvance / 20, y: tYPadding / 20});
+        tTextRecord.xAdvance += tGlyph.advance;
         tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
 //console.log('Glyph width [' + j + ']=' + tGlyph.advance);
       }
       tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: tTextRecord.height, emHeight: tEMHeight});
-      tTwipsHeight = Math.max(tTwipsHeight, tTextRecord.height);
+      tTwipsWidth = Math.max(tTwipsWidth, tTextRecord.xAdvance);
+      tY0 = Math.min(tY0, tTextRecord.y - tAscent);
+      tY1 = Math.max(tY1, tTextRecord.y + tDescent);
 //console.log('Glyph width total=' + tXPadding);
     }
-    pParams.width = pText.xAdvance;
-    pParams.height = tTwipsHeight;
+    pParams.width = tTwipsWidth;
+    pParams.height = tY1 - tY0;
 //console.log('tTwipsWidth=' + tTwipsWidth);
 //console.log('tTwipsHeight=' + tTwipsHeight);
 //console.log('tString=' + tString);
@@ -169,8 +176,8 @@
       }
       var tShape = tFontInfo.shape;
       tShape.bounds = {left: 0, right: 1024,
-        top: (tFont.ascent === null ? -1024 : -tFont.ascent),
-        bottom: (tFont.descent === null ? 0 : tFont.descent)};
+        top: (tFont.ascent === 0 ? -1024 : -tFont.ascent),
+        bottom: (tFont.descent === 0 ? 0 : tFont.descent)};
       tShape.fillStyles[0].color = pActor.textcolor;
       var tActualBounds = {left: 0, right: 0, top: 0, bottom: 0};
       var tDrawFunc = mShapeUtils.generateDrawFunction(null, tShape, tActualBounds);
@@ -375,11 +382,16 @@
     tContext.scale(0.05, 0.05);
 
     // Define TextActor
+    var tMedia = this.swf.mediaLoader;
     var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor(pPlayer) {
       this.base(pPlayer);
 
       // Copy necesary data.
-      this.text = pEditText.initialtext;
+      if (pEditText.sjis && pEditText.initialtext) {
+        this.text = tMedia.get('text', pEditText.initialtext);
+      } else {
+        this.text = pEditText.initialtext;
+      }
       this.bounds = pEditText.bounds;
       this.leftmargin = pEditText.leftmargin;
       this.rightmargin = pEditText.rightmargin;
