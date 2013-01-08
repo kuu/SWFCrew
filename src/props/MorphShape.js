@@ -10,12 +10,12 @@
   var mProps = theatre.define('theatre.crews.swf.props');
   var mSWFCrew = theatre.crews.swf;
 
-  var QuickSWFRect = quickswf.structs.Rect;
-  var QuickSWFFillStyle = quickswf.structs.FillStyle;
-  var QuickSWFLineStyle = quickswf.structs.LineStyle;
-  var QuickSWFMatrix = quickswf.structs.Matrix;
+  var QuickSWFRect = quickswf.structs.RECT;
+  var QuickSWFFillStyle = quickswf.structs.FILLSTYLE;
+  var QuickSWFLineStyle = quickswf.structs.LINESTYLE;
+  var QuickSWFMatrix = quickswf.structs.MATRIX;
   var QuickSWFRGBA = quickswf.structs.RGBA;
-  var QuickSWFGradient = quickswf.structs.Gradient;
+  var QuickSWFGradient = quickswf.structs.GRADIENT;
   var QuickSWFStop = quickswf.structs.Stop;
   var mShapeUtils = mSWFCrew.utils.shape;
 
