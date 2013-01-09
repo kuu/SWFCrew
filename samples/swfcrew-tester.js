@@ -149,7 +149,8 @@
       mApp.data = this.data;
 
       if (mFlashPlayerCheck.checked) {
-        mApp.flash = mApp.mediaLoader.load('', mApp.data, 'application/x-shockwave-flash');
+        mApp.mediaLoader.load('', mApp.data, 'application/x-shockwave-flash');
+        mApp.flash = mApp.mediaLoader.get('application', '');
         mContainer.insertBefore(mApp.flash, mContainer.firstChild);
       }
 
