@@ -305,7 +305,7 @@
 
         tColorTransform = tTarget.colorTransform;
         if (tColorTransform === null) {
-          tColorTransform = tTarget.colorTransform = new global.quickswf.structs.ColorTransform();
+          tColorTransform = tTarget.colorTransform = new global.quickswf.structs.CXFORM();
         }
         tColorTransform.am = 1;
         tColorTransform.aa = (tFloat * 2.55) | 0;
@@ -475,7 +475,7 @@
 
     var tOriginalColorTransform = tOriginal.colorTransform;
     if (tOriginalColorTransform !== null) {
-      var tColorTransform = tNewActor.colorTransform = new quickswf.structs.ColorTransform();
+      var tColorTransform = tNewActor.colorTransform = new quickswf.structs.CXFORM();
       for (var k in tOriginalColorTransform) {
         tColorTransform[k] = tOriginalColorTransform[k];
       }

@@ -71,15 +71,38 @@
           "type": "files",
           "root": "src/actors",
           "files": [
-            "compositor.js",
-            "displaylistactor.js",
-            "shape.js",
-            "button.js",
-            "text.js",
-            "morphshape.js",
-            "sprite.js",
-            "canvassprite.js",
-            "webglsprite.js"
+            "DisplayList.js",
+            "Compositor.js",
+            "Sprite.js",
+            "Shape.js",
+            "MorphShape.js",
+            "Button.js",
+            "Text.js"
+          ]
+        },
+
+        {
+          "type": "files",
+          "root": "src/props",
+          "files": [
+            "CanvasSprite.js",
+            "WebGLSprite.js",
+            "Shape.js",
+            "MorphShape.js",
+            "Text.js"
+          ]
+        },
+
+        {
+          "type": "files",
+          "root": "src/handlers",
+          "files": [
+            "Sprites.js",
+            "Shapes.js",
+            "MorphShapes.js",
+            "Buttons.js",
+            "Texts.js",
+            "EditTexts.js"
           ]
         },
 
@@ -91,7 +114,7 @@
 
         {
           "type": "files",
-          "root": "src/actionscript",
+          "root": "src/AS",
           "include": "\\.js$"
         }
       ]

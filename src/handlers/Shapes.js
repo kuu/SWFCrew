@@ -7,67 +7,11 @@
 (function(global) {
 
   var theatre = global.theatre;
-
-  var mActors = theatre.define('theatre.crews.swf.actors');
-  var mProps = theatre.define('theatre.crews.swf.props');
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
   var mShapeUtils = mSWFCrew.utils.shape;
-
-  mActors.ShapeActor = ShapeActor;
-  mProps.ShapeProp = ShapeProp;
-
-  /**
-   * The actor for handling SWF Shapes.
-   * @constructor
-   * @type {theatre.crews.swf.actors.ShapeActor}
-   * @extends {theatre.Actor}
-   */
-  function ShapeActor(pPlayer) {
-    this.base(pPlayer);
-
-    this.width = (((this.twipsWidth / 20) >>> 0) || 0) + 1;
-    this.height = (((this.twipsHeight / 20) >>> 0) || 0) + 1;
-  }
-  theatre.inherit(ShapeActor, mSWFCrew.DisplayListActor);
-
-  function ShapeProp(pBackingCanvas, pWidth, pHeight) {
-    this.base(pBackingCanvas, pWidth, pHeight);
-    this.cacheDrawResult = true;
-    this.cacheWithClass = true;
-  }
-  theatre.inherit(ShapeProp, theatre.crews.canvas.CanvasProp);
-
-  var mPreDrawBackup = theatre.crews.canvas.CanvasProp.prototype.preDraw;
-  var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
-
-  ShapeProp.prototype.preDraw = function(pData) {
-    if (this.actor.isVisible === false) {
-      return false;
-    }
-
-    var tContext = pData.context;
-    var tActor = this.actor;
-
-    tContext.save();
-
-    tContext.translate(tActor.bounds.left, tActor.bounds.top);
-    tContext.scale(20, 20);
-
-    var tWillDraw = mPreDrawBackup.call(this, pData);
-
-    if (tWillDraw === false) {
-      pData.context.restore();
-    }
-
-    return tWillDraw;
-  };
-
-  ShapeProp.prototype.postDraw = function(pData) {
-    mPostDrawBackup.call(this, pData);
-
-    pData.context.restore();
-  };
+  var ShapeActor = mSWFCrew.actors.ShapeActor;
+  var ShapeProp = mSWFCrew.props.ShapeProp;
 
   /**
    * Handles SWF Shapes.
