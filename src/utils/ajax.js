@@ -37,7 +37,7 @@
       for (var k in pParams) {
         if (pParams.hasOwnProperty(k) === false) continue;
         var tParam = pParams[k];
-        if (tParam.__proto__ === Array.prototype) {
+        if (tParam && tParam.__proto__ === Array.prototype) {
           tParam.forEach(function(pPart) {
             tResult.push(join(k, pPart));
           });
