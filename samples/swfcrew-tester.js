@@ -10,7 +10,8 @@
     player: null,
     play: true,
     targets: [],
-    flash: null
+    flash: null,
+    mediaLoader : new quickswf.utils.MediaLoader()
   };
 
   function $(pId, pContext) {
@@ -148,8 +149,9 @@
       mApp.data = this.data;
 
       if (mFlashPlayerCheck.checked) {
-        mApp.flash = quickswf.polyfills.createMedia(null, pData, 'application/x-shockwave-flash');
-        mContainer.insertBefore(mApp.flash.data, mContainer.firstChild);
+        mApp.mediaLoader.load('', mApp.data, 'application/x-shockwave-flash');
+        mApp.flash = mApp.mediaLoader.get('application', '');
+        mContainer.insertBefore(mApp.flash, mContainer.firstChild);
       }
 
       console.time('Parse');
@@ -166,8 +168,8 @@
       tCanvas.id = 'canvas';
 
       if (mApp.flash !== null) {
-        mApp.flash.data.width = tSWF.width;
-        mApp.flash.data.height = tSWF.height;
+        mApp.flash.width = tSWF.width;
+        mApp.flash.height = tSWF.height;
       }
 
       mContainer.appendChild(tCanvas);
