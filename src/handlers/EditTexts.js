@@ -19,7 +19,7 @@
         tString = pActor.text || '',
         tFont = pActor.font,
         tTwipsWidth = 0, tTwipsHeight = 0, tEMHeight = 0,
-        tTextLines = new Array(), tYPadding = 0;
+        tTextLines = new Array(), tYPadding = pActor.leading;
 
     tXBounds = tTextBounds.right - tTextBounds.left - pActor.leftmargin - pActor.rightmargin;
 
@@ -27,9 +27,11 @@
 
     for (i = 0, il = tString.length; i < il; i++) {
       var tCharCode = tString.charCodeAt(i),
-          tFontInfo = tFont.lookupTable[tCharCode + ''];
+          tFontInfo = tFont.lookupTable[tCharCode + ''],
+          tAdvance = tFontInfo ? (tFontInfo.advance * pActor.fontheight / 1024) 
+                      : (tCharCode < 256 ? pActor.fontheight / 2 : pActor.fontheight);
 
-      if (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tFontInfo.advance > tXBounds)) {
+      if (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tAdvance > tXBounds)) {
         // new line
         tYPadding += (pActor.leading + pActor.fontheight);
         tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
@@ -57,7 +59,7 @@
       tDrawFunctions.push(tDrawFunc);
       tPaddingList.push({x: tCurrX / 20, y: tYPadding / 20});
       tEMHeight = Math.max(tEMHeight, (tShape.bounds.bottom - tShape.bounds.top));
-      tCurrX += tFontInfo.advance;
+      tCurrX += tAdvance;
     }
     tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
     tTwipsWidth = Math.max(tTwipsWidth, tCurrX);
