@@ -58,6 +58,8 @@
         var tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape, tActualBounds);
         if (tActualBounds.bottom > tShape.bounds.bottom) {
           // The font's shape can exceed the EM square (1024 x 1024) downward.
+          var tNewTop = tShape.bounds.top + (tActualBounds.bottom - tShape.bounds.bottom);
+          tShape.bounds.top = tNewTop < tActualBounds.top ? tNewTop : tActualBounds.top;
           tShape.bounds.bottom = tActualBounds.bottom;
           tDrawFunc = mShapeUtils.generateDrawFunction(pSWF.mediaLoader, tShape);
         }
@@ -115,8 +117,18 @@
     var tProto = tTextPropClass.prototype;
     var tParams = new Object();
     tProto.draw = generateGlyphTextDrawFunction(pText, this.swf, tParams);
-    var tTwipsWidth = tParams.width;
-    var tTwipsHeight = tParams.height;
+    var tWidthDiff  = tParams.width - (pText.bounds.right  - pText.bounds.left);
+    var tHeightDiff = tParams.height - (pText.bounds.bottom - pText.bounds.top);
+    if (tWidthDiff > 0) {
+      pText.bounds.left   -= tWidthDiff  / 2;
+      pText.bounds.right  += tWidthDiff  / 2;
+    }
+    if (tHeightDiff > 0) {
+      pText.bounds.top    -= tHeightDiff / 2;
+      pText.bounds.bottom += tHeightDiff / 2;
+    }
+    var tTwipsWidth = pText.bounds.right  - pText.bounds.left;
+    var tTwipsHeight = pText.bounds.bottom - pText.bounds.top;
 
     var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
     tCanvas.width = ((tTwipsWidth / 20) >>> 0) || 1;
@@ -137,14 +149,6 @@
     theatre.inherit(tTextActor, TextActor);
     tProto = tTextActor.prototype;
 
-    var tWidthDiff  = tTwipsWidth  - (pText.bounds.right  - pText.bounds.left);
-    var tHeightDiff = tTwipsHeight - (pText.bounds.bottom - pText.bounds.top);
-    pText.bounds.left   -= tWidthDiff  / 2;
-    pText.bounds.right  += tWidthDiff  / 2;
-    pText.bounds.top    -= tHeightDiff / 2;
-    pText.bounds.bottom += tHeightDiff / 2;
-    tProto.twipsWidth = tTwipsWidth;
-    tProto.twipsHeight = tTwipsHeight;
     tProto.bounds = pText.bounds;
     tProto.matrix = pText.matrix;
   };
