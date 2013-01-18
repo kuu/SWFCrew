@@ -50,6 +50,15 @@
     return tSize;
   }
 
+  function fixName(pName) {
+    var tName = pName.trim().toLowerCase();
+    var tColon = tName.lastIndexOf(':');
+    if (tColon !== -1) {
+      tName = tName.slice(tColon + 1);
+    }
+    return tName;
+  }
+
   /**
    * Registers callback function to be invoked when the variable is accessed.
    * @param {string} pVariableName The name of variable.
@@ -59,13 +68,14 @@
    * @param {string} pType 'getter' or 'setter'
    */
   DisplayListActor.prototype.hookVariable = function (pVariableName, pFunction, pType) {
-    var tAccessor = this.accessors[pVariableName];
+    var tName = fixName(pVariableName);
+    var tAccessor = this.accessors[tName];
     if (tAccessor) {
       if (tAccessor[pType]) {
-        console.warn('AS variable accessor is overwritten: ' + pVariableName + '#' + pType);
+        console.warn('AS variable accessor is overwritten: ' + tName + '#' + pType);
       }
     } else {
-      tAccessor = this.accessors[pVariableName] = {};
+      tAccessor = this.accessors[tName] = {};
     }
     tAccessor[pType] = pFunction;
   };
@@ -76,18 +86,19 @@
    * @param {string} pType 'getter' or 'setter', if avoided, both.
    */
   DisplayListActor.prototype.unhookVariable = function (pVariableName, pType) {
-    var tAccessor = this.accessors[pVariableName];
+    var tName = fixName(pVariableName);
+    var tAccessor = this.accessors[tName];
     if (tAccessor) {
       if (pType) {
         delete tAccessor[pType];
       } else {
-        delete this.accessors[pVariableName];
+        delete this.accessors[tName];
       }
     }
   };
 
   DisplayListActor.prototype.getVariable = function (pName) {
-    var tAccessor = this.accessors[pName];
+    var tAccessor = this.accessors[pName.toLowerCase()];
     if (tAccessor && tAccessor.getter) {
       return tAccessor.getter();
     } else {
@@ -96,7 +107,7 @@
   };
 
   DisplayListActor.prototype.setVariable = function (pName, pValue) {
-    var tAccessor = this.accessors[pName];
+    var tAccessor = this.accessors[pName.toLowerCase()];
     if (tAccessor && tAccessor.setter) {
       tAccessor.setter(pValue);
     } else {
