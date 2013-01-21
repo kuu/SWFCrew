@@ -19,6 +19,7 @@
    */
   mHandlers['DefineShape'] = function(pShape) {
     var tDictionaryToActorMap = this.actorMap;
+    tDictionaryToActorMap[pShape.id] = {clazz: null, singleton: false};
     var tProto;
     var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
     var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
@@ -41,7 +42,7 @@
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
 
-    var tShapeActor = tDictionaryToActorMap[pShape.id] = function BuiltinShapeActor(pPlayer) {
+    var tShapeActor = tDictionaryToActorMap[pShape.id].clazz = function BuiltinShapeActor(pPlayer) {
       this.base(pPlayer);
 
       var tShapeProp = new tShapePropClass(pPlayer.backingContainer, this.width, this.height);
