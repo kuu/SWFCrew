@@ -31,7 +31,7 @@
           tAdvance = tFontInfo ? (tFontInfo.advance * pActor.fontheight / 1024) 
                       : (tCharCode < 256 ? pActor.fontheight / 2 : pActor.fontheight);
 
-      if (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tAdvance > tXBounds)) {
+      if (pActor.multiline && (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tAdvance > tXBounds))) {
         // new line
         tYPadding += (pActor.leading + pActor.fontheight);
         tTextLines.push({draws: tDrawFunctions, paddings: tPaddingList, height: pActor.fontheight, emHeight: tEMHeight});
@@ -95,14 +95,41 @@
   }
 
   function generateDeviceEditTextDrawFunction(pActor, pParams) {
+    var tProps = pActor.getProps('Drawing');
+    var tContext = tProps[0].drawingContext;
     var tColor = pActor.textcolor;
-    var tStringList = pActor.text.split(/[\n\r]/g); // split lines
-    var tRows = [];
+    var tStringList, tString = pActor.text;
     var tFont = pActor.font;
     var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pActor.fontheight + 'px ' + tFont.name;
     var tBounds = pActor.bounds;
     var tXPos = pActor.leftmargin, tYPos = 0, tWidth = tBounds.right - tBounds.left - pActor.leftmargin - pActor.rightmargin, tHeight = tBounds.bottom - tBounds.top;
     var tAlign = '\'left\'';
+    var i, il;
+
+    if (pActor.multiline) {
+      // Folding the text.
+      var tCharCode, tStringBuffer = '';
+      tStringList = [];
+      tContext.save();
+      tContext.font = tFontString;
+      for (i = 0, il = tString.length; i < il; i++) {
+        tCharCode = tString.charCodeAt(i);
+        if (tCharCode === 10 || tCharCode === 13) {
+          tStringList.push(tStringBuffer);
+          tStringBuffer = '';
+          continue;
+        }
+        tStringBuffer += tString[i];
+        if (i === il - 1
+          || (tContext.measureText(tStringBuffer + tString[i + 1]).width > tWidth)) {
+          tStringList.push(tStringBuffer);
+          tStringBuffer = '';
+        }
+      }
+      tContext.restore();
+    } else {
+      tStringList = [tString.replace(/[\n\r]/g, '')];
+    }
 
     if (pActor.align === 1) {
       tAlign = '\'right\'';
@@ -112,9 +139,7 @@
       tXPos += tWidth / 2;
     }
 
-    for (var i = 0, il = tStringList.length; i < il; i++) {
-      var tString = tStringList[i].replace(/(?!\\)'/, '\\\'');
-      var tCode = [
+    var tCode = [
         'var tContext = pData.context;',
         'var tTempCanvas = this.drawingCanvas;',
         'var tTempContext = this.drawingContext;',
@@ -127,23 +152,26 @@
         'tTempContext.fillStyle = \'' + tColor.toString() + '\';',
         'tTempContext.font = \'' + tFontString + '\';',
         'tTempContext.textBaseline = \'top\';',
-        'tTempContext.textAlign = ' + tAlign + ';',
-        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');',
-        'tContext.drawImage(tTempCanvas, 0, 0);',
-        'tTempContext.restore();'
+        'tTempContext.textAlign = ' + tAlign + ';'
       ];
-      tRows.push(new Function('pData', tCode.join('\n')));
+    for (i = 0, il = tStringList.length; i < il; i++) {
+      tString = tStringList[i].replace(/(?!\\)'/, '\\\'');
+      tCode.push(
+        'tTempContext.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');'
+      );
       tYPos += (pActor.leading + pActor.fontheight);
     }
+    tCode.push(
+        'tContext.drawImage(tTempCanvas, 0, 0);',
+        'tTempContext.restore();'
+    );
+    var tDrawFunc = new Function('pData', tCode.join('\n'));
 
     pParams.width = tWidth;
     pParams.height = tHeight;
 
     return function (pData) {
-        for (i = 0, il = tRows.length; i < il; i++) {
-          var tDrawFunc = tRows[i];
-          tDrawFunc.call(this, pData);
-        }
+        tDrawFunc.call(this, pData);
       };
   }
 
@@ -224,7 +252,8 @@
       this.textcolor = pEditText.textcolor;
       this.fontheight = pEditText.fontheight;
       this.leading = pEditText.leading;
-      this.font = tFonts[pEditText.font],
+      this.multiline = pEditText.multiline;
+      this.font = tFonts[pEditText.font];
       this.isDeviceText = tDeviceText;
 
       // Creates Prop objects.
@@ -235,26 +264,25 @@
       var tVarName = pEditText.variablename;
       if (tVarName) {
         this.varName = tVarName;
+        var tThis = this;
+        var tGetter = function () {
+            return tThis.text;
+          };
+        var tSetter = function (pValue) {
+            // need some escape ?
+            tThis.text = pValue;
+            tTextProp.clearCache();
+            tTextProp.rebuildGlyph = true;
+            tThis.invalidate();
+          };
         this.on('enter', function () {
-            var tThis = this;
             // Registers the accessor methods.
-            this.parent.hookVariable(tVarName, function () {
-console.log('getter called!!!');
-                return tThis.text;
-              }, 'getter');
-            this.parent.hookVariable(tVarName, function (pValue) {
-console.log('setter called!!!');
-                // need some escape ?
-                tThis.text = pValue;
-                tTextProp.clearCache();
-                tTextProp.rebuildGlyph = true;
-                tThis.invalidate();
-              }, 'setter');
+            this.parent.hookVariable(tVarName, tGetter, tSetter);
           });
         this.on('leave', function () {
             // Unregisters the accessor methods.
             if (this.varName && this.parent) {
-              this.parent.unhookVariable(this.varName);
+              this.parent.unhookVariable(this.varName, tGetter, tSetter);
             }
           });
       }
