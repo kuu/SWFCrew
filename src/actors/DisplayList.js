@@ -29,6 +29,24 @@
     this._width = -1;
     this._height = -1;
 
+    // this.accessors holds the references to the functions for accessing child node's variables.
+    // It has the following structure:
+    //
+    // accessors = {
+    //    "variableName-1" : {
+    //        "getter" : [
+    //            function () { return v; },
+    //            function () { return v; }
+    //          ],
+    //        "setter" : [
+    //            function (v) { },
+    //            function (v) { }
+    //          ]
+    //    },
+    //    "variableName-2" : {
+    //        ...
+    //    }
+    //}
     this.accessors = {};
   }
   theatre.inherit(DisplayListActor, theatre.Actor)
@@ -70,14 +88,13 @@
   DisplayListActor.prototype.hookVariable = function (pVariableName, pFunction, pType) {
     var tName = fixName(pVariableName);
     var tAccessor = this.accessors[tName];
-    if (tAccessor) {
-      if (tAccessor[pType]) {
-        console.warn('AS variable accessor is overwritten: ' + tName + '#' + pType);
-      }
-    } else {
+    if (tAccessor === void 0) {
       tAccessor = this.accessors[tName] = {};
     }
-    tAccessor[pType] = pFunction;
+    if (tAccessor[pType] === void 0) {
+        tAccessor[pType] = [];
+    }
+    tAccessor[pType].push(pFunction);
   };
 
   /**
@@ -90,8 +107,20 @@
     var tAccessor = this.accessors[tName];
     if (tAccessor) {
       if (pType) {
-        delete tAccessor[pType];
+        if (tAccessor[pType]) {
+          tAccessor[pType].pop();
+          tAccessor[pType].length === 0 && delete tAccessor[pType];
+        }
       } else {
+        for (var k in tAccessor) {
+          var v = tAccessor[k];
+          if (v && v instanceof global.Array) {
+            v.pop();
+            v.length === 0 && delete tAccessor[k];
+          }
+        }
+      }
+      if (Object.getOwnPropertyNames(tAccessor).length === 0) {
         delete this.accessors[tName];
       }
     }
@@ -99,8 +128,8 @@
 
   DisplayListActor.prototype.getVariable = function (pName) {
     var tAccessor = this.accessors[pName.toLowerCase()];
-    if (tAccessor && tAccessor.getter) {
-      return tAccessor.getter();
+    if (tAccessor && tAccessor.getter[0]) {
+      return tAccessor.getter[0]();
     } else {
       return this.variables[pName];
     }
@@ -109,7 +138,10 @@
   DisplayListActor.prototype.setVariable = function (pName, pValue) {
     var tAccessor = this.accessors[pName.toLowerCase()];
     if (tAccessor && tAccessor.setter) {
-      tAccessor.setter(pValue);
+      var tSetters = tAccessor.setter;
+      for (var i = 0, il = tSetters.length; i < il; i++) {
+        tSetters[i](pValue);
+      }
     } else {
       this.variables[pName] = pValue;
     }
