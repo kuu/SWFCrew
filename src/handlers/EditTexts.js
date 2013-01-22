@@ -16,7 +16,7 @@
   function generateGlyphEditTextDrawFunction(pActor, pParams) {
     var i, il, j, jl, tTextBounds = pActor.bounds,
         tCurrX = pActor.leftmargin, tXBounds,
-        tString = pActor.text || '',
+        tString = pActor.text + '',
         tFont = pActor.font,
         tTwipsWidth = 0, tTwipsHeight = 0, tEMHeight = 0,
         tTextLines = new Array(), tYPadding = pActor.leading;
@@ -98,7 +98,7 @@
     var tProps = pActor.getProps('Drawing');
     var tContext = tProps[0].drawingContext;
     var tColor = pActor.textcolor;
-    var tStringList, tString = pActor.text;
+    var tStringList, tString = pActor.text + '';
     var tFont = pActor.font;
     var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pActor.fontheight + 'px ' + tFont.name;
     var tBounds = pActor.bounds;
@@ -109,6 +109,9 @@
     if (pActor.multiline) {
       // Folding the text.
       var tCharCode, tStringBuffer = '';
+      // As CnvasRenderingContext2D.fillText() converts the multi-byte space into ASCII space (0x20),
+      //  here we replace it with four ASCII spaces so that we can make enough space.
+      tString = tString.replace(/\u3000/g, '    '); 
       tStringList = [];
       tContext.save();
       tContext.font = tFontString;
