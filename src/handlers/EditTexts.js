@@ -264,26 +264,25 @@
       var tVarName = pEditText.variablename;
       if (tVarName) {
         this.varName = tVarName;
+        var tThis = this;
+        var tGetter = function () {
+            return tThis.text;
+          };
+        var tSetter = function (pValue) {
+            // need some escape ?
+            tThis.text = pValue;
+            tTextProp.clearCache();
+            tTextProp.rebuildGlyph = true;
+            tThis.invalidate();
+          };
         this.on('enter', function () {
-            var tThis = this;
             // Registers the accessor methods.
-            this.parent.hookVariable(tVarName, function () {
-console.log('getter called!!!');
-                return tThis.text;
-              }, 'getter');
-            this.parent.hookVariable(tVarName, function (pValue) {
-console.log('setter called!!!');
-                // need some escape ?
-                tThis.text = pValue;
-                tTextProp.clearCache();
-                tTextProp.rebuildGlyph = true;
-                tThis.invalidate();
-              }, 'setter');
+            this.parent.hookVariable(tVarName, tGetter, tSetter);
           });
         this.on('leave', function () {
             // Unregisters the accessor methods.
             if (this.varName && this.parent) {
-              this.parent.unhookVariable(this.varName);
+              this.parent.unhookVariable(this.varName, tGetter, tSetter);
             }
           });
       }
