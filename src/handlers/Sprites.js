@@ -32,9 +32,8 @@
    */
   mHandlers['DefineSprite'] = function(pSprite) {
     var tDictionaryToActorMap = this.actorMap;
-    tDictionaryToActorMap[pSprite.id] = {clazz: null, singleton: false};
     var tActions = mSWFCrew.actions;
-    var tSpriteActor = tDictionaryToActorMap[pSprite.id].clazz = function BuiltinSpriteActor(pPlayer) {
+    var tSpriteActor = tDictionaryToActorMap[pSprite.id] = function BuiltinSpriteActor(pPlayer) {
       this.base(pPlayer);
     };
     theatre.inherit(tSpriteActor, SpriteActor);

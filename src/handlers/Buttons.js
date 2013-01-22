@@ -31,8 +31,7 @@
    */
   mHandlers['DefineButton'] = function(pButton) {
     var tDictionaryToActorMap = this.actorMap;
-    tDictionaryToActorMap[pButton.id] = {clazz: null, singleton: false};
-    var tButtonActor = tDictionaryToActorMap[pButton.id].clazz = function BuiltinButtonActor(pPlayer) {
+    var tButtonActor = tDictionaryToActorMap[pButton.id] = function BuiltinButtonActor(pPlayer) {
       this.base(pPlayer);
     };
     theatre.inherit(tButtonActor, ButtonActor);

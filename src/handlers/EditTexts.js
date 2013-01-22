@@ -181,7 +181,6 @@
    */
   mHandlers['DefineEditText'] = function(pEditText) {
     var tDictionaryToActorMap = this.actorMap;
-    tDictionaryToActorMap[pEditText.id] = {clazz: null, singleton: true, initialized: false};
     var tFonts = this.swf.fonts;
     // Define TextProp
     var tTextPropClass = function BuiltinEditTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
@@ -237,7 +236,7 @@
 
     // Define TextActor
     var tMedia = this.swf.mediaLoader;
-    var tTextActor = tDictionaryToActorMap[pEditText.id].clazz = function BuiltinEditTextActor(pPlayer) {
+    var tTextActor = tDictionaryToActorMap[pEditText.id] = function BuiltinEditTextActor(pPlayer) {
       this.base(pPlayer);
 
       // Copy necesary data.
@@ -288,7 +287,6 @@ console.log('setter called!!!');
             }
           });
       }
-      tDictionaryToActorMap[pEditText.id].initialized = true;
     };
     theatre.inherit(tTextActor, TextActor);
     tTextActor.prototype.bounds = pEditText.bounds;

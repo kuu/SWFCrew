@@ -63,7 +63,7 @@
   };
 
   Player.prototype.newRoot = function() {
-    var tRoot = new this.loader.actorMap[0].clazz(this);
+    var tRoot = new this.loader.actorMap[0](this);
     tRoot.name = 'root';
     tRoot.__isRoot = true;
 
@@ -71,11 +71,7 @@
   };
 
   Player.prototype.newFromId = function(pId) {
-    var tActorMap = this.loader.actorMap[pId];
-    if (tActorMap.singleton && tActorMap.initialized) {
-      return null;
-    }
-    var tClass = tActorMap.clazz;
+    var tClass = this.loader.actorMap[pId];
     if (tClass === void 0) {
       return null;
     }

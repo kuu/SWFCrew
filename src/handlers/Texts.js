@@ -108,7 +108,6 @@
    */
   mHandlers['DefineText'] = function(pText) {
     var tDictionaryToActorMap = this.actorMap;
-    tDictionaryToActorMap[pText.id] = {clazz: null, singleton: false};
 
     // Define TextProp
     var tTextPropClass = function BuiltinTextProp(pBackingContainer, pWidth, pHeight, pDeviceText) {
@@ -142,7 +141,7 @@
     tContext.scale(0.05, 0.05);
 
     // Define TextActor
-    var tTextActor = tDictionaryToActorMap[pText.id].clazz = function BuiltinTextActor(pPlayer) {
+    var tTextActor = tDictionaryToActorMap[pText.id] = function BuiltinTextActor(pPlayer) {
       this.base(pPlayer);
       var tShapeProp = new tTextPropClass(pPlayer.backingContainer, this.width, this.height, false); // TODO: This feels like a hack...
       this.addProp(tShapeProp);

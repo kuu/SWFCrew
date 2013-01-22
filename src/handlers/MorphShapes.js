@@ -20,7 +20,6 @@
    */
   mHandlers['DefineMorphShape'] = function(pMorphShape) {
     var tDictionaryToActorMap = this.actorMap;
-    tDictionaryToActorMap[pMorphShape.id] = {clazz: null, singleton: false};
     var tProto;
     var tMaxTwipsWidth = Math.max(
       pMorphShape.startBounds.right - pMorphShape.startBounds.left,
@@ -48,7 +47,7 @@
     tContext.lineJoin = 'round';
     tContext.scale(0.05, 0.05);
 
-    var tMorphShapeActor = tDictionaryToActorMap[pMorphShape.id].clazz = function BuiltinMorphShapeActor(pPlayer) {
+    var tMorphShapeActor = tDictionaryToActorMap[pMorphShape.id] = function BuiltinMorphShapeActor(pPlayer) {
       this.base(pPlayer);
 
       var tMorphShapeProp = new tMorphShapePropClass(pPlayer.backingContainer, this.width, this.height); // TODO: This feels like a hack...
