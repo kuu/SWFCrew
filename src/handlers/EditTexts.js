@@ -106,15 +106,30 @@
     var tAlign = '\'left\'';
     var i, il;
 
+    // CnvasRenderingContext2D.fillText() forcibly converts all the spaces into ASCII spaces.
+    // However, the space characters are sometimes used for making visual space.
+    // So, here we do such the conversion more precise way so that we can preserve the original layout.
+    tContext.save();
+    tContext.font = tFontString;
+    var tSpaceWidth = tContext.measureText('\u0020').width;
+    var tIdeographicSpaceWidth = tContext.measureText('\u3000').width;
+    var tSpaceMultRate = (tSpaceWidth && tIdeographicSpaceWidth ? tIdeographicSpaceWidth / tSpaceWidth : 4);
+
+    // This function takes an arbitrary number of the ideographic spaces (U+3000,)
+    // and returns how many ASCII spaces (U+0020) are needed for filling the same on-screen area
+    // that the ideographic spaces would have ocupied.
+    var howManySpaces = function (pString) {
+      return Math.round(pString.length * tSpaceMultRate);
+    };
+    tString = tString.replace(/\u3000+/g, function (pMatched) {
+        // Generating sucessive SPACE characters.
+        return Array(howManySpaces(pMatched) + 1).join('\u0020');
+      });
+
     if (pActor.multiline) {
       // Folding the text.
       var tCharCode, tStringBuffer = '';
-      // As CnvasRenderingContext2D.fillText() converts the multi-byte space into ASCII space (0x20),
-      //  here we replace it with four ASCII spaces so that we can make enough space.
-      tString = tString.replace(/\u3000/g, '    '); 
       tStringList = [];
-      tContext.save();
-      tContext.font = tFontString;
       for (i = 0, il = tString.length; i < il; i++) {
         tCharCode = tString.charCodeAt(i);
         if (tCharCode === 10 || tCharCode === 13) {
@@ -129,7 +144,6 @@
           tStringBuffer = '';
         }
       }
-      tContext.restore();
     } else {
       tStringList = [tString.replace(/[\n\r]/g, '')];
     }
@@ -172,6 +186,8 @@
 
     pParams.width = tWidth;
     pParams.height = tHeight;
+
+    tContext.restore();
 
     return function (pData) {
         tDrawFunc.call(this, pData);
