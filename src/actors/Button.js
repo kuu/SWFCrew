@@ -78,6 +78,9 @@
       //console.log('** record=', tRecord);
       if (tRecord.state.up) { // Initial state is ButtonUp.
         var tActor = pPlayer.newFromId(tRecord.id);
+        if (tActor instanceof mSWFCrew.actors.SpriteActor) {
+          tActor.buttonMatrix = tRecord.matrix;
+        }
         tActor.colorTransform = tRecord.colorTransform;
         this.colorTransform = tRecord.colorTransform;
         this.addActor(tActor);
