@@ -29,9 +29,14 @@
                         '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
     }
 
-    if (pData.matrix !== null) {
-      var tMatrix = tNewActor.matrix;
-      var tDataMatrix = pData.matrix;
+    var tMatrix = tNewActor.matrix;
+    var tDataMatrix = null;
+    if (pSpriteActor.buttonMatrix) {
+      tDataMatrix = pSpriteActor.buttonMatrix;
+    } else if (pData.matrix !== null) {
+      tDataMatrix = pData.matrix;
+    }
+    if (tDataMatrix !== null) {
       tMatrix.a = tDataMatrix[0];
       tMatrix.b = tDataMatrix[1];
       tMatrix.c = tDataMatrix[2];
