@@ -16,7 +16,7 @@
   function generateGlyphEditTextDrawFunction(pActor, pParams) {
     var i, il, j, jl, tTextBounds = pActor.bounds,
         tCurrX = pActor.leftmargin, tXBounds,
-        tString = pActor.text || '',
+        tString = pActor.text + '',
         tFont = pActor.font,
         tTwipsWidth = 0, tTwipsHeight = 0, tEMHeight = 0,
         tTextLines = new Array(), tYPadding = pActor.leading;
@@ -98,7 +98,7 @@
     var tProps = pActor.getProps('Drawing');
     var tContext = tProps[0].drawingContext;
     var tColor = pActor.textcolor;
-    var tStringList, tString = pActor.text;
+    var tStringList, tString = pActor.text + '';
     var tFont = pActor.font;
     var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + pActor.fontheight + 'px ' + tFont.name;
     var tBounds = pActor.bounds;
@@ -106,12 +106,30 @@
     var tAlign = '\'left\'';
     var i, il;
 
+    // CnvasRenderingContext2D.fillText() forcibly converts all the spaces into ASCII spaces.
+    // However, the space characters are sometimes used for making visual space.
+    // So, here we do such the conversion more precise way so that we can preserve the original layout.
+    tContext.save();
+    tContext.font = tFontString;
+    var tSpaceWidth = tContext.measureText('\u0020').width;
+    var tIdeographicSpaceWidth = tContext.measureText('\u3000').width;
+    var tSpaceMultRate = (tSpaceWidth && tIdeographicSpaceWidth ? tIdeographicSpaceWidth / tSpaceWidth : 4);
+
+    // This function takes an arbitrary number of the ideographic spaces (U+3000,)
+    // and returns how many ASCII spaces (U+0020) are needed for filling the same on-screen area
+    // that the ideographic spaces would have ocupied.
+    var howManySpaces = function (pString) {
+      return Math.round(pString.length * tSpaceMultRate);
+    };
+    tString = tString.replace(/\u3000+/g, function (pMatched) {
+        // Generating sucessive SPACE characters.
+        return Array(howManySpaces(pMatched) + 1).join('\u0020');
+      });
+
     if (pActor.multiline) {
       // Folding the text.
       var tCharCode, tStringBuffer = '';
       tStringList = [];
-      tContext.save();
-      tContext.font = tFontString;
       for (i = 0, il = tString.length; i < il; i++) {
         tCharCode = tString.charCodeAt(i);
         if (tCharCode === 10 || tCharCode === 13) {
@@ -126,7 +144,6 @@
           tStringBuffer = '';
         }
       }
-      tContext.restore();
     } else {
       tStringList = [tString.replace(/[\n\r]/g, '')];
     }
@@ -169,6 +186,8 @@
 
     pParams.width = tWidth;
     pParams.height = tHeight;
+
+    tContext.restore();
 
     return function (pData) {
         tDrawFunc.call(this, pData);
