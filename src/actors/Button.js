@@ -73,13 +73,14 @@
     });
 
     // Add the button shapes.
+    var tMatrix; // Necessary because only the first record can have the matrix.
     for (var i = 0, il = tRecords.length; i < il; i++) {
       var tRecord = tRecords[i];
       //console.log('** record=', tRecord);
       if (tRecord.state.up) { // Initial state is ButtonUp.
         var tActor = pPlayer.newFromId(tRecord.id);
         if (tActor instanceof mSWFCrew.actors.SpriteActor) {
-          tActor.buttonMatrix = tRecord.matrix;
+          tMatrix = tActor.buttonMatrix = tMatrix || tRecord.matrix;
         }
         tActor.colorTransform = tRecord.colorTransform;
         this.colorTransform = tRecord.colorTransform;
