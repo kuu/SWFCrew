@@ -48,8 +48,6 @@
       tMatrix.f = tDataMatrix[5];
     }
 
-    //tNewActor.stepAdded = pSpriteActor.currentStep;
-
     pSpriteActor.addActor(tNewActor, pData.depth);
   };
 
@@ -65,24 +63,7 @@
 
     tActor.leave();
 
-    var tNewActor = pSpriteActor.player.newFromId(pData.id);
-
-    if (tNewActor === null) {
-      return;
-    }
-
-    if (pData.name) {
-      tNewActor.name = pData.name;
-    } else {
-      tNewActor.name = tNewActor instanceof swfcrew.actors.SpriteActor ?
-                        'instance' + (++pSpriteActor.stage.spriteInstanceCounter) :
-                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
-    }
-
-    tNewActor.matrix = tMatrix;
-    //tNewActor.stepAdded = pSpriteActor.currentStep;
-
-    pSpriteActor.addActor(tNewActor, pData.depth);
+    mActions.add(pSpriteActor, pData);
   };
 
   mActions.move = function(pSpriteActor, pData) {
