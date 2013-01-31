@@ -10,7 +10,7 @@
       swfcrew = theatre.crews.swf,
       quickswf = global.quickswf,
       AlphabetJS = global.AlphabetJS,
-      PersistentCueListener = theatre.PersistentCueListener;
+      PersistentCueListener = global.benri.cues.PersistentCueListener;
 
   /**
    * @constructor
@@ -23,6 +23,7 @@
     this.actionScriptProgram = null;
     this.actorMap = [];
     this.actorNameMap = {};
+    this.actorRenderableCache = [];
     this.media = null;
   }
 
@@ -66,6 +67,19 @@
 
   PersistentCueListener.extend(Loader.prototype);
 
+  Loader.prototype.setActorRenderableCache = function(pId, pRenderable) {
+    this.actorRenderableCache[pId] = pRenderable;
+  };
+
+  Loader.prototype.getActorRenderableCache = function(pId) {
+    return this.actorRenderableCache[pId] || null;
+  };
+
+  Loader.prototype.clearActorRenderableCache = function() {
+    this.actorRenderableCache.length = 0;
+  };
+
+
   /**
    * @class
    * @extends Loader
@@ -77,6 +91,7 @@
     }
 
     DataLoader.prototype = Object.create(pSuper.prototype);
+    DataLoader.prototype.constructor = DataLoader;
 
     DataLoader.prototype.load = function(pData, pOptions) {
       var tSelf = this;
@@ -112,6 +127,7 @@
     }
 
     URLLoader.prototype = Object.create(pSuper.prototype);
+    URLLoader.prototype.constructor = URLLoader;
 
     URLLoader.prototype.load = function(pURL, pOptions) {
       var tSelf = this;

@@ -7,23 +7,23 @@
 (function(global) {
 
   var theatre = global.theatre;
-  var mActors = theatre.define('theatre.crews.swf.actors');
-  var mSWFCrew = theatre.crews.swf;
-
-  mActors.ShapeActor = ShapeActor;
+  var mActors = theatre.crews.swf.actors;
 
   /**
-   * The actor for handling SWF Shapes.
-   * @constructor
-   * @type {theatre.crews.swf.actors.ShapeActor}
-   * @extends {theatre.Actor}
+   * @class
+   * @extends {theatre.crews.swf.actors.DisplayListActor}
    */
-  function ShapeActor(pPlayer) {
-    this.base(pPlayer);
+  var ShapeActor = (function(pSuper) {
+    function ShapeActor(pPlayer) {
+      pSuper.call(this, pPlayer);
+    }
 
-    this.width = (((this.twipsWidth / 20) >>> 0) || 0) + 1;
-    this.height = (((this.twipsHeight / 20) >>> 0) || 0) + 1;
-  }
-  theatre.inherit(ShapeActor, mSWFCrew.DisplayListActor);
+    ShapeActor.prototype = Object.create(pSuper.prototype);
+    ShapeActor.prototype.constructor = ShapeActor;
+
+    return ShapeActor;
+  })(mActors.DisplayListActor);
+
+  mActors.ShapeActor = ShapeActor;
 
 }(this));

@@ -1,20 +1,21 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 SWFCrew Project.
+ * Copyright (C) 2013 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
   var theatre = global.theatre;
 
-  var swfcrew = theatre.define('theatre.crews.swf');
-
-  swfcrew.handlers = {};
-
-  swfcrew.utils = {};
-
-  swfcrew.ASHandlers = {};
-
+  var swfcrew = theatre.crews.swf = {
+    handlers: {},
+    utils: {},
+    ASHandlers: {},
+    props: {},
+    actors: {},
+    actions: {},
+    shaders: {}
+  };
 
   function play(pLoader, pData, pAttachTo, pOptions) {
     var tPlayer = new swfcrew.Player(pLoader);

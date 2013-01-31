@@ -12,67 +12,91 @@
   var QuickSWFShape = quickswf.structs.Shape;
   var mShapeUtils = mSWFCrew.utils.shape;
   var MorphShapeActor = mSWFCrew.actors.MorphShapeActor;
-  var MorphShapeProp = mSWFCrew.props.MorphShapeProp;
+  var MorphShapeRenderProp = mSWFCrew.props.MorphShapeRenderProp;
+  var Canvas = global.benri.draw.Canvas;
+  var CanvasRenderable = global.benri.render.CanvasRenderable;
+  var mMorphShapeUtils = mSWFCrew.utils.morphshapes;
 
   /**
    * Handles SWF MorphShapes.
    * @param {quickswf.structs.MorphShape} pMorphShape The MorphShape to handle.
    */
   mHandlers['DefineMorphShape'] = function(pMorphShape) {
-    var tDictionaryToActorMap = this.actorMap;
-    var tProto;
-    var tMaxTwipsWidth = Math.max(
-      pMorphShape.startBounds.right - pMorphShape.startBounds.left,
-      pMorphShape.endBounds.right - pMorphShape.endBounds.left
+    var tActorMap = this.actorMap;
+    var tId = pMorphShape.id;
+
+    var tStartBounds = pMorphShape.startBounds;
+    var tEndBounds = pMorphShape.endBounds;
+
+    var tTwipsWidth = Math.max(
+      tStartBounds.right - tStartBounds.left,
+      tEndBounds.right - tEndBounds.left
     );
-    var tMaxTwipsHeight = Math.max(
-      pMorphShape.startBounds.bottom - pMorphShape.startBounds.top,
-      pMorphShape.endBounds.bottom - pMorphShape.endBounds.top
+    var tTwipsHeight = Math.max(
+      tStartBounds.bottom - tStartBounds.top,
+      tEndBounds.bottom - tEndBounds.top
     );
 
-    var tMorphShapePropClass = function BuiltinMorphShapeProp(pBackingContainer, pWidth, pHeight) {
-      this.base(pBackingContainer, pWidth, pHeight);
-    }
-    theatre.inherit(tMorphShapePropClass, MorphShapeProp);
+    var tPixelWidth = (tTwipsWidth / 20 | 0) + 1;
+    var tPixelHeight = (tTwipsHeight / 20 | 0) + 1
 
-    tProto = tMorphShapePropClass.prototype;
-    tProto.images = this.swf.mediaLoader;
-    tProto.morphShape = pMorphShape;
+    /**
+     * @class
+     * @extends {theatre.crews.swf.actors.ShapeActor}
+     */
+    var BuiltinMorphShapeActor = this.actorMap[tId] = (function(pSuper) {
+      function BuiltinMorphShapeActor(pPlayer) {
+        pSuper.call(this, pPlayer);
+        this.addProp(new MorphShapeRenderProp(this.pixelWidth, this.pixelHeight));
+      }
 
-    var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
-    tCanvas.width = ((tMaxTwipsWidth / 20) >>> 0) || 1;
-    tCanvas.height = ((tMaxTwipsHeight / 20) >>> 0) || 1;
-    var tContext = tProto.drawingContext = tCanvas.getContext('2d');
-    tContext.lineCap = 'round';
-    tContext.lineJoin = 'round';
-    tContext.scale(0.05, 0.05);
+      BuiltinMorphShapeActor.prototype = Object.create(pSuper.prototype);
+      BuiltinMorphShapeActor.prototype.constructor = BuiltinMorphShapeActor;
 
-    var tMorphShapeActor = tDictionaryToActorMap[pMorphShape.id] = function BuiltinMorphShapeActor(pPlayer) {
-      this.base(pPlayer);
+      BuiltinMorphShapeActor.prototype.startBounds = tStartBounds;
+      BuiltinMorphShapeActor.prototype.endBounds = tEndBounds;
+      BuiltinMorphShapeActor.prototype.twipsWidth = tTwipsWidth;
+      BuiltinMorphShapeActor.prototype.twipsHeight = tTwipsHeight;
+      BuiltinMorphShapeActor.prototype.pixelWidth = tPixelWidth;
+      BuiltinMorphShapeActor.prototype.pixelHeight = tPixelHeight;
 
-      var tMorphShapeProp = new tMorphShapePropClass(pPlayer.backingContainer, this.width, this.height); // TODO: This feels like a hack...
+      return BuiltinMorphShapeActor;
+    })(theatre.crews.swf.actors.ShapeActor);
 
-      this.addProp(tMorphShapeProp);
-    };
-    theatre.inherit(tMorphShapeActor, MorphShapeActor);
+    BuiltinMorphShapeActor.prototype.displayListId = tId;
+
+    var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
+
+    var tConvertedFillStyles = mMorphShapeUtils.convertFillStyles(pMorphShape.fillStyles);
+    var tConvertedLineStyles = mMorphShapeUtils.convertLineStyles(pMorphShape.lineStyles);
 
     var tTempShape = new QuickSWFShape();
-    tTempShape.bounds = pMorphShape.startBounds;
+    tTempShape.bounds = tStartBounds;
     var tStartRecords = tTempShape.records = pMorphShape.startEdges;
-    tTempShape.fillStyles = pMorphShape.fillStyles;
-    tTempShape.lineStyles = pMorphShape.lineStyles;
+    tTempShape.fillStyles = tConvertedFillStyles[0];
+    tTempShape.lineStyles = tConvertedLineStyles[0];
 
-    tMorphShapeActor.prototype.startDrawables = mShapeUtils.getResolvedDrawables(tTempShape);
+    mShapeUtils.drawShape(tTempShape, tCanvas, this.swf.mediaLoader);
+
+    BuiltinMorphShapeActor.prototype.startCanvasRecords = tCanvas.records.slice(0);
+
+    // We will probably use this shape (the first one) the most. Cache it.
+    var tRenderable = new CanvasRenderable(tCanvas);
+    tRenderable.ratio = 0;
+    this.setActorRenderableCache(tId, tRenderable);
+
+    tCanvas = new Canvas(tPixelWidth, tPixelHeight);
 
     tTempShape = new QuickSWFShape();
-    tTempShape.bounds = pMorphShape.endBounds;
+    tTempShape.bounds = tEndBounds;
     var tEndRecords = tTempShape.records = pMorphShape.endEdges;
-    tTempShape.fillStyles = pMorphShape.fillStyles;
-    tTempShape.lineStyles = pMorphShape.lineStyles;
+    tTempShape.fillStyles = tConvertedFillStyles[1];
+    tTempShape.lineStyles = tConvertedLineStyles[1];
     var tEndRecord, tStartRecord;
+    var i, il;
 
     // Copy all style changes to the end records.
-    for (var i = 0, il = tEndRecords.length; i < il; i++) {
+    for (i = 0, il = tEndRecords.length; i < il; i++) {
       tEndRecord = tEndRecords[i];
       if (tEndRecord.type === 1) {
         tStartRecord = tStartRecords[i];
@@ -84,6 +108,10 @@
       }
     }
 
-    tMorphShapeActor.prototype.endDrawables = mShapeUtils.getResolvedDrawables(tTempShape);
+    mShapeUtils.drawShape(tTempShape, tCanvas, this.swf.mediaLoader);
+
+    BuiltinMorphShapeActor.prototype.endCanvasRecords = tCanvas.records.slice(0);
+
+    tCanvas = null;
   };
 }(this));

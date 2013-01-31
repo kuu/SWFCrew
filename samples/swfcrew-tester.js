@@ -162,17 +162,10 @@
 
       var tSWF = this.swf;
 
-      var tCanvas = global.document.createElement('canvas');
-      tCanvas.width = tSWF.width;
-      tCanvas.height = tSWF.height;
-      tCanvas.id = 'canvas';
-
       if (mApp.flash !== null) {
         mApp.flash.width = tSWF.width;
         mApp.flash.height = tSWF.height;
       }
-
-      mContainer.appendChild(tCanvas);
     });
 
     pLoader.on('loadstart', function() {
@@ -191,7 +184,8 @@
         mSPSInput.value = mSPSView.textContent = this.swf.frameRate;
       }
 
-      tPlayer.takeCentreStage($('canvas'));
+      tPlayer.takeCentreStage(mContainer);
+      mContainer.getElementsByTagName('canvas')[0].id = 'canvas';
 
       mStage.on('leavestep', updateTargets);
       mStage.on('leavestep', updateSPS);

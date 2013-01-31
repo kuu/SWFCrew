@@ -6,15 +6,17 @@
  */
 (function(global) {
 
-  var mActions = theatre.define('theatre.crews.swf.actions');
+  var mActions = global.theatre.crews.swf.actions;
+  var Color = global.benri.draw.Color;
 
   /**
    * Set's the background colour of the stage.
-   * @param {theatre.Actor} pSpriteActor Ignored..
+   * @param {theatre.Actor} pSpriteActor
    * @param {Object} pData The data to use to know what to add.
    */
   mActions.background = function(pSpriteActor, pData) {
-    pSpriteActor.player.backingContainer.style.backgroundColor = pData.color.toString();
+    var tColor = pData.color;
+    pSpriteActor.player.compositor.backgroundColor = new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255);
   }
 
 }(this));

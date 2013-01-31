@@ -9,8 +9,6 @@
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
 
-  theatre.define('actors.ButtonActor', ButtonActor, mSWFCrew);
-
   function translateKeyCode(pKeyCode, pShift) {
     var tKeyCode = pKeyCode;
     switch (pKeyCode) {
@@ -45,48 +43,60 @@
     return tKeyCode;
   };
 
-  function ButtonActor(pPlayer) {
-    this.base(pPlayer);
+  /**
+   * @class
+   * @extends {theatre.crews.swf.actors.DisplayListActor}
+   */
+  var ButtonActor = (function(pSuper) {
+    function ButtonActor(pPlayer) {
+      pSuper.call(this, pPlayer);
 
-    var tCondActions = this.condActions;
-    var tRecords = this.records;
+      var tCondActions = this.condActions;
+      var tRecords = this.records;
 
-    // Register the event handlers.
-    var tThis = this;
-    function onKeyDown(pEvent) {
-      var tKeyCode = translateKeyCode(pEvent.code, pEvent.shift);
-      console.log('KeyDown: code=', tKeyCode);
-      var i, il, tCond, tScript;
-      for (i = 0, il = tCondActions.length; i < il; i++) {
-        tCond = tCondActions[i].cond;
-        tScript = tCondActions[i].script;
-        if (tCond.keyPress === tKeyCode) {
-          tScript(tThis.parent);
+      // Register the event handlers.
+      var tThis = this;
+      function onKeyDown(pEvent) {
+        var tKeyCode = translateKeyCode(pEvent.code, pEvent.shift);
+        console.log('KeyDown: code=', tKeyCode);
+        var i, il, tCond, tScript;
+        for (i = 0, il = tCondActions.length; i < il; i++) {
+          tCond = tCondActions[i].cond;
+          tScript = tCondActions[i].script;
+          if (tCond.keyPress === tKeyCode) {
+            tScript(tThis.parent);
+          }
+        }
+      }
+      this.on('enter', function () {
+        tThis.stage.on('keydown', onKeyDown);
+      });
+      this.on('leave', function () {
+        tThis.stage.ignore('keydown', onKeyDown);
+      });
+
+      // Add the button shapes.
+      for (var i = 0, il = tRecords.length; i < il; i++) {
+        var tRecord = tRecords[i];
+        //console.log('** record=', tRecord);
+        if (tRecord.state.up) { // Initial state is ButtonUp.
+          var tActor = pPlayer.newFromId(tRecord.id);
+          if (tActor instanceof mSWFCrew.actors.SpriteActor) {
+            tActor.buttonMatrix = tRecord.matrix;
+          }
+          tActor.colorTransform = tRecord.colorTransform;
+          this.colorTransform = tRecord.colorTransform;
+          this.addActor(tActor);
         }
       }
     }
-    this.on('enter', function () {
-      tThis.stage.on('keydown', onKeyDown);
-    });
-    this.on('leave', function () {
-      tThis.stage.ignore('keydown', onKeyDown);
-    });
 
-    // Add the button shapes.
-    for (var i = 0, il = tRecords.length; i < il; i++) {
-      var tRecord = tRecords[i];
-      //console.log('** record=', tRecord);
-      if (tRecord.state.up) { // Initial state is ButtonUp.
-        var tActor = pPlayer.newFromId(tRecord.id);
-        if (tActor instanceof mSWFCrew.actors.SpriteActor) {
-          tActor.buttonMatrix = tRecord.matrix;
-        }
-        tActor.colorTransform = tRecord.colorTransform;
-        this.colorTransform = tRecord.colorTransform;
-        this.addActor(tActor);
-      }
-    }
-  }
-  theatre.inherit(ButtonActor, mSWFCrew.DisplayListActor);
+    ButtonActor.prototype = Object.create(pSuper.prototype);
+    ButtonActor.prototype.constructor = ButtonActor;
+
+    return ButtonActor;
+  })(mSWFCrew.actors.DisplayListActor);
+
+  mSWFCrew.actors.ButtonActor = ButtonActor;
 
 }(this));

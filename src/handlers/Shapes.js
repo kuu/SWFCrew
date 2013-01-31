@@ -11,50 +11,52 @@
   var mHandlers = mSWFCrew.handlers;
   var mShapeUtils = mSWFCrew.utils.shape;
   var ShapeActor = mSWFCrew.actors.ShapeActor;
-  var ShapeProp = mSWFCrew.props.ShapeProp;
+  var ShapeRenderProp = mSWFCrew.props.ShapeRenderProp;
+  var Canvas = global.benri.draw.Canvas;
+  var CanvasRenderable = global.benri.render.CanvasRenderable;
 
   /**
    * Handles SWF Shapes.
    * @param {quickswf.structs.Shape} pShape The Shape to handle.
    */
   mHandlers['DefineShape'] = function(pShape) {
-    var tDictionaryToActorMap = this.actorMap;
-    var tProto;
-    var tTwipsWidth = pShape.bounds.right - pShape.bounds.left;
-    var tTwipsHeight = pShape.bounds.bottom - pShape.bounds.top;
+    var tActorMap = this.actorMap;
+    var tId = pShape.id;
+    var tBounds = pShape.bounds;
+    var tTwipsWidth = tBounds.right - tBounds.left;
+    var tTwipsHeight = tBounds.bottom - tBounds.top;
+    var tPixelWidth = (tTwipsWidth / 20 | 0) + 1;
+    var tPixelHeight = (tTwipsHeight / 20 | 0) + 1
 
-    var tShapePropClass = function BuiltinShapeProp(pBackingContainer, pWidth, pHeight) {
-      this.base(pBackingContainer, pWidth, pHeight);
-    }
-    theatre.inherit(tShapePropClass, ShapeProp);
+    var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
 
-    tProto = tShapePropClass.prototype;
+    mShapeUtils.drawShape(pShape, tCanvas, this.swf.mediaLoader);
 
-    tProto.images = this.swf.mediaLoader;
-    tProto.draw = mShapeUtils.generateDrawFunction(this.swf.mediaLoader, pShape);
+    /**
+     * @class
+     * @extends {theatre.crews.swf.actors.ShapeActor}
+     */
+    var BuiltinShapeActor = this.actorMap[tId] = (function(pSuper) {
+      function BuiltinShapeActor(pPlayer) {
+        pSuper.call(this, pPlayer);
+        this.addProp(new ShapeRenderProp(this.pixelWidth, this.pixelHeight));
+      }
 
-    var tCanvas = tProto.drawingCanvas = global.document.createElement('canvas');
-    tCanvas.width = (((tTwipsWidth / 20) >>> 0) || 0) + 1;
-    tCanvas.height = (((tTwipsHeight / 20) >>> 0) || 0) + 1;
-    var tContext = tProto.drawingContext = tCanvas.getContext('2d');
-    tContext.lineCap = 'round';
-    tContext.lineJoin = 'round';
-    tContext.scale(0.05, 0.05);
+      BuiltinShapeActor.prototype = Object.create(pSuper.prototype);
+      BuiltinShapeActor.prototype.constructor = BuiltinShapeActor;
 
-    var tShapeActor = tDictionaryToActorMap[pShape.id] = function BuiltinShapeActor(pPlayer) {
-      this.base(pPlayer);
+      BuiltinShapeActor.prototype.bounds = tBounds;
+      BuiltinShapeActor.prototype.twipsWidth = tTwipsWidth;
+      BuiltinShapeActor.prototype.twipsHeight = tTwipsHeight;
+      BuiltinShapeActor.prototype.pixelWidth = tPixelWidth;
+      BuiltinShapeActor.prototype.pixelHeight = tPixelHeight;
 
-      var tShapeProp = new tShapePropClass(pPlayer.backingContainer, this.width, this.height);
+      return BuiltinShapeActor;
+    })(theatre.crews.swf.actors.ShapeActor);
 
-      this.addProp(tShapeProp);
-    };
-    theatre.inherit(tShapeActor, ShapeActor);
+    BuiltinShapeActor.prototype.displayListId = tId;
 
-    tProto = tShapeActor.prototype;
-
-    tProto.twipsWidth = tTwipsWidth;
-    tProto.twipsHeight = tTwipsHeight;
-    tProto.bounds = pShape.bounds;
+    this.setActorRenderableCache(tId, new CanvasRenderable(tCanvas));
   };
 
 }(this));

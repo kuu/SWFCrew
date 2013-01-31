@@ -9,8 +9,6 @@
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
 
-  theatre.define('actors.SpriteActor', SpriteActor, mSWFCrew);
-
   function applyTimelineCache(pActor, pCurrentStep) {
     var i, il;
     var tActorsInStepMap = pActor.actorsInStepMap[pCurrentStep];
@@ -123,74 +121,83 @@
     }
   }
 
-  function SpriteActor(pPlayer) {
-    this.base(pPlayer);
-
-    this.on('startstep', onStartStep);
-    this.on('endstep', onEndStep);
-
-    var i, il, k, kl, tScripts;
-    var tData = this.stepData;
-    var tTotalLength = Math.max(tData.length, this.stepScripts.length);
-
-    this.setSceneLength(tTotalLength);
-
-    var tActorsInStepMap = this.actorsInStepMap = new Array(tTotalLength);
-
-    for (i = 0, il = tData.length; i < il; i++) {
-      tScripts = tData[i];
-      for (k = 0, kl = tScripts.length; k < kl; k++) {
-        if (tScripts[k] === void 0) {
-          continue;
-        }
-        this.addPreparationScript(i, tScripts[k]);
-      }
-    }
-
-    tData = this.stepScripts;
-    for (i = 0, il = tData.length; i < il; i++) {
-      tScripts = tData[i];
-      for (k = 0, kl = tScripts.length; k < kl; k++) {
-        if (tScripts[k] === void 0) {
-          continue;
-        }
-        this.addScript(i, tScripts[k]);
-      }
-    }
-
-    var tLabels = this.labels;
-    for (var tName in tLabels) {
-      this.setLabel(tName, tLabels[tName]);
-    }
-
-    this.addProp(new this.propClass(pPlayer.backingContainer));
-  }
-  theatre.inherit(SpriteActor, mSWFCrew.DisplayListActor);
-
-  /** 
-   * Returns all the variables in this movie clip.
-   * @return {Object} An object containing all variable names and values.
+  /**
+   * @class
+   * @extends {theatre.crews.swf.actors.DisplayListActor}
    */
-  SpriteActor.prototype.getAllVariables = function () {
+  var SpriteActor = (function(pSuper) {
+    function SpriteActor(pPlayer) {
+      pSuper.call(this, pPlayer);
 
-    var tAccessors = this.accessors,
-        tVariables = this.variables,
-        tKeyValueList = {}, k, tGetter;
+      this.on('startstep', onStartStep);
+      this.on('endstep', onEndStep);
 
-    for (k in tAccessors) {
-      var v;
-      tGetter = tAccessors[k].getter;
-      if (typeof tGetter === 'function') {
-        v = tGetter();
+      var i, il, k, kl, tScripts;
+      var tData = this.stepData;
+      var tTotalLength = Math.max(tData.length, this.stepScripts.length);
+
+      this.setSceneLength(tTotalLength);
+
+      var tActorsInStepMap = this.actorsInStepMap = new Array(tTotalLength);
+
+      for (i = 0, il = tData.length; i < il; i++) {
+        tScripts = tData[i];
+        for (k = 0, kl = tScripts.length; k < kl; k++) {
+          if (tScripts[k] === void 0) {
+            continue;
+          }
+          this.addPreparationScript(i, tScripts[k]);
+        }
       }
-      tKeyValueList[k] = v;
+
+      tData = this.stepScripts;
+      for (i = 0, il = tData.length; i < il; i++) {
+        tScripts = tData[i];
+        for (k = 0, kl = tScripts.length; k < kl; k++) {
+          if (tScripts[k] === void 0) {
+            continue;
+          }
+          this.addScript(i, tScripts[k]);
+        }
+      }
+
+      var tLabels = this.labels;
+      for (var tName in tLabels) {
+        this.setLabel(tName, tLabels[tName]);
+      }
     }
 
-    for (k in tVariables) {
-      tKeyValueList[k] = tVariables[k];
-    }
+    SpriteActor.prototype = Object.create(pSuper.prototype);
+    SpriteActor.prototype.constructor = SpriteActor;
 
-    return tKeyValueList;
-  };
+    /**
+     * Returns all the variables in this movie clip.
+     * @return {Object} An object containing all variable names and values.
+     */
+    SpriteActor.prototype.getAllVariables = function () {
+      var tAccessors = this.accessors,
+          tVariables = this.variables,
+          tKeyValueList = {}, k, tGetter;
+
+      for (k in tAccessors) {
+        var v;
+        tGetter = tAccessors[k].getter;
+        if (typeof tGetter === 'function') {
+          v = tGetter();
+        }
+        tKeyValueList[k] = v;
+      }
+
+      for (k in tVariables) {
+        tKeyValueList[k] = tVariables[k];
+      }
+
+      return tKeyValueList;
+    };
+
+    return SpriteActor;
+  })(mSWFCrew.actors.DisplayListActor);
+
+  mSWFCrew.actors.SpriteActor = SpriteActor;
 
 }(this));

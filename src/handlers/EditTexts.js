@@ -10,8 +10,8 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
   var mShapeUtils = mSWFCrew.utils.shape;
-  var TextActor = mSWFCrew.actors.TextActor;
-  var TextProp = mSWFCrew.props.TextProp;
+  //var TextActor = mSWFCrew.actors.TextActor;
+  //var TextProp = mSWFCrew.props.TextProp;
 
   function generateGlyphEditTextDrawFunction(pActor, pParams) {
     var i, il, j, jl, tTextBounds = pActor.bounds,
@@ -28,7 +28,7 @@
     for (i = 0, il = tString.length; i < il; i++) {
       var tCharCode = tString.charCodeAt(i),
           tFontInfo = tFont.lookupTable[tCharCode + ''],
-          tAdvance = tFontInfo ? (tFontInfo.advance * pActor.fontheight / 1024) 
+          tAdvance = tFontInfo ? (tFontInfo.advance * pActor.fontheight / 1024)
                       : (tCharCode < 256 ? pActor.fontheight / 2 : pActor.fontheight);
 
       if (pActor.multiline && (tCharCode === 10 || tCharCode === 13 || (tFontInfo && tCurrX + tAdvance > tXBounds))) {
@@ -198,7 +198,7 @@
    * Handles SWF Texts (DefineEditText.)
    * @param {quickswf.Text} pText The Text to handle.
    */
-  mHandlers['DefineEditText'] = function(pEditText) {
+  mHandlers['DefineEditText1'] = function(pEditText) {
     var tDictionaryToActorMap = this.actorMap;
     var tFonts = this.swf.fonts;
     // Define TextProp

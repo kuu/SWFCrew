@@ -17,7 +17,6 @@
 
     this.stage = tStage;
     this.loader = pLoader;
-    this.backingContainer = null;
     this.compositor = null;
     this.root = null;
 
@@ -43,23 +42,22 @@
 
     var tCompositor = this.compositor = this.newCompositor();
 
-    tStage.addActor(tCompositor, 0);
+    tStage.stageManager.addProp(tCompositor);
+
+    // TODO: This is depending on the DOM... should fix it later...
+    pAttachTo.appendChild(tCompositor.getSurface());
 
     var tRoot = this.root = this.newRoot();
 
-    tCompositor.addActor(tRoot, 0);
+    tStage.addActor(tRoot, 0);
 
     tStage.open();
 
-    tCompositor.invalidate();
+    tStage.stageManager.invalidate();
   };
 
   Player.prototype.newCompositor = function() {
-    var tCompositor = new swfcrew.actors.Compositor(this.loader.swf, this.backingContainer, this.loader.options);
-    tCompositor.name = '__compositor__';
-    tCompositor.player = this;
-
-    return tCompositor;
+    return new swfcrew.props.Compositor(this);
   };
 
   Player.prototype.newRoot = function() {

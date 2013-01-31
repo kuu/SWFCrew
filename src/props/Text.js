@@ -1,7 +1,7 @@
 /**
  * @author Kuu Miyazaki
  *
- * Copyright (C) 2012 SWFCrew Project.
+ * Copyright (C) 2013 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
@@ -9,17 +9,17 @@
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
 
-  theatre.define('props.TextProp', TextProp, mSWFCrew);
+  //theatre.define('props.TextProp', TextProp, mSWFCrew);
 
   function TextProp(pBackingCanvas, pWidth, pHeight) {
     this.base(pBackingCanvas, pWidth, pHeight);
     this.cacheDrawResult = true;
     this.cacheWithClass = true;
   }
-  theatre.inherit(TextProp, theatre.crews.canvas.CanvasProp);
+  //theatre.inherit(TextProp, theatre.crews.canvas.CanvasProp);
 
-  var mPreDrawBackup = theatre.crews.canvas.CanvasProp.prototype.preDraw;
-  var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
+  //var mPreDrawBackup = theatre.crews.canvas.CanvasProp.prototype.preDraw;
+  //var mPostDrawBackup = theatre.crews.canvas.CanvasProp.prototype.postDraw;
 
   TextProp.prototype.preDraw = function(pData) {
     if (this.actor.isVisible === false) {
@@ -49,4 +49,4 @@
     pData.context.restore();
   };
 
-}(this));
+});

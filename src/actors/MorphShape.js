@@ -7,16 +7,23 @@
 (function(global) {
 
   var theatre = global.theatre;
-  var mActors = theatre.define('theatre.crews.swf.actors');
-
-  mActors.MorphShapeActor = MorphShapeActor;
+  var mActors = theatre.crews.swf.actors;
 
   /**
-   * @constructor
+   * @class
+   * @extends {theatre.crews.swf.actors.ShapeActor}
    */
-  function MorphShapeActor(pPlayer) {
-    this.base(pPlayer);
-  }
-  theatre.inherit(MorphShapeActor, mActors.ShapeActor);
+  var MorphShapeActor = (function(pSuper) {
+    function MorphShapeActor(pPlayer) {
+      pSuper.call(this, pPlayer);
+    }
+
+    MorphShapeActor.prototype = Object.create(pSuper.prototype);
+    MorphShapeActor.prototype.constructor = MorphShapeActor;
+
+    return MorphShapeActor;
+  })(mActors.ShapeActor);
+
+  mActors.MorphShapeActor = MorphShapeActor;
 
 }(this));

@@ -7,7 +7,7 @@
 
   var theatre = global.theatre;
   var utils = theatre.crews.swf.utils;
-  var PersistentCueListener = theatre.PersistentCueListener;
+  var PersistentCueListener = global.benri.cues.PersistentCueListener;
 
   /**
    * Functions for sending XMLHttpRequests (Ajax).
@@ -79,7 +79,7 @@
 
       var tUrlMatch = pUrl.match(ajax.urlRegex),
           tQuery = ajax.queryify(pQueryData, tUrlMatch[4]),
-          tUrl =  
+          tUrl =
             (tUrlMatch[1] || '') + (tUrlMatch[2] || '') +
             (tUrlMatch[3] || '') + tQuery + (tUrlMatch[5] || '');
 
@@ -97,11 +97,11 @@
      *      - overrideMimeType: {string} MIME type
      * @default pOpts={method: 'GET'}
      * @return {PersistentCueListener} A Delay object.<br>
-     *    Clients are notified of the loaded event by setting a callback 
+     *    Clients are notified of the loaded event by setting a callback
      *        via {@link PersistentCueListener#on}('success', callback) on the returned object.<br>
-     *    Clients are notified of the error event by setting a callback 
+     *    Clients are notified of the error event by setting a callback
      *        via {@link  PersistentCueListener#on}('error', callback) on the returned object.<br>
-     *    Clients are notified of the progress events by setting a callback 
+     *    Clients are notified of the progress events by setting a callback
      *        via {@link PersistentCueListener#on}('progress', callback) on the returned object.<br>
      *    Each callback takes the following object as a single parameter:<br>
      *      - loaded:   An object with properties of {status, statusText, responseType, response, responseXML}<br>
@@ -175,7 +175,7 @@
       if (tQueryData !== null) {
         var tUrlMatch = pUrl.match(ajax.urlRegex),
         tQuery = ajax.queryify(tQueryData, tUrlMatch[4]);
-        pUrl = 
+        pUrl =
           (tUrlMatch[1] || '') + (tUrlMatch[2] || '') +
           (tUrlMatch[3] || '') + tQuery + (tUrlMatch[5] || '');
       }
@@ -208,9 +208,9 @@
      * @see utils.ajax#send
      */
     get: function(pUrl, pOpts) {
-      return this.send(pUrl, Object.mixin({
-        method: 'GET'
-      }, pOpts));
+      pOpts = pOpts || {};
+      pOpts.method = pOpts.method || 'GET';
+      return this.send(pUrl, pOpts);
     },
 
     /**
@@ -223,9 +223,9 @@
      * @see utils.ajax#send
      */
     post: function(pUrl, pOpts) {
-      return this.send(pUrl, Object.mixin({
-        method: 'POST'
-      }, pOpts));
+      pOpts = pOpts || {};
+      pOpts.method = pOpts.method || 'POST';
+      return this.send(pUrl, pOpts);
     },
 
   };

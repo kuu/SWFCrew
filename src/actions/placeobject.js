@@ -8,7 +8,7 @@
 
   var theatre = global.theatre;
   var swfcrew = theatre.crews.swf;
-  var mActions = theatre.define('theatre.crews.swf.actions');
+  var mActions = swfcrew.actions;
 
   /**
    * Sets up adding an Actor to the Stage.
@@ -17,6 +17,7 @@
    */
   mActions.add = function(pSpriteActor, pData) {
     var tNewActor = pSpriteActor.player.newFromId(pData.id);
+
     if (tNewActor === null) {
       return;
     }
@@ -31,11 +32,13 @@
 
     var tMatrix = tNewActor.matrix;
     var tDataMatrix = null;
+
     if (pSpriteActor.buttonMatrix) {
       tDataMatrix = pSpriteActor.buttonMatrix;
     } else if (pData.matrix !== null) {
       tDataMatrix = pData.matrix;
     }
+
     if (tDataMatrix !== null) {
       tMatrix.a = tDataMatrix[0];
       tMatrix.b = tDataMatrix[1];
@@ -45,17 +48,19 @@
       tMatrix.f = tDataMatrix[5];
     }
 
-    tNewActor.stepAdded = pSpriteActor.currentStep;
+    //tNewActor.stepAdded = pSpriteActor.currentStep;
 
-    pSpriteActor.addActor(tNewActor, pData.layer);
+    pSpriteActor.addActor(tNewActor, pData.depth);
   };
 
   mActions.replace = function(pSpriteActor, pData) {
-    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    var tActor = pSpriteActor.getActorAtLayer(pData.depth);
+
     if (tActor === null) {
-      console.error('Could not replace non-existent Actor at layer ' + pData.layer);
+      console.error('Could not replace non-existent Actor at layer ' + pData.depth);
       return;
     }
+
     var tMatrix = tActor.matrix;
 
     tActor.leave();
@@ -75,15 +80,16 @@
     }
 
     tNewActor.matrix = tMatrix;
-    tNewActor.stepAdded = pSpriteActor.currentStep;
+    //tNewActor.stepAdded = pSpriteActor.currentStep;
 
-    pSpriteActor.addActor(tNewActor, pData.layer);
+    pSpriteActor.addActor(tNewActor, pData.depth);
   };
 
   mActions.move = function(pSpriteActor, pData) {
-    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    var tActor = pSpriteActor.getActorAtLayer(pData.depth);
+
     if (tActor === null) {
-      console.error('Could not move non-existent Actor at layer ' + pData.layer);
+      console.error('Could not move non-existent Actor at layer ' + pData.depth);
       return;
     }
 
@@ -106,9 +112,10 @@
   };
 
   mActions.clip = function(pSpriteActor, pData) {
-    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    var tActor = pSpriteActor.getActorAtLayer(pData.depth);
+
     if (tActor === null) {
-      console.error('Could not clip non-existent Actor at layer ' + pData.layer);
+      console.error('Could not clip non-existent Actor at layer ' + pData.depth);
       return;
     }
 
@@ -118,9 +125,10 @@
   };
 
   mActions.colorTransform = function(pSpriteActor, pData) {
-    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    var tActor = pSpriteActor.getActorAtLayer(pData.depth);
+
     if (tActor === null) {
-      console.error('Could not color transform non-existent Actor at layer ' + pData.layer);
+      console.error('Could not color transform non-existent Actor at layer ' + pData.depth);
       return;
     }
 
@@ -130,9 +138,10 @@
   };
 
   mActions.ratio = function(pSpriteActor, pData) {
-    var tActor = pSpriteActor.getActorAtLayer(pData.layer);
+    var tActor = pSpriteActor.getActorAtLayer(pData.depth);
+
     if (tActor === null) {
-      console.error('Could not color transform non-existent Actor at layer ' + pData.layer);
+      console.error('Could not color transform non-existent Actor at layer ' + pData.depth);
       return;
     }
 

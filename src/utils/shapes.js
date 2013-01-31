@@ -1,14 +1,23 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 SWFCrew Project.
+ * Copyright (C) 2013 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
 
   var theatre = global.theatre;
-
-  var mShape = theatre.define('crews.swf.utils.shape', void 0, theatre);
+  var Path = global.benri.geometry.Path;
+  var Point = global.benri.geometry.Point;
+  var Color = global.benri.draw.Color;
+  var Matrix2D = global.benri.geometry.Matrix2D;
+  var Style = global.benri.draw.Style;
+  var StrokeStyle = global.benri.draw.StrokeStyle;
+  var ColorShader = global.benri.draw.ColorShader;
+  var LinearGradientShader = global.benri.draw.LinearGradientShader;
+  var RadialGradientShader = global.benri.draw.RadialGradientShader;
+  var BitmapShader = global.benri.draw.BitmapShader;
+  var mShape = theatre.crews.swf.utils.shape = {};
 
   /**
    * Finds the next edge to connect to for this shape.
@@ -17,7 +26,7 @@
    *  Sorry, needs to be a bool for performance.
    * @private
    */
-  function findNext(pDrawable, pPath, pEdge, pPoints, pPoint, pFinalPointX, pFinalPointY, pAIfTrue) {
+  function findNext(pType, pCanvas, pCanvasStyle, pPath, pEdge, pPoints, pPoint, pFinalPointX, pFinalPointY, pAIfTrue) {
     var tAorB = pAIfTrue === true ? 'a' : 'b';
 
     var tEdgeCompareX;
@@ -43,7 +52,7 @@
     if (tNextPoint === void 0 || (tNextPointEdgesLength = tNextPoint.length) === 1) {
       if (tNextPoint !== void 0) {
         // Remove the base edge as we already used it.
-        var tIndex = tNextPoint.indexOf(pEdge);
+        tIndex = tNextPoint.indexOf(pEdge);
         if (tIndex !== -1) {
           tNextPoint.splice(tIndex, 1);
           delete pPoints[pEdge[tAorB]];
@@ -92,20 +101,24 @@
 
       // Draw the current edge.
       if (tEdgeType === 2) { // Curve
-        pPath.quadraticCurveTo(
+        pPath.qc(
           tNextEdge.controlX,
           tNextEdge.controlY,
           tNextEdge[tPXorX],
           tNextEdge[tPYorY]
         );
       } else if (tEdgeType === 3) { // Straight
-        pPath.lineTo(tNextEdge[tPXorX], tNextEdge[tPYorY]);
+        pPath.l(tNextEdge[tPXorX], tNextEdge[tPYorY]);
       }
 
       // Check if have completed a shape.
       if (pFinalPointX === tNextEdge[tPXorX] && pFinalPointY === tNextEdge[tPYorY]) {
         // We have completed a shape!
-        pPath.paint();
+        if (pType === 'line') {
+          pCanvas.strokePath(pPath, pCanvasStyle);
+        } else {
+          pCanvas.fillPath(pPath, pCanvasStyle);
+        }
 
         // Clean things up as we have now used this edge.
         tIndex = pPoint.indexOf(tNextEdge);
@@ -120,7 +133,9 @@
         return true;
       } else {
         return findNext(
-          pDrawable,
+          pType,
+          pCanvas,
+          pCanvasStyle,
           pPath,
           tNextEdge,
           pPoints,
@@ -135,6 +150,87 @@
     }
   }
 
+  function createStyle(pStyle, pType, pResources, pBounds) {
+    var tType = pStyle.type;
+    var tColor;
+    var tCanvasStyle;
+    var tShader;
+    var tMatrix;
+    var tStops, tStop;
+    var tBitmap;
+    var i, il;
+
+    if (pType === 'line') {
+      tCanvasStyle = new StrokeStyle(pStyle.width);
+      tCanvasStyle.cap = 'round';
+      tCanvasStyle.join = 'round';
+    } else {
+      tCanvasStyle = new Style();
+    }
+
+    tCanvasStyle.compositor = 'xor';
+
+    if (tType === 0x00 || pType === 'line') {
+      // Solid colour
+      tColor = pStyle.color;
+      tCanvasStyle.setColor(new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
+    } else if (pStyle.matrix !== null) {
+      tMatrix = new Matrix2D(pStyle.matrix);
+
+      // TODO: Understand why we can't use transform methods.
+      // Why do we need to do everything manually?
+      // Need to understand the reasons for this.
+      tMatrix.scale(0.05, 0.05);
+      tMatrix.e *= 0.05;
+      tMatrix.f *= 0.05;
+      tMatrix.e -= pBounds.left * 0.05;
+      tMatrix.f -= pBounds.top * 0.05;
+
+      if (tType === 0x10 || tType === 0x12 || tType === 0x13) {
+        // A Gradient
+        if (tType === 0x10) {
+          // Linear Gradient
+          tShader = new LinearGradientShader(new Point(-16384, 0), new Point(16384, 0));
+        } else if (tType === 0x12) {
+          // Radial Gradient
+          tShader = new RadialGradientShader(new Point(0, 0), 16384);
+        } else if (tType === 0x13) {
+          // Focal Radial Gradient
+          console.warn('Focal radient detected. Showing it as a normal radial.');
+          tShader = new RadialGradientShader(new Point(0, 0), 16384);
+        }
+
+        tStops = pStyle.gradient.stops;
+        for (i = 0, il = tStops.length; i < il; i++) {
+          tStop = tStops[i];
+          tColor = tStop.color;
+          tShader.addStop(tStop.ratio / 255, new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
+        }
+
+        tShader.matrix = tMatrix;
+
+        tCanvasStyle.shader = tShader;
+      } else if (tType === 0x40 || tType === 0x41) {
+        // Repeating Bitmap or Clipped Bitmap
+        tBitmap = pResources.get('image', pStyle.bitmapId);
+
+        if (!tBitmap) {
+          tCanvasStyle.setColor(new Color(255, 0, 0, 255));
+        } else {
+          tShader = new BitmapShader(tBitmap);
+          tShader.tileMode = tType === 0x40 ? 'repeat' : 'none';
+          tShader.matrix = tMatrix;
+
+          tCanvasStyle.shader = tShader;
+        }
+      }
+    } else {
+      tCanvasStyle.setColor(new Color(255, 0, 0, 255));
+    }
+
+    return tCanvasStyle;
+  }
+
   /**
    * Flushes the edges arrays in to code.
    * @param {String=line|fill} pType The type of edge.
@@ -142,10 +238,7 @@
    * @param {Array.<Object>} pStyles The array of fill or line styles to reference from.
    * @private
    */
-  function flush(pType, pAllPoints, pStyles) {
-    var tDrawables = [];
-    var tDrawable;
-
+  function flush(pType, pAllPoints, pStyles, pCanvas, pResources, pBounds) {
     var tFinalPointX;
     var tFinalPointY;
     var tPoints;
@@ -154,6 +247,8 @@
     var tEdgeMain;
     var tEdgeType;
     var tPath;
+
+    var tCanvasStyle;
 
     var i, il, k;
 
@@ -167,13 +262,11 @@
         continue;
       }
 
-      if (pType === 'line') {
-        tDrawable = new Line(pStyles[i - 1]);
-      } else {
-        tDrawable = new Shape(pStyles[i - 1]);
-      }
+      pCanvas.enterLayer();
+      pCanvas.matrix.scale(0.05, 0.05);
+      pCanvas.matrix.translate(-pBounds.left, -pBounds.top);
 
-      tDrawables.push(tDrawable);
+      tCanvasStyle = createStyle(pStyles[i - 1], pType, pResources, pBounds);
 
       tFinalPointX = 0;
       tFinalPointY = 0;
@@ -191,34 +284,38 @@
               tEdgeType = tEdgeMain.type;
 
               tPath = new Path(tEdgeMain.px, tEdgeMain.py);
-              tDrawable.addPath(tPath);
 
               if (tEdgeType === 2) { // Curve
-                tPath.quadraticCurveTo(
+                tPath.qc(
                   tEdgeMain.controlX,
                   tEdgeMain.controlY,
                   tEdgeMain.x,
                   tEdgeMain.y
                 );
               } else if (tEdgeType === 3) { // Straight
-                tPath.lineTo(tEdgeMain.x, tEdgeMain.y);
+                tPath.l(tEdgeMain.x, tEdgeMain.y);
               }
 
-              tPath.stroke();
+              pCanvas.strokePath(tPath, tCanvasStyle);
             } else {
               console.warn(k + ' does not have anything connecting to it!');
             }
 
             tPoint = tPoints[tEdgeMain.a];
+
             if (tPoint !== void 0) {
               tPoint.splice(tPoint.indexOf(tEdgeMain), 1);
+
               if (tPoint.length === 0) {
                 delete tPoints[tEdgeMain.a];
               }
             }
+
             tPoint = tPoints[tEdgeMain.b];
+
             if (tPoint !== void 0) {
               tPoint.splice(tPoint.indexOf(tEdgeMain), 1);
+
               if (tPoint.length === 0) {
                 delete tPoints[tEdgeMain.b];
               }
@@ -228,7 +325,7 @@
           }
 
           // Grab the first edge of this point. We use it as our starting edge.
-          // Also remove it as have used it now.
+          // Also remove it as we have used it now.
           tEdgeMain = tPoint.shift();
 
           // These are the actual numerical points we are searching for.
@@ -240,22 +337,23 @@
           tEdgeType = tEdgeMain.type;
 
           tPath = new Path(tEdgeMain.px, tEdgeMain.py);
-          tDrawable.addPath(tPath);
 
           if (tEdgeType === 2) { // Curve
-            tPath.quadraticCurveTo(
+            tPath.qc(
               tEdgeMain.controlX,
               tEdgeMain.controlY,
               tEdgeMain.x,
               tEdgeMain.y
             );
           } else if (tEdgeType === 3) { // Straight
-            tPath.lineTo(tEdgeMain.x, tEdgeMain.y);
+            tPath.l(tEdgeMain.x, tEdgeMain.y);
           }
 
           // Start searching from the b point of the edge.
           if (findNext(
-                tDrawable,
+                pType,
+                pCanvas,
+                tCanvasStyle,
                 tPath,
                 tEdgeMain,
                 tPoints,
@@ -265,23 +363,23 @@
                 false
             ) === false) {
             if (pType === 'line') {
-              tPath.stroke();
+              pCanvas.strokePath(tPath, tCanvasStyle);
             } else {
               console.warn('Encountered an unclosed shape! Forcing it closed!');
               //tPath.close();
-              tPath.lineTo(tFinalPointX, tFinalPointY);
-              tPath.fill();
+              tPath.l(tFinalPointY, tFinalPointY);
+              pCanvas.fillPath(tPath, tCanvasStyle);
             }
           }
 
         }
       }
-    }
 
-    return tDrawables;
+      pCanvas.leaveLayer();
+    }
   }
 
-  var getResolvedDrawables = mShape.getResolvedDrawables = function(pShape) {
+  mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
     var tLineStyles = pShape.lineStyles;
     var tFillEdges, tLineEdges;
@@ -291,6 +389,7 @@
     var tCurrentFillStyle0 = null;
     var tCurrentFillStyle1 = null;
     var tCurrentLineStyle = null;
+    var tBounds = pShape.bounds;
 
     var tRecords = pShape.records;
     var tRecord;
@@ -303,8 +402,6 @@
     var tPreviousY = 0;
 
     var i, il;
-
-    var tNewDrawables = [];
 
     function populateFillBuffers() {
       tFillEdges = new Array(tFillStyles.length + 1);
@@ -333,6 +430,8 @@
         pArray[pEdge.b].push(pEdge);
       }
     }
+
+    pCanvas.clear(new Color(0, 0, 0, 0));
 
     populateFillBuffers();
     populateLineBuffers();
@@ -392,13 +491,13 @@
         }
       } else if (tType === 1) { // Change
         if (tRecord.fillStyles !== null) {
-          tNewDrawables = tNewDrawables.concat(flush('fill', tFillEdges, tFillStyles));
+          flush('fill', tFillEdges, tFillStyles, pCanvas, pResources, tBounds);
           tFillStyles = tRecord.fillStyles;
           populateFillBuffers();
         }
 
         if (tRecord.lineStyles !== null) {
-          tNewDrawables = tNewDrawables.concat(flush('line', tLineEdges, tLineStyles));
+          flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
           tLineStyles = tRecord.lineStyles;
           populateLineBuffers();
         }
@@ -425,346 +524,8 @@
       }
     }
 
-    tNewDrawables = tNewDrawables.concat(flush('fill', tFillEdges, tFillStyles));
-    tNewDrawables = tNewDrawables.concat(flush('line', tLineEdges, tLineStyles));
-
-    return tNewDrawables;
+    flush('fill', tFillEdges, tFillStyles, pCanvas, pResources, tBounds);
+    flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
   };
-
-  function Path(pStartX, pStartY) {
-    this.startX = pStartX;
-    this.startY = pStartY;
-    this.records = [];
-  }
-
-  Path.prototype.constructor = Path;
-
-  var mMinX, mMinY, mMaxX, mMaxY;
-  var mCalcBounds = false;
-  function initBounds() {
-    mMinX =  Number.MAX_VALUE;
-    mMinY =  Number.MAX_VALUE;
-    mMaxX = -Number.MAX_VALUE;
-    mMaxY = -Number.MAX_VALUE;
-  }
-  function updateBounds(pX, pY) {
-    mMinX = Math.min(mMinX, pX);
-    mMinY = Math.min(mMinY, pY);
-    mMaxX = Math.max(mMaxX, pX);
-    mMaxY = Math.max(mMaxY, pY);
-  }
-
-  Path.prototype.draw = function(pCode, pDrawable) {
-    var tRecords = this.records;
-    var tRecord;
-    var tType;
-
-    pCode.push(
-      'tTempContext.beginPath();',
-      'tTempContext.moveTo(' + this.startX + ', ' + this.startY + ');'
-    );
-    mCalcBounds && updateBounds(this.startX, this.startY);
-
-    for (var i = 0, il = tRecords.length; i < il; i++) {
-      tRecord = tRecords[i];
-      tType = tRecord.type;
-
-      if (tType === 'quadraticCurve') {
-        pCode.push('tTempContext.quadraticCurveTo(' + tRecord.controlX + ', ' + tRecord.controlY + ', ' + tRecord.x + ', ' + tRecord.y + ');');
-        mCalcBounds && updateBounds(tRecord.x, tRecord.y);
-      } else if (tType === 'line') {
-        pCode.push('tTempContext.lineTo(' + tRecord.x + ', ' + tRecord.y + ');');
-        mCalcBounds && updateBounds(tRecord.x, tRecord.y);
-      } else if (tType === 'close') {
-        pCode.push('tTempContext.closePath();');
-      } else if (tType === 'fill') {
-        pCode.push('tTempContext.fill();');
-      } else if (tType === 'stroke') {
-        pCode.push('tTempContext.stroke();');
-      } else if (tType === 'paint') {
-        pDrawable.paintPath(pCode, this);
-      }
-    }
-  };
-
-  Path.prototype.lineTo = function(pX, pY) {
-    this.records.push({
-      type: 'line',
-      x: pX,
-      y: pY
-    });
-  };
-
-  Path.prototype.quadraticCurveTo = function(pControlX, pControlY, pX, pY) {
-    this.records.push({
-      type: 'quadraticCurve',
-      controlX: pControlX,
-      controlY: pControlY,
-      x: pX,
-      y: pY
-    });
-  };
-
-  Path.prototype.close = function() {
-    this.records.push({
-      type: 'close'
-    });
-  };
-
-  Path.prototype.fill = function() {
-    this.records.push({
-      type: 'fill'
-    });
-  };
-
-  Path.prototype.stroke = function() {
-    this.records.push({
-      type: 'stroke'
-    });
-  };
-
-  Path.prototype.paint = function() {
-    this.records.push({
-      type: 'paint'
-    });
-  }
-
-  function Drawable(pStyle) {
-    this.style = pStyle;
-    this.paths = [];
-  }
-
-  Drawable.prototype.constructor = Drawable;
-
-  Drawable.prototype.draw = function(pCode, pBounds, pImages) {
-    var tPaths = this.paths;
-
-    for (var i = 0, il = tPaths.length; i < il; i++) {
-      tPaths[i].draw(pCode, this);
-    }
-  };
-
-  Drawable.prototype.addPath = function(pPath) {
-    this.paths.push(pPath);
-  };
-
-  Drawable.prototype.paintPath = function(pPath) {};
-
-  /**
-   * @class
-   * @extends {Drawable}
-   */
-  var Shape = (function(pSuper) {
-    function Shape(pStyle) {
-      pSuper.call(this, pStyle);
-    }
-
-    Shape.prototype = Object.create(pSuper.prototype);
-    Shape.prototype.constructor = Shape;
-
-    Shape.prototype.paintPath = function(pCode, pPath) {
-      pCode.push('tTempContext.fill();');
-    };
-
-    Shape.prototype.draw = function(pCode, pBounds, pImages) {
-      var tStyleData = this.style;
-      var tMatrix;
-
-      pCode.push(
-        'tTempContext.globalCompositeOperation = \'xor\';'
-      );
-
-      if (tStyleData.color !== null) {
-        pCode.push('tTempContext.fillStyle = \'' + tStyleData.color.toString() + '\';');
-      } else if (tStyleData.matrix !== null) {
-        tMatrix = tStyleData.matrix;
-
-        var tTopLeftX = -16384 * tMatrix[0] + -16384 * tMatrix[2] + tMatrix[4];
-        var tTopLeftY = -16384 * tMatrix[1] + -16384 * tMatrix[3] + tMatrix[5];
-        var tTopRightX = 16384 * tMatrix[0] + -16384 * tMatrix[2] + tMatrix[4];
-        var tTopRightY = 16384 * tMatrix[1] + -16384 * tMatrix[3] + tMatrix[5];
-        var tBottomLeftX = -16384 * tMatrix[0] + 16384 * tMatrix[2] + tMatrix[4];
-        var tBottomLeftY = -16384 * tMatrix[1] + 16384 * tMatrix[3] + tMatrix[5];
-        var tBottomRightX = 16384 * tMatrix[0] + 16384 * tMatrix[2] + tMatrix[4];
-        var tBottomRightY = 16384 * tMatrix[1] + 16384 * tMatrix[3] + tMatrix[5];
-
-
-        /*var tPoint0X = tBottomLeftX + tBottomLeftX - tTopLeftX;
-        var tPoint0Y = tBottomLeftY + tBottomLeftY - tTopLeftY;
-        var tPoint1X = tBottomRightX + tBottomRightX - tTopRightX;
-        var tPoint1Y = tBottomRightY + tBottomRightY - tTopRightY;
-        */
-
-
-        var tPoint0X = -16384 * tMatrix[0] + tMatrix[4];
-        var tPoint0Y = -16384 * tMatrix[1] + tMatrix[5];
-        var tPoint1X = 16384 * tMatrix[0] + tMatrix[4];
-        var tPoint1Y = 16384 * tMatrix[1] + tMatrix[5];
-
-
-        //tPoint0X -= (tBottomLeftX - tTopLeftX) * tMatrix[2];
-        //tPoint0Y -= (tBottomLeftY - tTopLeftY) * tMatrix[3];
-        //tPoint1X += (tBottomRightX - tTopRightX) * tMatrix[2];
-        //tPoint1Y += (tBottomRightY - tTopRightY) * tMatrix[3];
-
-        var tStops;
-        var tStop;
-        var tStopsIndex;
-        var tStopsLength;
-
-        if (tStyleData.type === 0x10) { // linear gradient
-          pCode.push(
-            'var tStyle = tTempContext.createLinearGradient(' + tPoint0X + ', ' + tPoint0Y + ', ' + tPoint1X + ', ' + tPoint1Y + ');'
-          );
-
-          tStops = tStyleData.gradient.stops;
-          for (tStopsIndex = 0, tStopsLength = tStops.length; tStopsIndex < tStopsLength; tStopsIndex++) {
-            tStop = tStops[tStopsIndex];
-            pCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
-          }
-        } else if (tStyleData.type === 0x12) { // radial gradient
-          var tCircleWidth = Math.abs(tPoint1X - tPoint0X);
-          var tCircleHeight = Math.abs(tPoint1Y - tPoint0Y);
-          var tCircleX = tPoint0X + tCircleWidth / 2;
-          var tCircleY = tPoint0Y + tCircleHeight / 2;
-
-          tStops = tStyleData.gradient.stops;
-          pCode.push(
-            'var tStyle = tTempContext.createRadialGradient(' + tCircleX + ', ' + tCircleY + ', 0, ' + tCircleX + ', ' + tCircleY + ', ' + tCircleWidth / 2 + ');'
-          );
-
-          for (tStopsIndex = 0, tStopsLength = tStops.length; tStopsIndex < tStopsLength; tStopsIndex++) {
-            tStop = tStops[tStopsIndex];
-            pCode.push('tStyle.addColorStop(' + tStop.ratio / 255 + ', \'' + tStop.color.toString() + '\');');
-          }
-        } else if (tStyleData.type === 0x13) { // focal radial gradient
-          console.warn('Focal radient detected. Showing it as red.');
-          pCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
-        } else if (tStyleData.type === 0x40 || tStyleData.type === 0x41) { // repeating bitmap or clipped bitmap
-          if (pImages.get(tStyleData.bitmapId) === void 0) {
-            pCode.push('var tStyle = \'rgba(255, 0, 0, 1)\';');
-          } else {
-            pCode.push(
-              'var tPatternMatrix = [' + tMatrix[0] + ', ' + tMatrix[1] + ', ' + tMatrix[2] + ', ' + tMatrix[3] + ', ' + tMatrix[4] + ', ' + tMatrix[5] + '];',
-              'var tPatternStyle = tTempContext.createPattern(this.images.get(\'image\',' + tStyleData.bitmapId + '), \'' + (tStyleData.type === 0x40 ? 'repeat' : 'no-repeat') + '\');',
-              'var tStyle = \'rgba(0, 255, 0, 1)\';'
-            );
-          }
-        }
-
-        pCode.push('tTempContext.fillStyle = tStyle;');
-      }
-
-      pSuper.prototype.draw.call(this, pCode, pBounds, pImages);
-
-      if (tStyleData.bitmapId !== null && pImages.get(tStyleData.bitmapId) !== void 0) {
-        pCode.push(
-          'tTempContext.save();',
-          'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
-          'tTempContext.scale(.05, .05);',
-          'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');',
-          'tTempContext.transform(tPatternMatrix[0], tPatternMatrix[1], tPatternMatrix[2], tPatternMatrix[3], tPatternMatrix[4], tPatternMatrix[5]);',
-          'tTempContext.globalCompositeOperation = \'source-in\';',
-          'tTempContext.fillStyle = tPatternStyle;',
-          'tTempContext.fillRect(-16384, -16384, 32768, 32768);',
-          'tTempContext.restore();'
-        );
-      }
-    };
-
-    return Shape;
-  })(Drawable);
-
-  /**
-   * @class
-   * @extends {Drawable}
-   */
-  var Line = (function(pSuper) {
-    function Line(pStyle) {
-      pSuper.call(this, pStyle);
-    }
-
-    Line.prototype = Object.create(pSuper.prototype);
-    Line.prototype.constructor = Line;
-
-    Line.prototype.paintPath = function(pCode, pPath) {
-      pCode.push('tTempContext.stroke();');
-    };
-
-    Line.prototype.draw = function(pCode, pBounds, pImages) {
-      var tStyleData = this.style;
-
-      pCode.push(
-        'tTempContext.globalCompositeOperation = \'source-over\';',
-        'tTempContext.lineWidth = ' + tStyleData.width + ';',
-        'tTempContext.strokeStyle = \'' + tStyleData.color.toString() + '\';'
-      );
-
-      pSuper.prototype.draw.call(this, pCode, pBounds, pImages);
-    };
-
-    return Line;
-  })(Drawable);
-
-
-  var getShapeDrawFunction = mShape.getShapeDrawFunction = function(pShapes, pBounds, pImages) {
-    var tWidth = Math.ceil((pBounds.right - pBounds.left) / 20);
-    var tHeight = Math.ceil((pBounds.bottom - pBounds.top) / 20);
-    // TODO: Account for the very small offset created by this scale.
-
-    var i, il;
-    var tShape;
-
-    var tCode = [
-      'var tContext = pData.context;',
-      'var tTempCanvas = this.drawingCanvas;',
-      'var tTempContext = this.drawingContext;',
-      'tTempContext.save();',
-      'tTempContext.translate(' + -pBounds.left + ',' + -pBounds.top + ');'
-    ];
-
-    for (i = 0, il = pShapes.length; i < il; i++) {
-      tCode.push(
-        'tTempContext.save();',
-        'tTempContext.setTransform(1, 0, 0, 1, 0, 0);',
-        'tTempContext.clearRect(0, 0, ' + tWidth + ', ' + tHeight + ');',
-        'tTempContext.restore();'
-      );
-
-      tShape = pShapes[i];
-      tShape.draw(tCode, pBounds, pImages);
-
-      tCode.push(
-        //'console.log(tTempCanvas.width, tTempCanvas.height, ' + tWidth + ', ' + tHeight + ');',
-        'tContext.drawImage(tTempCanvas, 0, 0);'
-        //'tContext.drawImage(tTempCanvas, 0, 0, ' + tWidth + ', ' + tHeight + ', 0, 0, ' + tWidth + ', ' + tHeight + ');' // TODO: Is it possible to get rid of an image style way of doing this?
-      );
-    }
-
-    tCode.push('tTempContext.restore();');
-
-    return new Function('pData', tCode.join('\n'));
-  };
-
-  /**
-   * Generates a new function for drawing a given shape.
-   */
-  mShape.generateDrawFunction = function(pImages, pShape, pActualBounds) {
-    if (pActualBounds) {
-      mCalcBounds = true;
-      initBounds();
-    }
-    var tDrawFunc = getShapeDrawFunction(getResolvedDrawables(pShape), pShape.bounds, pImages);
-
-    if (pActualBounds) {
-      mCalcBounds = false;
-      pActualBounds.left   = mMinX;
-      pActualBounds.right  = mMaxX;
-      pActualBounds.top    = mMinY;
-      pActualBounds.bottom = mMaxY;
-    }
-    return tDrawFunc;
-  }
-
 
 }(this));

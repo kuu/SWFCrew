@@ -470,7 +470,7 @@
       return;
     }
 
-    var tNewActor = new tOriginal.constructor(tOriginal.player);
+    var tNewActor = tOriginal.player.newFromId(tOriginal.displayListId);
     tNewActor.isNonTimeline = true;
 
     var tOriginalColorTransform = tOriginal.colorTransform;
@@ -554,7 +554,7 @@
   mHandlers.GetURL2 = function(pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag) {
 //console.log('GetURL2: ', pURL, pTarget, pSendVarsMethod, pLoadTargetFlag, pLoadVariablesFlag);
 
-    var tLastValidTarget = this.getLastValidTarget(), 
+    var tLastValidTarget = this.getLastValidTarget(),
         tUrl, tWindow, tOptions, tDelay, tSelf = this;
 
     // The coresponding API calls are:
@@ -609,7 +609,7 @@
           tData, tTarget, tQueryStrings;
 
       if (pLoadTargetFlag) {
-        // pTarget is a path to a sprite. The path can be in slash or dot syntax. 
+        // pTarget is a path to a sprite. The path can be in slash or dot syntax.
         tData = tSelf.callMapped('GetTargetAndData', pTarget, tLastValidTarget, true);
         tTarget = tData.target;
         if (pLoadVariablesFlag) {

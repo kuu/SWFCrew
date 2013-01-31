@@ -10,8 +10,8 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
   var mShapeUtils = mSWFCrew.utils.shape;
-  var TextActor = mSWFCrew.actors.TextActor;
-  var TextProp = mSWFCrew.props.TextProp;
+  //var TextActor = mSWFCrew.actors.TextActor;
+  //var TextProp = mSWFCrew.props.TextProp;
 
   function generateGlyphTextDrawFunction(pText, pSWF, pParams) {
 //console.log(pText);
@@ -106,7 +106,7 @@
    * Handles SWF Texts (DefineText, DefineText2.)
    * @param {quickswf.Text} pText The Text to handle.
    */
-  mHandlers['DefineText'] = function(pText) {
+  mHandlers['DefineText1'] = function(pText) {
     var tDictionaryToActorMap = this.actorMap;
 
     // Define TextProp

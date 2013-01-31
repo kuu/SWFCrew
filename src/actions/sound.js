@@ -8,7 +8,7 @@
 
   var theatre = global.theatre;
   var AudioProp = theatre.crews.audio.AudioProp;
-  var mActions = theatre.define('theatre.crews.swf.actions');
+  var mActions = theatre.crews.swf.actions;
 
   /**
    * Sets up playing back event sounds.

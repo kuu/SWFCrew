@@ -30,14 +30,28 @@
    * @param {quickswf.Sprite} pSprite The Sprite to handle.
    */
   mHandlers['DefineButton'] = function(pButton) {
-    var tDictionaryToActorMap = this.actorMap;
-    var tButtonActor = tDictionaryToActorMap[pButton.id] = function BuiltinButtonActor(pPlayer) {
-      this.base(pPlayer);
-    };
-    theatre.inherit(tButtonActor, ButtonActor);
+    var tActorMap = this.actorMap;
+    var tId = pButton.id;
 
-    var tCondActions = tButtonActor.prototype.condActions = new Array();
-    var tRecords = tButtonActor.prototype.records = new Array();
+    /**
+     * @class
+     * @extends {theatre.crews.swf.actors.ButtonActor}
+     */
+    var BuiltinButtonActor = this.actorMap[tId] = (function(pSuper) {
+      function BuiltinButtonActor(pPlayer) {
+        pSuper.call(this, pPlayer);
+      }
+
+      BuiltinButtonActor.prototype = Object.create(pSuper.prototype);
+      BuiltinButtonActor.prototype.constructor = BuiltinButtonActor;
+
+      return BuiltinButtonActor;
+    })(ButtonActor);
+
+    BuiltinButtonActor.prototype.displayListId = tId;
+
+    var tCondActions = BuiltinButtonActor.prototype.condActions = [];
+    var tRecords = BuiltinButtonActor.prototype.records = [];
     var i, il, tRawCondActions = pButton.condActions || [],
         tRawRecords = pButton.records || [];
 
@@ -58,7 +72,8 @@
       }
       tRecords.push(tRecord);
     }
-    tButtonActor.prototype.isMenu = pButton.isMenu;
+
+    BuiltinButtonActor.prototype.isMenu = pButton.isMenu;
   };
 
 }(this));

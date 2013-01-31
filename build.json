@@ -32,7 +32,7 @@
 
   "targets": {
     "swfcrew": {
-      "builder": "closure-compiler",
+      "builder": "js",
       "compilationLevel": "WHITESPACE_ONLY",
       "outputs": "${binDir}/swfcrew.js",
       "resources": [
@@ -54,67 +54,6 @@
         {
           "type": "files",
           "root": "src",
-          "files": [
-            "swfcrew.js",
-            "Loaders.js",
-            "Player.js"
-          ]
-        },
-
-        {
-          "type": "files",
-          "root": "src/utils",
-          "include": "\\.js$"
-        },
-
-        {
-          "type": "files",
-          "root": "src/actors",
-          "files": [
-            "DisplayList.js",
-            "Compositor.js",
-            "Sprite.js",
-            "Shape.js",
-            "MorphShape.js",
-            "Button.js",
-            "Text.js"
-          ]
-        },
-
-        {
-          "type": "files",
-          "root": "src/props",
-          "files": [
-            "CanvasSprite.js",
-            "WebGLSprite.js",
-            "Shape.js",
-            "MorphShape.js",
-            "Text.js"
-          ]
-        },
-
-        {
-          "type": "files",
-          "root": "src/handlers",
-          "files": [
-            "Sprites.js",
-            "Shapes.js",
-            "MorphShapes.js",
-            "Buttons.js",
-            "Texts.js",
-            "EditTexts.js"
-          ]
-        },
-
-        {
-          "type": "files",
-          "root": "src/actions",
-          "include": "\\.js$"
-        },
-
-        {
-          "type": "files",
-          "root": "src/AS",
           "include": "\\.js$"
         }
       ]
