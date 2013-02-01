@@ -9,6 +9,13 @@
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
 
+  /**
+   * This will apply the timeline cache that was
+   * saved in the endStep handler.
+   *
+   * @param  {theatre.Actor} pActor The Actor to apply cache to.
+   * @param  {number} pCurrentStep The current step to apply.
+   */
   function applyTimelineCache(pActor, pCurrentStep) {
     var i, il;
     var tActorsInStepMap = pActor.actorsInStepMap[pCurrentStep];
@@ -79,6 +86,9 @@
 
   /**
    * @private
+   * If we have some cache for this step, instead of
+   * playing the entire step (which can be slow) apply
+   * the cache from the previous time we did this step.
    */
   function onStartStep(pData) {
     var tCurrentStep = pData.currentStep;
@@ -96,6 +106,14 @@
     }
   }
 
+  /**
+   * This will cache the status of all Actors
+   * currently belonging to this Actor so that
+   * when we move around the timeline later
+   * we can move very fast.
+   * The downside is that this uses quite a bit
+   * of memory.
+   */
   function onEndStep(pData) {
     var tCurrentStep = pData.currentStep;
     var tChildren = this.getActors();
@@ -129,13 +147,19 @@
     function SpriteActor(pPlayer) {
       pSuper.call(this, pPlayer);
 
+      // When a step starts, check to see if
+      // we should use the cached version or not.
       this.on('startstep', onStartStep);
+
+      // Cache our results after executing a step.
       this.on('endstep', onEndStep);
 
       var i, il, k, kl, tScripts;
       var tData = this.stepData;
       var tTotalLength = Math.max(tData.length, this.stepScripts.length);
 
+      // Need to forceable set the scene length as
+      // it's possible to have empty steps to the end of the scene.
       this.setSceneLength(tTotalLength);
 
       var tActorsInStepMap = this.actorsInStepMap = new Array(tTotalLength);

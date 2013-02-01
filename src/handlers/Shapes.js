@@ -28,17 +28,24 @@
     var tPixelWidth = (tTwipsWidth / 20 | 0) + 1;
     var tPixelHeight = (tTwipsHeight / 20 | 0) + 1
 
+    // Create a new Canvas to render to.
     var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
 
+    // Convert and draw the SWF shape in to the new Canvas.
+    // Note that only the draw commands were created at this point.
+    // We have not flushed the commands or generated a bitmap yet.
     mShapeUtils.drawShape(pShape, tCanvas, this.swf.mediaLoader);
 
     /**
+     * A custom class for this particular Shape.
      * @class
      * @extends {theatre.crews.swf.actors.ShapeActor}
      */
     var BuiltinShapeActor = this.actorMap[tId] = (function(pSuper) {
       function BuiltinShapeActor(pPlayer) {
         pSuper.call(this, pPlayer);
+
+        // We need to render this so add a prop to do that.
         this.addProp(new ShapeRenderProp(this.pixelWidth, this.pixelHeight));
       }
 

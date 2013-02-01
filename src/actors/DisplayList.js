@@ -9,20 +9,68 @@
   var theatre = global.theatre;
 
   /**
+   * A class for Actors that exist on the Display List of the SWF file.
    * @class
    * @extends {theatre.Actor}
    */
   var DisplayListActor = (function(pSuper) {
     function DisplayListActor(pPlayer) {
       pSuper.call(this);
+
+      /**
+       * The player this Actor is playing in.
+       * @type {theatre.crews.swf.Player}
+       */
       this.player = pPlayer;
+
+      /**
+       * Variables that are set and get in ActionScript.
+       * @type {object}
+       */
       this.variables = {};
+
+      /**
+       * The colour transform to apply to this Actor
+       * while rendering (if any).
+       * @type {quickswf.structs.CXFORM=}
+       */
       this.colorTransform = null;
+
+      /**
+       * If non-zero, this Actor should start a new mask
+       * with a depth of this number.
+       * @type {number}
+       */
       this.clipDepth = 0;
+
+      /**
+       * A flag for if this Actor is visible or not.
+       * @type {boolean}
+       */
       this.isVisible = true;
+
+      /**
+       * A flag for if this Actor's matrix is locked.
+       * When the matrix is locked it means that the
+       * matrix can only be modified via ActionScript and
+       * can no longer be modified using actions such as move.
+       * It get's locked when ActionScript modifies the matrix
+       * in any way.
+       * @type {boolean}
+       */
       this.isMatrixLocked = false;
+
+      /**
+       * A flag for if this Actor was created via the timeline
+       * or via ActionScript.
+       * @type {boolean}
+       */
       this.isNonTimeline = false;
-      this.stepAdded = -1;
+
+      /**
+       * The ratio of the Actor for use in MorphShape.
+       * @type {number}
+       */
       this.ratio = 0;
 
       // -1 means auto.
@@ -53,6 +101,12 @@
     DisplayListActor.prototype = Object.create(pSuper.prototype);
     DisplayListActor.prototype.constructor = DisplayListActor;
 
+    /**
+     * The Display List ID of the actor. This is like a class ID
+     * and is not unique per Actor.
+     * It is also used as the key in the player's actorMap.
+     * @type {number}
+     */
     DisplayListActor.prototype.displayListId = -1;
 
     DisplayListActor.prototype.setSize = function(pWidth, pHeight) {
@@ -135,6 +189,10 @@
       }
     };
 
+    /**
+     * Get's a variable saved in this Actor.
+     * @param  {string} pName The name of the variable.
+     */
     DisplayListActor.prototype.getVariable = function (pName) {
       var tAccessor = this.accessors[pName.toLowerCase()];
       if (tAccessor && tAccessor.getter[0]) {
@@ -144,6 +202,11 @@
       }
     };
 
+    /**
+     * Set's a variable to be saved in this Actor.
+     * @param {string} pName  The name of the variable.
+     * @param {object} pValue The value of the variable.
+     */
     DisplayListActor.prototype.setVariable = function (pName, pValue) {
       var tAccessor = this.accessors[pName.toLowerCase()];
       if (tAccessor && tAccessor.setter) {
