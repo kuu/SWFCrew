@@ -20,11 +20,144 @@
   var mShape = theatre.crews.swf.utils.shape = {};
 
   /**
+   * Creates a new Style for the given SWF style.
+   * @param  {object} pStyle     The QuickSWF style.
+   * @param  {string=line|fill} pType The type of style.
+   * @param  {quickswf.utils.MediaLoader} pResources The loaded resources.
+   * @param  {quickswf.structs.RECT} pBounds The bounds of this shape.
+   * @return {benri.draw.style} The new Style to be used for drawing.
+   */
+  function createStyle(pStyle, pType, pResources, pBounds) {
+
+    /**
+     * @type {string}
+     */
+    var tType = pStyle.type;
+
+    /**
+     * @type {benri.draw.Color}
+     */
+    var tColor;
+
+    /**
+     * @type {benri.draw.Style}
+     */
+    var tCanvasStyle;
+
+    /**
+     * @type {benri.draw.Shader}
+     */
+    var tShader;
+
+    /**
+     * @type {benri.geometry.Matrix2D}
+     */
+    var tMatrix;
+
+    /**
+     * Gradient Stops.
+     */
+    var tStops, tStop;
+
+    /**
+     * The Bitmap for patterns.
+     */
+    var tBitmap;
+
+    var i, il;
+
+    if (pType === 'line') {
+      tCanvasStyle = new StrokeStyle(pStyle.width);
+      // All SWF < 8 lines are round.
+      tCanvasStyle.cap = 'round';
+      tCanvasStyle.join = 'round';
+    } else {
+      // Just use a standard style.
+      tCanvasStyle = new Style();
+    }
+
+    // We use the XOR compositor for shapes of the same style.
+    // We do this to support 'holes' inside a shape.
+    tCanvasStyle.compositor = 'xor';
+
+    if (tType === 0x00 || pType === 'line') {
+      // Solid colour
+      tColor = pStyle.color;
+      tCanvasStyle.setColor(new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
+    } else if (pStyle.matrix !== null) {
+      tMatrix = new Matrix2D(pStyle.matrix);
+
+      // TODO: Understand why we can't use transform methods.
+      // Why do we need to do everything manually?
+      // Need to understand the reasons for this.
+      tMatrix.scale(0.05, 0.05);
+      tMatrix.e *= 0.05;
+      tMatrix.f *= 0.05;
+      tMatrix.e -= pBounds.left * 0.05;
+      tMatrix.f -= pBounds.top * 0.05;
+
+      if (tType === 0x10 || tType === 0x12 || tType === 0x13) {
+        // A Gradient
+        // Gradients are based off of a massive -16384,-16384 to 16384,16384 square.
+        // They get sized to the correct size via the matrix at runtime.
+        if (tType === 0x10) {
+          // Linear Gradient
+          tShader = new LinearGradientShader(new Point(-16384, 0), new Point(16384, 0));
+        } else if (tType === 0x12) {
+          // Radial Gradient
+          tShader = new RadialGradientShader(new Point(0, 0), 16384);
+        } else if (tType === 0x13) {
+          // Focal Radial Gradient
+          console.warn('Focal radient detected. Showing it as a normal radial.');
+          tShader = new RadialGradientShader(new Point(0, 0), 16384);
+        }
+
+        tStops = pStyle.gradient.stops;
+        for (i = 0, il = tStops.length; i < il; i++) {
+          tStop = tStops[i];
+          tColor = tStop.color;
+          tShader.addStop(tStop.ratio / 255, new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
+        }
+
+        tShader.matrix = tMatrix;
+
+        tCanvasStyle.shader = tShader;
+      } else if (tType === 0x40 || tType === 0x41) {
+        // Repeating Bitmap or Clipped Bitmap
+        tBitmap = pResources.get('image', pStyle.bitmapId);
+
+        if (!tBitmap) {
+          tCanvasStyle.setColor(new Color(255, 0, 0, 255));
+        } else {
+          tShader = new BitmapShader(tBitmap);
+          tShader.tileMode = tType === 0x40 ? 'repeat' : 'none';
+          tShader.matrix = tMatrix;
+
+          tCanvasStyle.shader = tShader;
+        }
+      }
+    } else {
+      // Don't know how to support this. Colour it red.
+      tCanvasStyle.setColor(new Color(255, 0, 0, 255));
+    }
+
+    return tCanvasStyle;
+  }
+
+  /**
    * Finds the next edge to connect to for this shape.
-   * @param {Object} pEdge The edge to search from.
-   * @param {Boolean} pAIfTrue Which side of the edge to search from.
-   *  Sorry, needs to be a bool for performance.
    * @private
+   * @param  {string} pType
+   * @param  {benri.draw.Canvas} pCanvas
+   * @param  {benri.draw.Style} pCanvasStyle
+   * @param  {benri.geometry.Path} pPath
+   * @param  {object} pEdge
+   * @param  {Array.<object>} pPoints
+   * @param  {object} pPoint
+   * @param  {object} pFinalPointX
+   * @param  {object} pFinalPointY
+   * @param  {boolean} pAIfTrue
+   * @return {boolean} True if a shape was found. False when not.
    */
   function findNext(pType, pCanvas, pCanvasStyle, pPath, pEdge, pPoints, pPoint, pFinalPointX, pFinalPointY, pAIfTrue) {
     var tAorB = pAIfTrue === true ? 'a' : 'b';
@@ -150,93 +283,16 @@
     }
   }
 
-  function createStyle(pStyle, pType, pResources, pBounds) {
-    var tType = pStyle.type;
-    var tColor;
-    var tCanvasStyle;
-    var tShader;
-    var tMatrix;
-    var tStops, tStop;
-    var tBitmap;
-    var i, il;
-
-    if (pType === 'line') {
-      tCanvasStyle = new StrokeStyle(pStyle.width);
-      tCanvasStyle.cap = 'round';
-      tCanvasStyle.join = 'round';
-    } else {
-      tCanvasStyle = new Style();
-    }
-
-    tCanvasStyle.compositor = 'xor';
-
-    if (tType === 0x00 || pType === 'line') {
-      // Solid colour
-      tColor = pStyle.color;
-      tCanvasStyle.setColor(new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
-    } else if (pStyle.matrix !== null) {
-      tMatrix = new Matrix2D(pStyle.matrix);
-
-      // TODO: Understand why we can't use transform methods.
-      // Why do we need to do everything manually?
-      // Need to understand the reasons for this.
-      tMatrix.scale(0.05, 0.05);
-      tMatrix.e *= 0.05;
-      tMatrix.f *= 0.05;
-      tMatrix.e -= pBounds.left * 0.05;
-      tMatrix.f -= pBounds.top * 0.05;
-
-      if (tType === 0x10 || tType === 0x12 || tType === 0x13) {
-        // A Gradient
-        if (tType === 0x10) {
-          // Linear Gradient
-          tShader = new LinearGradientShader(new Point(-16384, 0), new Point(16384, 0));
-        } else if (tType === 0x12) {
-          // Radial Gradient
-          tShader = new RadialGradientShader(new Point(0, 0), 16384);
-        } else if (tType === 0x13) {
-          // Focal Radial Gradient
-          console.warn('Focal radient detected. Showing it as a normal radial.');
-          tShader = new RadialGradientShader(new Point(0, 0), 16384);
-        }
-
-        tStops = pStyle.gradient.stops;
-        for (i = 0, il = tStops.length; i < il; i++) {
-          tStop = tStops[i];
-          tColor = tStop.color;
-          tShader.addStop(tStop.ratio / 255, new Color(tColor.red, tColor.green, tColor.blue, tColor.alpha * 255));
-        }
-
-        tShader.matrix = tMatrix;
-
-        tCanvasStyle.shader = tShader;
-      } else if (tType === 0x40 || tType === 0x41) {
-        // Repeating Bitmap or Clipped Bitmap
-        tBitmap = pResources.get('image', pStyle.bitmapId);
-
-        if (!tBitmap) {
-          tCanvasStyle.setColor(new Color(255, 0, 0, 255));
-        } else {
-          tShader = new BitmapShader(tBitmap);
-          tShader.tileMode = tType === 0x40 ? 'repeat' : 'none';
-          tShader.matrix = tMatrix;
-
-          tCanvasStyle.shader = tShader;
-        }
-      }
-    } else {
-      tCanvasStyle.setColor(new Color(255, 0, 0, 255));
-    }
-
-    return tCanvasStyle;
-  }
 
   /**
-   * Flushes the edges arrays in to code.
-   * @param {String=line|fill} pType The type of edge.
-   * @param {Object.<String, Object>} pAllPoints A map of all points to edges in this shape so far.
-   * @param {Array.<Object>} pStyles The array of fill or line styles to reference from.
+   * Flushes the edges to the given Canvas as draw commands.
    * @private
+   * @param  {string} pType      The type.
+   * @param  {Array.<object>} pAllPoints
+   * @param  {Array.<object>} pStyles
+   * @param  {benri.draw.Canvas} pCanvas
+   * @param  {quickswf.utils.MediaLoader} pResources
+   * @param  {quickswf.structs.RECT} pBounds
    */
   function flush(pType, pAllPoints, pStyles, pCanvas, pResources, pBounds) {
     var tFinalPointX;
@@ -262,8 +318,11 @@
         continue;
       }
 
+      // Each style has it's own Canvas layer.
       pCanvas.enterLayer();
+      // Convert to pixels from twips.
       pCanvas.matrix.scale(0.05, 0.05);
+      // Correct the offset created by negative bounds.
       pCanvas.matrix.translate(-pBounds.left, -pBounds.top);
 
       tCanvasStyle = createStyle(pStyles[i - 1], pType, pResources, pBounds);
@@ -379,6 +438,12 @@
     }
   }
 
+  /**
+   * Draws the given SWF shape to the given Canvas.
+   * @param  {quickswf.structs.Shape} pShape The shape to draw.
+   * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
+   * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
+   */
   mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
     var tLineStyles = pShape.lineStyles;

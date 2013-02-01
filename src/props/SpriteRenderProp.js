@@ -8,6 +8,7 @@
 (function(global) {
 
   /**
+   * The class resonsible for rendering Sprites.
    * @class
    * @extends {theatre.crews.swf.props.DisplayListRenderProp}
    */

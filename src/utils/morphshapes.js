@@ -26,10 +26,24 @@
 
   var morphshapes = mSWFCrew.utils.morphshapes = {};
 
+  /**
+   * Interpolate between a start and end value.
+   * @param  {number} pStart The start value.
+   * @param  {number} pEnd   The end value.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {number}        The interpolated value.
+   */
   function interpolate(pStart, pEnd, pRatio) {
     return pStart + (pEnd - pStart) * pRatio;
   }
 
+  /**
+   * Interpolate between a start Color and end Color.
+   * @param  {benri.draw.Color} pStart The start color.
+   * @param  {benri.draw.Color} pEnd   The end color.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.draw.Color}        The interpolated Color.
+   */
   function interpolateColor(pStart, pEnd, pRatio) {
     var tStartRGBA = pStart.getRGBA();
     var tEndRGBA = pEnd.getRGBA();
@@ -41,6 +55,13 @@
     );
   }
 
+  /**
+   * Interpolate between a start Point and end Point.
+   * @param  {benri.geometry.Point} pStart The start Point.
+   * @param  {benri.geometry.Point} pEnd   The end Point.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.geometry.Point}        The interpolated Point.
+   */
   function interpolatePoint(pStart, pEnd, pRatio) {
     return new Point(
       interpolate(pStart.x, pEnd.x, pRatio),
@@ -48,6 +69,13 @@
     );
   }
 
+  /**
+   * Interpolate between a start Matrix2D and end Matrix2D.
+   * @param  {benri.geometry.Matrix2D} pStart The start Matrix2D.
+   * @param  {benri.geometry.Matrix2D} pEnd   The end Matrix2D.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.geometry.Matrix2D}        The interpolated Matrix2D.
+   */
   function interpolateMatrix(pStart, pEnd, pRatio) {
     return new Matrix2D([
       interpolate(pStart.a, pStart.a, pRatio),
@@ -59,6 +87,14 @@
     ]);
   }
 
+  /**
+   * Interpolate all values in the given array using the given
+   * interpolation function.
+   * @param  {Array.<object>} pStart The start Array.
+   * @param  {Array.<object>} pEnd   The end Array.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {Array.<object>}        The interpolated Array.
+   */
   function interpolateArray(pStart, pEnd, pRatio, pFunction) {
     var i, il = pStart.length;
     var tArray = new Array(il);
@@ -70,6 +106,13 @@
     return tArray;
   }
 
+  /**
+   * Interpolate between a start StrokeStyle and end StrokeStyle.
+   * @param  {benri.draw.StrokeStyle} pStart The start StrokeStyle.
+   * @param  {benri.draw.StrokeStyle} pEnd   The end StrokeStyle.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.draw.StrokeStyle}        The interpolated StrokeStyle.
+   */
   function interpolateStrokeStyle(pStart, pEnd, pRatio) {
     var tStyle = new StrokeStyle(interpolate(pStart.width, pEnd.width, pRatio));
     tStyle.cap = pStart.cap;
@@ -80,18 +123,32 @@
     return tStyle;
   }
 
+  /**
+   * Interpolate between a start Style and end Style.
+   * @param  {benri.draw.Style} pStart The start Style.
+   * @param  {benri.draw.Style} pEnd   The end Style.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.draw.Style}        The interpolated Style.
+   */
   function interpolateStyle(pStart, pEnd, pRatio) {
     var tStyle = new Style();
     tStyle.shader = interpolateShader(pStart.shader, pEnd.shader, pRatio);
     return tStyle;
   }
 
+  /**
+   * Interpolate between a start Shader and end Shader.
+   * @param  {benri.draw.Shader} pStart The start Shader.
+   * @param  {benri.draw.Shader} pEnd   The end Shader.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {benri.draw.Shader}        The interpolated Shader.
+   */
   function interpolateShader(pStart, pEnd, pRatio) {
     var tShader;
 
-    if (pStart.__proto__ === ColorShader.prototype) {
+    if (pStart.constructor === ColorShader) {
       return new ColorShader(interpolateColor(pStart.color, pEnd.color, pRatio));
-    } else if (pStart.__proto__ === LinearGradientShader.prototype) {
+    } else if (pStart.constructor === LinearGradientShader) {
       tShader = new LinearGradientShader(
         interpolatePoint(pStart.startPoint, pEnd.startPoint, pRatio),
         interpolatePoint(pStart.endPoint, pEnd.endPoint, pRatio),
@@ -100,7 +157,7 @@
       );
       tShader.matrix = interpolateMatrix(pStart.matrix, pEnd.matrix, pRatio);
       return tShader;
-    } else if (pStart.__proto__ === RadialGradientShader.prototype) {
+    } else if (pStart.constructor === RadialGradientShader) {
       tShader = new RadialGradientShader(
         interpolatePoint(pStart.startPoint, pEnd.startPoint, pRatio),
         interpolate(pStart.radius, pEnd.radius, pRatio),
@@ -109,7 +166,7 @@
       );
       tShader.matrix = interpolateMatrix(pStart.matrix, pEnd.matrix, pRatio);
       return tShader;
-    } else if (pStart.__proto__ === BitmapShader.prototype) {
+    } else if (pStart.constructor === BitmapShader) {
       tShader = new BitmapShader(
         pStart.bitmap
       );
@@ -120,6 +177,13 @@
     return new Shader();
   }
 
+  /**
+   * Interpolate between start canvas records and end canvas records.
+   * @param  {Array.<object>} pStartRecords The start records.
+   * @param  {Array.<object>} pEndRecords   The end records.
+   * @param  {number} pRatio The ratio from 0 to 1.
+   * @return {Array.<object>}        The interpolated records.
+   */
   morphshapes.interpolateRecords = function(pStartRecords, pEndRecords, pRatio) {
     var tStartRecordsLength = pStartRecords.length;
     var tEndRecordsLength = pEndRecords.length;
@@ -129,6 +193,12 @@
     var tCurrentPoint, tPreviousPoint;
     var i;
 
+    /**
+     * Finds the previous Point from the current record.
+     * @param  {Array.<object>} pRecords The records to search in.
+     * @param  {number} pCurrentIndex The current position in the records.
+     * @return {benri.geometry.Point} The previous Point.
+     */
     function getPreviousPoint(pRecords, pCurrentIndex) {
       var tRecord, tRecordType;
 
@@ -235,6 +305,11 @@
     return tRecords;
   };
 
+  /**
+   * Converts MorphShape fill styles to regular Fill styles.
+   * @param  {Array.<object>} pMorphFillStyles The MorphShape fill styles.
+   * @return {Array.<object>}                  The regular fill styles.
+   */
   morphshapes.convertFillStyles = function(pMorphFillStyles) {
     var i, il = pMorphFillStyles.length;
     var tStartAndEndStyles = [new Array(il), new Array(il)];
@@ -271,6 +346,11 @@
     return tStartAndEndStyles;
   };
 
+  /**
+   * Converts MorphShape line styles to regular line styles.
+   * @param  {Array.<object>} pMorphLineStyles The MorphShape line styles.
+   * @return {Array.<object>}                  The regular line styles.
+   */
   morphshapes.convertLineStyles = function(pMorphLineStyles) {
     var i, il = pMorphLineStyles.length;
     var tStartAndEndStyles = [new Array(il), new Array(il)];
@@ -301,6 +381,12 @@
     return tStartAndEndStyles;
   };
 
+  /**
+   * Converts a MorphShape gradient to a standard gradient
+   * @param  {object} pMorphGradient
+   * @param  {string} pStartOrEnd    The start or end records.
+   * @return {object}                The new gradient.
+   */
   morphshapes.convertGradient = function(pMorphGradient, pStartOrEnd) {
     if (!pMorphGradient) {
       return null;
