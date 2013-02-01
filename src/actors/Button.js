@@ -75,31 +75,32 @@
         tThis.stage.ignore('keydown', onKeyDown);
       });
 
-    // Add the button shapes.
-    var tMatrix; // Necessary because only the first record can have the matrix.
-    for (var i = 0, il = tRecords.length; i < il; i++) {
-      var tRecord = tRecords[i];
-      //console.log('** record=', tRecord);
-      if (tRecord.state.up) { // Initial state is ButtonUp.
-        if (!tMatrix || tMatrix.join('') === '100100') {
-          tMatrix = tRecord.matrix;
-        } else {
-          if (tRecord.matrix && tRecord.matrix.join('') !== '100100') {
+      // Add the button shapes.
+      var tMatrix; // Necessary because only the first record can have the matrix.
+      for (var i = 0, il = tRecords.length; i < il; i++) {
+        var tRecord = tRecords[i];
+        //console.log('** record=', tRecord);
+        if (tRecord.state.up) { // Initial state is ButtonUp.
+          if (!tMatrix || tMatrix.join('') === '100100') {
             tMatrix = tRecord.matrix;
+          } else {
+            if (tRecord.matrix && tRecord.matrix.join('') !== '100100') {
+              tMatrix = tRecord.matrix;
+            }
           }
-        }
-        var tActor = pPlayer.newFromId(tRecord.id);
-        if (tActor instanceof mSWFCrew.actors.SpriteActor) {
-          tActor.buttonMatrix = tMatrix;
-        }
-        var Matrix3d = tActor.matrix;
-        if (tMatrix) {
-          Matrix3d.a = tMatrix[0]; //console.log('-->' + tRecord.id + '[0]:' + tMatrix[0]);
-          Matrix3d.b = tMatrix[1]; //console.log('-->' + tRecord.id + '[1]:' + tMatrix[1]);
-          Matrix3d.c = tMatrix[2]; //console.log('-->' + tRecord.id + '[2]:' + tMatrix[2]);
-          Matrix3d.d = tMatrix[3]; //console.log('-->' + tRecord.id + '[3]:' + tMatrix[3]);
-          Matrix3d.e = tMatrix[4]; //console.log('-->' + tRecord.id + '[4]:' + tMatrix[4]);
-          Matrix3d.f = tMatrix[5]; //console.log('-->' + tRecord.id + '[5]:' + tMatrix[5]);
+          var tActor = pPlayer.newFromId(tRecord.id);
+          if (tActor instanceof mSWFCrew.actors.SpriteActor) {
+            tActor.buttonMatrix = tMatrix;
+          }
+          var tMatrix3d = tActor.matrix;
+          if (tMatrix) {
+            tMatrix3d.a = tMatrix[0]; //console.log('-->' + tRecord.id + '[0]:' + tMatrix[0]);
+            tMatrix3d.b = tMatrix[1]; //console.log('-->' + tRecord.id + '[1]:' + tMatrix[1]);
+            tMatrix3d.c = tMatrix[2]; //console.log('-->' + tRecord.id + '[2]:' + tMatrix[2]);
+            tMatrix3d.d = tMatrix[3]; //console.log('-->' + tRecord.id + '[3]:' + tMatrix[3]);
+            tMatrix3d.e = tMatrix[4]; //console.log('-->' + tRecord.id + '[4]:' + tMatrix[4]);
+            tMatrix3d.f = tMatrix[5]; //console.log('-->' + tRecord.id + '[5]:' + tMatrix[5]);
+          }
         }
       }
     }
