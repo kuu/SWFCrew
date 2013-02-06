@@ -22,7 +22,7 @@
     var tLayerString, tLayer;
     var tFutureChildren = pActor.getActors();
     var tPastChild, tFutureChild;
-    var tPastChildActor;
+    var tPastChildActor, tFutureChildActor;
 
     var tNewChildren = [];
     var tActorsToAdd = [];
@@ -66,7 +66,18 @@
     });
 
     for (i = 0, il = tActorsToAdd.length; i < il; i++) {
-      pActor.addActor(tActorsToAdd[i][0], tActorsToAdd[i][1]);
+      if (tActorsToAdd[i][0].stage === null) {
+        tPastChildActor = tActorsToAdd[i][0];
+        tFutureChildActor = pActor.player.newFromId(tPastChildActor.displayListId);
+        tFutureChildActor.name = tPastChildActor.name;
+        tFutureChildActor.matrix = tPastChildActor.matrix;
+        tFutureChildActor.colorTransform = tPastChildActor.colorTransform;
+        tFutureChildActor.clipDepth = tPastChildActor.clipDepth;
+        tFutureChildActor.ratio = tPastChildActor.ratio;
+        pActor.addActor(tFutureChildActor, tActorsToAdd[i][1]);
+      } else {
+        pActor.addActor(tActorsToAdd[i][0], tActorsToAdd[i][1]);
+      }
     }
 
     tActorsToAdd.length = 0;
@@ -140,6 +151,22 @@
   }
 
   /**
+   * When we leave the stage, remove all children.
+   * Also destroy our own cache.
+   * @param  {object} pData
+   */
+  function onLeave(pData) {
+    var tChildren = this.getActors();
+    var i, il;
+
+    for (i = 0, il = tChildren.length; i < il; i++) {
+      tChildren[i].leave();
+    }
+
+    this.actorsInStepMap = new Array(this.numberOfSteps);
+  }
+
+  /**
    * @class
    * @extends {theatre.crews.swf.actors.DisplayListActor}
    */
@@ -153,6 +180,9 @@
 
       // Cache our results after executing a step.
       this.on('endstep', onEndStep);
+
+      // Remove all children permamently, even from cache when we leave.
+      this.on('leave', onLeave);
 
       var i, il, k, kl, tScripts;
       var tData = this.stepData;

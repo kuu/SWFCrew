@@ -73,10 +73,6 @@
        */
       this.ratio = 0;
 
-      // -1 means auto.
-      this._width = -1;
-      this._height = -1;
-
       // this.accessors holds the references to the functions for accessing child node's variables.
       // It has the following structure:
       //
@@ -109,21 +105,15 @@
      */
     DisplayListActor.prototype.displayListId = -1;
 
-    DisplayListActor.prototype.setSize = function(pWidth, pHeight) {
-      this._width = pWidth;
-      this._height = pHeight;
+    /**
+     * Gets a bounding Rect for this Actor relative to the Stage
+     * in absolute pixel coordinates.
+     * @return {[type]} [description]
+     */
+    DisplayListActor.prototype.getBoundingRect = function() {
 
-      this.invalidate();
-    };
+      var tChildren = this.getActors();
 
-    DisplayListActor.prototype.getSize = function() {
-      var tWidth = this._width;
-      var tHeight = this._height;
-      var tSize;
-
-      tSize = [tWidth, tHeight];
-
-      return tSize;
     };
 
     /**
