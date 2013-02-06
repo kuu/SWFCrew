@@ -92,14 +92,14 @@
           if (tActor instanceof mSWFCrew.actors.SpriteActor) {
             tActor.buttonMatrix = tMatrix;
           }
-          var tMatrix3d = tActor.matrix;
+          var tMatrix2d = tActor.matrix;
           if (tMatrix) {
-            tMatrix3d.a = tMatrix[0]; //console.log('-->' + tRecord.id + '[0]:' + tMatrix[0]);
-            tMatrix3d.b = tMatrix[1]; //console.log('-->' + tRecord.id + '[1]:' + tMatrix[1]);
-            tMatrix3d.c = tMatrix[2]; //console.log('-->' + tRecord.id + '[2]:' + tMatrix[2]);
-            tMatrix3d.d = tMatrix[3]; //console.log('-->' + tRecord.id + '[3]:' + tMatrix[3]);
-            tMatrix3d.e = tMatrix[4]; //console.log('-->' + tRecord.id + '[4]:' + tMatrix[4]);
-            tMatrix3d.f = tMatrix[5]; //console.log('-->' + tRecord.id + '[5]:' + tMatrix[5]);
+            tMatrix2d.a = tMatrix[0]; //console.log('-->' + tRecord.id + '[0]:' + tMatrix[0]);
+            tMatrix2d.b = tMatrix[1]; //console.log('-->' + tRecord.id + '[1]:' + tMatrix[1]);
+            tMatrix2d.c = tMatrix[2]; //console.log('-->' + tRecord.id + '[2]:' + tMatrix[2]);
+            tMatrix2d.d = tMatrix[3]; //console.log('-->' + tRecord.id + '[3]:' + tMatrix[3]);
+            tMatrix2d.e = tMatrix[4]; //console.log('-->' + tRecord.id + '[4]:' + tMatrix[4]);
+            tMatrix2d.f = tMatrix[5]; //console.log('-->' + tRecord.id + '[5]:' + tMatrix[5]);
           }
         }
       }
