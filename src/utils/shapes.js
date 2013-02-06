@@ -9,6 +9,7 @@
   var theatre = global.theatre;
   var Path = global.benri.geometry.Path;
   var Point = global.benri.geometry.Point;
+  var Rect = global.benri.geometry.Rect;
   var Color = global.benri.draw.Color;
   var Matrix2D = global.benri.geometry.Matrix2D;
   var Style = global.benri.draw.Style;
@@ -18,6 +19,8 @@
   var RadialGradientShader = global.benri.draw.RadialGradientShader;
   var BitmapShader = global.benri.draw.BitmapShader;
   var mShape = theatre.crews.swf.utils.shape = {};
+
+  var mBoundingBox = null;
 
   /**
    * Creates a new Style for the given SWF style.
@@ -252,6 +255,7 @@
         } else {
           pCanvas.fillPath(pPath, pCanvasStyle);
         }
+        mBoundingBox.merge(pPath.getBoundingRect());
 
         // Clean things up as we have now used this edge.
         tIndex = pPoint.indexOf(tNextEdge);
@@ -356,6 +360,7 @@
               }
 
               pCanvas.strokePath(tPath, tCanvasStyle);
+              mBoundingBox.merge(pPath.getBoundingRect());
             } else {
               console.warn(k + ' does not have anything connecting to it!');
             }
@@ -429,6 +434,7 @@
               tPath.l(tFinalPointY, tFinalPointY);
               pCanvas.fillPath(tPath, tCanvasStyle);
             }
+            mBoundingBox.merge(tPath.getBoundingRect());
           }
 
         }
@@ -443,8 +449,11 @@
    * @param  {quickswf.structs.Shape} pShape The shape to draw.
    * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
    * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
+   * @param  {boolean} pAppend If true, drawShape doesn't clear the canvas.
+   * @return {boolean} Returns false if any paths exceeds the shape's bounds.
+   *      In that case, pShape.bounds is updated with the values that can contain every paths.
    */
-  mShape.drawShape = function(pShape, pCanvas, pResources) {
+  mShape.drawShape = function(pShape, pCanvas, pResources, pAppend) {
     var tFillStyles = pShape.fillStyles;
     var tLineStyles = pShape.lineStyles;
     var tFillEdges, tLineEdges;
@@ -496,7 +505,13 @@
       }
     }
 
-    pCanvas.clear(new Color(0, 0, 0, 0));
+    mBoundingBox = new Rect(new Point(tBounds.left, tBounds.top),
+                        tBounds.right- tBounds.left,
+                        tBounds.bottom - tBounds.top);
+
+    if (!pAppend) {
+      pCanvas.clear(new Color(0, 0, 0, 0));
+    }
 
     populateFillBuffers();
     populateLineBuffers();
@@ -591,6 +606,20 @@
 
     flush('fill', tFillEdges, tFillStyles, pCanvas, pResources, tBounds);
     flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
+
+    // Return false if any paths exeeds the bounds.
+    var tOrigin = mBoundingBox.origin;
+    if (tOrigin.x < tBounds.left
+      || tOrigin.y < tBounds.top
+      || mBoundingBox.width > tBounds.right - tBounds.left
+      || mBoundingBox.height > tBounds.bottom - tBounds.top) {
+      tBounds.left = tOrigin.x;
+      tBounds.top = tOrigin.y;
+      tBounds.right = tOrigin.x + mBoundingBox.width;
+      tBounds.bottom = tOrigin.y + mBoundingBox.height;
+      return false;
+    }
+    return true;
   };
 
 }(this));
