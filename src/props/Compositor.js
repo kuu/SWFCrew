@@ -167,6 +167,7 @@
         tContext.renderBuffer(tMask.maskBufferId, new MaskShader(tContext, tMask.texture));
         tContext.restore();
         this.destroyBuffer(tMask.maskBufferId);
+        tContext.destroyTexture(tMask.texture);
         delete this.masks[tId];
       }
     };
@@ -190,6 +191,7 @@
           tContext.renderBuffer(tMask.maskBufferId, new MaskShader(tContext, tMask.texture));
           tContext.restore();
           this.destroyBuffer(tMask.maskBufferId);
+          tContext.destroyTexture(tMask.texture);
           delete this.masks[tId];
         }
       }

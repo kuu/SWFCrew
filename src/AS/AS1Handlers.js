@@ -7,6 +7,7 @@
 (function(global) {
   var mHandlers = global.theatre.crews.swf.ASHandlers;
   var utils = global.theatre.crews.swf.utils;
+  var Matrix2D = global.benri.geometry.Matrix2D;
 
   mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
     var i;
@@ -328,7 +329,10 @@
         tMatrix.d = (tMatrix.d < 0 ? -1 : 1) * this.toInt(pValue) / this.height;
         break;
       case 10: // rotation
-        console.warn('Set Property ROTATION.');
+        tMatrix = tTarget.matrix;
+        tMatrix.rotateInDegrees(tMatrix.getRotationInDegrees() - this.toFloat(pValue));
+        tTarget.isMatrixLocked = true;
+        tTarget.invalidate();
         break;
       case 11: // target
         console.warn('Set Property target');
@@ -377,6 +381,7 @@
     }
 
     var tResult;
+    var tMatrix;
 
     switch (pProperty) {
       case 0: // x
@@ -384,17 +389,9 @@
       case 1: // y
         return tTarget.matrix.f / 20;
       case 2: // xscale
-        tResult = tTarget.matrix.a * 100;
-        if (tResult < 0) {
-          tResult = -tResult;
-        }
-        return tResult;
+        return tTarget.matrix.getScaleX() * 100;
       case 3: // yscale
-        tResult = tTarget.matrix.d * 100;
-        if (tResult < 0) {
-          tResult = -tResult;
-        }
-        return tResult;
+        return tTarget.matrix.getScaleY() * 100;
       case 4: // currentFrame
         return tTarget.currentStep + 1;
       case 5: // totalFrames
@@ -415,8 +412,7 @@
         // TODO: Use getSize() when done.
         return tTarget.height || 0;
       case 10: // rotation
-        console.warn('Get Property ROTATION.');
-        return 0;
+        return tTarget.matrix.getRotationInDegrees();
       case 11: // target
         if (tTarget.__isRoot === true) {
           return '/';
