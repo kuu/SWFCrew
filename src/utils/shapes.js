@@ -360,7 +360,7 @@
               }
 
               pCanvas.strokePath(tPath, tCanvasStyle);
-              mBoundingBox.merge(pPath.getBoundingRect());
+              mBoundingBox.merge(tPath.getBoundingRect());
             } else {
               console.warn(k + ' does not have anything connecting to it!');
             }
