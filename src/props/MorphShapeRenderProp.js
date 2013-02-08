@@ -61,14 +61,14 @@
       // To counteract that, in the drawing code we have translated
       // by the negative of the bounds.
       // Here we offset that negative translation to bring it back in place.
-      tContext.matrix.translate(
+      tContext.translate(
         tStartBounds.left + (tEndBounds.left - tStartBounds.left) * tRatio,
         tStartBounds.top + (tEndBounds.top - tStartBounds.top) * tRatio
       );
 
       // We are rendering a bitmap in the end, so revert the matrix back to normal
       // temporarily.
-      tContext.matrix.scale(20, 20);
+      tContext.scale(20, 20);
 
       // If the current ratio is different than the cached one,
       // we need to regenerate our cache.
@@ -78,7 +78,7 @@
       }
 
       // Render the Renderable.
-      tContext.render(tRenderable);
+      tRenderable.render(tContext);
     };
 
     /**

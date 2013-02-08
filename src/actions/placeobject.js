@@ -79,14 +79,7 @@
         return;
       }
 
-      var tMatrix = tActor.matrix;
-      var tDataMatrix = pData.matrix;
-      tMatrix.a = tDataMatrix[0];
-      tMatrix.b = tDataMatrix[1];
-      tMatrix.c = tDataMatrix[2];
-      tMatrix.d = tDataMatrix[3];
-      tMatrix.e = tDataMatrix[4];
-      tMatrix.f = tDataMatrix[5];
+      tActor.matrix.fill(pData.matrix);
 
       tActor.invalidate();
     }
