@@ -7,7 +7,7 @@
 (function(global) {
 
   var theatre = global.theatre;
-  var mSWFCrew = theatre.crews.swf;
+  var mActors = theatre.crews.swf.actors;
 
   /**
    * @class
@@ -16,17 +16,14 @@
   var TextActor = (function(pSuper) {
     function TextActor(pPlayer) {
       pSuper.call(this, pPlayer);
-
-      this.width  = (this.bounds.right  - this.bounds.left) / 20;
-      this.height = (this.bounds.bottom - this.bounds.top ) / 20;
     }
 
     TextActor.prototype = Object.create(pSuper.prototype);
     TextActor.prototype.constructor = TextActor;
 
     return TextActor;
-  })(mSWFCrew.actors.DisplayListActor);
+  })(mActors.DisplayListActor);
 
-  mSWFCrew.actors.TextActor = TextActor;
+  mActors.TextActor = TextActor;
 
 }(this));

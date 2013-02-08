@@ -47,14 +47,14 @@
       // To counteract that, in the drawing code we have translated
       // by the negative of the bounds.
       // Here we offset that negative translation to bring it back in place.
-      tContext.matrix.translate(tActor.bounds.left, tActor.bounds.top);
+      tContext.translate(tActor.bounds.left, tActor.bounds.top);
 
       // We are rendering a bitmap in the end, so revert the matrix back to normal
       // temporarily.
-      tContext.matrix.scale(20, 20);
+      tContext.scale(20, 20);
 
       // Render the cached Renderable.
-      tContext.render(tRenderable);
+      tRenderable.render(tContext);
     };
 
     return TextRenderProp;
