@@ -72,7 +72,7 @@
       var tTextRecord = tTextRecords[i],
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
-          tFontScale, tAscent, tDescent, tYPadding,
+          tFontScale, tAscent, tYPadding,
           tFont, tStyle, tGlyph, tString = '';
 
       // Get benri.draw.Font object.
@@ -88,12 +88,11 @@
       tSwfFont = tSWF.fonts[tFontId];
       if (!(tFont = this.getFontCache(tFontId))) {
         tFont = createFont(tSwfFont);
-        this.setFontCache(tFont);
+        this.setFontCache(tFontId, tFont);
       }
 
       tFontScale = tTextRecord.height / 1024;
       tAscent = ((tFont.ascent === 0) ? 880 : tSwfFont.ascent) * tFontScale;
-      tDescent = ((tFont.descent === 0) ? 144 : tSwfFont.descent) * tFontScale;
       tXOffset = tTextRecord.xAdvance;
       tYOffset = tTextRecord.y - tAscent;
 

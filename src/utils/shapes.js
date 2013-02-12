@@ -449,11 +449,10 @@
    * @param  {quickswf.structs.Shape} pShape The shape to draw.
    * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
    * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
-   * @param  {boolean} pAppend If true, drawShape doesn't clear the canvas.
    * @return {boolean} Returns false if any paths exceeds the shape's bounds.
    *      In that case, pShape.bounds is updated with the values that can contain every paths.
    */
-  mShape.drawShape = function(pShape, pCanvas, pResources, pAppend) {
+  mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
     var tLineStyles = pShape.lineStyles;
     var tFillEdges, tLineEdges;
@@ -509,9 +508,7 @@
                         tBounds.right- tBounds.left,
                         tBounds.bottom - tBounds.top);
 
-    if (!pAppend) {
-      pCanvas.clear(new Color(0, 0, 0, 0));
-    }
+    pCanvas.clear(new Color(0, 0, 0, 0));
 
     populateFillBuffers();
     populateLineBuffers();

@@ -94,12 +94,7 @@
           }
           var tMatrix2d = tActor.matrix;
           if (tMatrix) {
-            tMatrix2d.a = tMatrix[0]; //console.log('-->' + tRecord.id + '[0]:' + tMatrix[0]);
-            tMatrix2d.b = tMatrix[1]; //console.log('-->' + tRecord.id + '[1]:' + tMatrix[1]);
-            tMatrix2d.c = tMatrix[2]; //console.log('-->' + tRecord.id + '[2]:' + tMatrix[2]);
-            tMatrix2d.d = tMatrix[3]; //console.log('-->' + tRecord.id + '[3]:' + tMatrix[3]);
-            tMatrix2d.e = tMatrix[4]; //console.log('-->' + tRecord.id + '[4]:' + tMatrix[4]);
-            tMatrix2d.f = tMatrix[5]; //console.log('-->' + tRecord.id + '[5]:' + tMatrix[5]);
+            tMatrix2d.fill(tMatrix);
           }
         }
       }
