@@ -32,19 +32,19 @@
 
   function createGlyph(pCharCode, pSwfShape, pAdvance, pMediaLoader) {
     var tTempCanvas = new Canvas(1024, 1024);
-    var tExtent = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
-    pSwfShape.bounds = tExtent;
+    var tRect = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
     tGlyph.data = tTempCanvas.getRecords(true);
     tGlyph.advance = pAdvance;
+    tGlyph.rect = tRect;
     return tGlyph;
   }
 
   function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset) {
     var tTextStyle = new TextStyle(pFont);
-    tTextStyle.fontHeight = pTextRecord.height / 20;
-    tTextStyle.leftMargin = pXOffset / 20;
-    tTextStyle.topMargin = pYOffset / 20;
+    tTextStyle.fontHeight = Math.floor(pTextRecord.height / 20);
+    tTextStyle.leftMargin = Math.floor(pXOffset / 20);
+    tTextStyle.topMargin = Math.floor(pYOffset / 20);
     return tTextStyle;
   }
 
@@ -112,10 +112,10 @@
         if (!tGlyph) {
           tShape = tSwfFont.shapes[tGlyphIndex];
           tShape.fillStyles[0].color = tTextRecord.color;
-          tGlyph = createGlyph(tCharCode, tShape, tSwfGlyph.advance / tFontScale, tSWF.mediaLoader);
+          tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
-          tGlyphHeight = Math.max(tGlyphHeight, tShape.bounds.bottom - tShape.bounds.top);
         }
+        tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.height);
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }

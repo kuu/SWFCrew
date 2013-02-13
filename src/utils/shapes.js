@@ -449,7 +449,7 @@
    * @param  {quickswf.structs.Shape} pShape The shape to draw.
    * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
    * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
-   * @return {object} The bounding box that can contain every paths.
+   * @return {benri.geometry.Rect} The bounding box that can contain every paths.
    */
   mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
@@ -603,14 +603,7 @@
     flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
 
     // Return the bounding box
-    var tOrigin = mBoundingBox.origin;
-    var tExtent = {
-        left : tOrigin.x,
-        top : tOrigin.y,
-        right : tOrigin.x + mBoundingBox.width,
-        bottom : tOrigin.y + mBoundingBox.height
-      };
-    return tExtent;
+    return mBoundingBox;
   };
 
 }(this));
