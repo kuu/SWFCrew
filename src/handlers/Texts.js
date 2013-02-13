@@ -34,7 +34,7 @@
     var tTempCanvas = new Canvas(1024, 1024);
     mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
-    tGlyph.data = tTempCanvas.records;
+    tGlyph.data = tTempCanvas.getRecords();
     tGlyph.advance = pAdvance;
     return tGlyph;
   }
