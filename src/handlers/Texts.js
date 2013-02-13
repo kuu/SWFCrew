@@ -32,18 +32,19 @@
 
   function createGlyph(pCharCode, pSwfShape, pAdvance, pMediaLoader) {
     var tTempCanvas = new Canvas(1024, 1024);
-    mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
+    var tExtent = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
+    pSwfShape.bounds = tExtent;
     var tGlyph = new Glyph(pCharCode);
-    tGlyph.data = tTempCanvas.getRecords();
+    tGlyph.data = tTempCanvas.getRecords(true);
     tGlyph.advance = pAdvance;
     return tGlyph;
   }
 
   function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset) {
     var tTextStyle = new TextStyle(pFont);
-    tTextStyle.fontHeight = pTextRecord.height;
-    tTextStyle.leftMargin = pXOffset;
-    tTextStyle.topMargin = pYOffset;
+    tTextStyle.fontHeight = pTextRecord.height / 20;
+    tTextStyle.leftMargin = pXOffset / 20;
+    tTextStyle.topMargin = pYOffset / 20;
     return tTextStyle;
   }
 
@@ -54,9 +55,6 @@
   mHandlers['DefineText'] = function(pText) {
     var tId = pText.id;
     var tBounds = pText.bounds;
-
-    var tParams = new Object();
-
     var tTwipsWidth = tBounds.right  - tBounds.left;
     var tTwipsHeight = tBounds.bottom - tBounds.top;
     var tPixelWidth = Math.round(tTwipsWidth / 20);
@@ -72,8 +70,9 @@
       var tTextRecord = tTextRecords[i],
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
-          tFontScale, tAscent, tYPadding,
-          tFont, tStyle, tGlyph, tString = '';
+          tFontScale, tXOffset = tTextRecord.xAdvance, tYOffset,
+          tFont, tStyle, tGlyph, tCharCode, tString = '',
+          tShape, tGlyphIndex, tGlyphHeight;
 
       // Get benri.draw.Font object.
       if (tFontId === null) {
@@ -92,9 +91,8 @@
       }
 
       tFontScale = tTextRecord.height / 1024;
-      tAscent = ((tFont.ascent === 0) ? 880 : tSwfFont.ascent) * tFontScale;
       tXOffset = tTextRecord.xAdvance;
-      tYOffset = tTextRecord.y - tAscent;
+      tGlyphHeight = 0;
 
       // Iterate on each character.
       for (var j = 0, jl = tGlyphList.length; j < jl; j++) {
@@ -113,16 +111,15 @@
         tGlyph = tFont.getGlyph(tCharCode);
         if (!tGlyph) {
           tShape = tSwfFont.shapes[tGlyphIndex];
-          tShape.bounds = {left: 0, right: 1024,
-            top: (tFont.ascent === 0 ? -1024 : -tFont.ascent),
-            bottom: (tFont.descent === 0 ? 0 : tFont.descent)};
           tShape.fillStyles[0].color = tTextRecord.color;
-          tGlyph = createGlyph(tCharCode, tShape, tSwfGlyph.advance, tSWF.mediaLoader);
+          tGlyph = createGlyph(tCharCode, tShape, tSwfGlyph.advance / tFontScale, tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
+          tGlyphHeight = Math.max(tGlyphHeight, tShape.bounds.bottom - tShape.bounds.top);
         }
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
+      tYOffset = tGlyphHeight * tFontScale;
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset);
       // Draw text.

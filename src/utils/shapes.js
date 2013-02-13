@@ -449,8 +449,7 @@
    * @param  {quickswf.structs.Shape} pShape The shape to draw.
    * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
    * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
-   * @return {boolean} Returns false if any paths exceeds the shape's bounds.
-   *      In that case, pShape.bounds is updated with the values that can contain every paths.
+   * @return {object} The bounding box that can contain every paths.
    */
   mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
@@ -462,7 +461,7 @@
     var tCurrentFillStyle0 = null;
     var tCurrentFillStyle1 = null;
     var tCurrentLineStyle = null;
-    var tBounds = pShape.bounds;
+    var tBounds = pShape.bounds || {top: 0, bottom: 0, left: 0, right: 0};
 
     var tRecords = pShape.records;
     var tRecord;
@@ -504,9 +503,8 @@
       }
     }
 
-    mBoundingBox = new Rect(new Point(tBounds.left, tBounds.top),
-                        tBounds.right- tBounds.left,
-                        tBounds.bottom - tBounds.top);
+    mBoundingBox = new Rect(new Point(~(1 << 31), ~(1 << 31)),
+                            1 << 31, 1 << 31);
 
     pCanvas.clear(new Color(0, 0, 0, 0));
 
@@ -604,19 +602,15 @@
     flush('fill', tFillEdges, tFillStyles, pCanvas, pResources, tBounds);
     flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
 
-    // Return false if any paths exeeds the bounds.
+    // Return the bounding box
     var tOrigin = mBoundingBox.origin;
-    if (tOrigin.x < tBounds.left
-      || tOrigin.y < tBounds.top
-      || mBoundingBox.width > tBounds.right - tBounds.left
-      || mBoundingBox.height > tBounds.bottom - tBounds.top) {
-      tBounds.left = tOrigin.x;
-      tBounds.top = tOrigin.y;
-      tBounds.right = tOrigin.x + mBoundingBox.width;
-      tBounds.bottom = tOrigin.y + mBoundingBox.height;
-      return false;
-    }
-    return true;
+    var tExtent = {
+        left : tOrigin.x,
+        top : tOrigin.y,
+        right : tOrigin.x + mBoundingBox.width,
+        bottom : tOrigin.y + mBoundingBox.height
+      };
+    return tExtent;
   };
 
 }(this));
