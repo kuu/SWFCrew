@@ -63,7 +63,7 @@
       var tCharCode, tFontInfo, tAdvance,
           tGlyph, tShape;
 
-      if (tActor.device === false && this.rebuildGlyph) {
+      if (tActor.device === false && this.rebuildGlyph && tString) {
         // Create glyphs.
         for (var i = 0, il = tString.length; i < il; i++) {
           tCharCode = tString.charCodeAt(i);

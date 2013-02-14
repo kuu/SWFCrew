@@ -83,7 +83,7 @@
         if (pEditText.sjis && pEditText.initialtext) {
           this.text = tSWF.mediaLoader.get('text', pEditText.initialtext);
         } else {
-          this.text = pEditText.initialtext;
+          this.text = pEditText.initialtext || '';
         }
         this.device = tDeviceText;
         this.fontHeight = pEditText.fontheight;
