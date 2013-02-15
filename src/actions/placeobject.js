@@ -1,7 +1,7 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 SWFCrew Project.
+ * Copyright (C) 2013 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {
@@ -23,11 +23,11 @@
     }
 
     if (pData.name) {
-      tNewActor.name = pData.name;
+      tNewActor.setName(pData.name);
     } else {
-      tNewActor.name = tNewActor instanceof swfcrew.actors.SpriteActor ?
+      tNewActor.setName(tNewActor instanceof swfcrew.actors.SpriteActor ?
                         'instance' + (++pSpriteActor.stage.spriteInstanceCounter) :
-                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
+                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter));
     }
 
     var tMatrix = tNewActor.matrix;

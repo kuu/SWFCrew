@@ -42,12 +42,12 @@
       var tRenderable = tActor.player.loader.getActorRenderableCache(tActor.displayListId);
 
       // Offset by the Shapes bounds.
-      // We do this because when boudns are negative they would be
+      // We do this because when bounds are negative they would be
       // drawn off of the Canvas.
       // To counteract that, in the drawing code we have translated
       // by the negative of the bounds.
       // Here we offset that negative translation to bring it back in place.
-      tContext.translate(tActor.bounds.left, tActor.bounds.top)
+      tContext.translate(tActor.bounds.left, tActor.bounds.top);
 
       // We are rendering a bitmap in the end, so revert the matrix back to normal
       // temporarily.

@@ -261,8 +261,7 @@
         case 'layer':
           tRecords[i] = {
             type: tType,
-            rect: tStartRecord.rect,
-            matrix: interpolateMatrix(tStartRecord.matrix, tEndRecord.matrix, pRatio)
+            rect: tStartRecord.rect
           };
           break;
         case 'matrix':

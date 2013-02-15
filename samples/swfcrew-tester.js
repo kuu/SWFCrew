@@ -372,10 +372,10 @@
 
     this.targetPlayStopButton.textContent = tTarget.isActing ? 'Stop' : 'Play';
 
-    this.targetNameView.textContent = tTarget.name;
+    this.targetNameView.textContent = tTarget.getName();
     this.targetLayerView.textContent = tTarget.layer;
-    this.targetParentNameView.textContent = tTarget.parent ? tTarget.parent.name : 'NO PARENT';
-    this.targetCurrentStepView.textContent = tTarget.currentStep + ' / ' + (tTarget.numberOfSteps - 1);
+    this.targetParentNameView.textContent = tTarget.parent ? tTarget.parent.getName() : 'NO PARENT';
+    this.targetCurrentStepView.textContent = tTarget.getCurrentStep() + ' / ' + (tTarget.getNumberOfSteps() - 1);
     this.targetMatrixView.textContent = tTarget.matrix.toString();
     this.targetIsVisibleView.textContent = tTarget.isVisible ? 'Yes' : 'No';
 
@@ -494,7 +494,7 @@
 
     for (var i = 0, il = tActors.length; i < il; i++) {
       tOption = document.createElement('option');
-      tOption.value = tPrefix + tActors[i].name;
+      tOption.value = tPrefix + tActors[i].getName();
       tList.appendChild(tOption);
     }
   }

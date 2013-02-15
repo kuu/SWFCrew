@@ -21,6 +21,16 @@
       };
     }
 
+    var tTempInt = parseInt(pPath, 10);
+    if (tTempInt + '' === pPath) {
+      return {
+        target: pCurrentTarget,
+        step: tTempInt - 1,
+        label: '',
+        targetDepth: 0
+      };
+    }
+
     var tFramePartIndex = pPath.indexOf(':');
     var tFramePart;
     if (tFramePartIndex !== -1) {
@@ -48,7 +58,7 @@
     }
 
     if (tNewTarget === null) {
-      console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().name + '"');
+      console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().getName() + '"');
       return {
         target: null,
         step: tStep,
@@ -73,7 +83,7 @@
         tNewTarget = tNewTarget.getActorByName(tPart);
       }
       if (tNewTarget === null) {
-        console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().name + '"');
+        console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().getName() + '"');
         return {
           target: null,
           step: tStep,
@@ -95,14 +105,14 @@
     if (this.target === null) {
       return;
     }
-    this.target.goto(this.target.currentStep + 1);
+    this.target.goto(this.target.getCurrentStep() + 1);
   };
 
   mHandlers.PreviousFrame = function() {
     if (this.target === null) {
       return;
     }
-    this.target.goto(this.target.currentStep - 1);
+    this.target.goto(this.target.getCurrentStep() - 1);
   };
 
   mHandlers.Play = function() {
@@ -143,7 +153,7 @@
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
     if (tData.target === null) {
-      console.warn('Target not found for Call: Target="' + pFrame + '" Base="' + this.getLastValidTarget().name + '"');
+      console.warn('Target not found for Call: Target="' + pFrame + '" Base="' + this.getLastValidTarget().getName() + '"');
       return;
     } else {
       tCurrentTarget = tData.target;
@@ -182,7 +192,7 @@
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
     if (tData.target === null) {
-      console.warn('Target not found for GoToFrame2: Target="' + pFrame + '" Base="' + this.getLastValidTarget().name + '"');
+      console.warn('Target not found for GoToFrame2: Target="' + pFrame + '" Base="' + this.getLastValidTarget().getName() + '"');
       return;
     }
 
@@ -197,7 +207,7 @@
         tCurrentTarget.stop();
       }
     } else {
-      tCurrentTarget.goto((tData.step - 1) + pSceneBias);
+      tCurrentTarget.goto(tData.step + pSceneBias);
 
       if (pPlayFlag === 1) {
         tCurrentTarget.startNextStep();
@@ -323,10 +333,12 @@
       case 8: // width
         tMatrix = tTarget.matrix;
         tMatrix.a = (tMatrix.a < 0 ? -1 : 1) * this.toInt(pValue) / this.width;
+        tTarget.isMatrixLocked = true;
         break;
       case 9: // height
         tMatrix = tTarget.matrix;
         tMatrix.d = (tMatrix.d < 0 ? -1 : 1) * this.toInt(pValue) / this.height;
+        tTarget.isMatrixLocked = true;
         break;
       case 10: // rotation
         tMatrix = tTarget.matrix;
@@ -341,7 +353,7 @@
         console.warn('Set Property framesLoaded');
         break;
       case 13: // name
-        this.name = this.toString(pValue);
+        tTarget.setName(this.toString(pValue));
         break;
       case 14: // dropTarget
         console.warn('Set Property dropTarget');
@@ -393,9 +405,9 @@
       case 3: // yscale
         return tTarget.matrix.getScaleY() * 100;
       case 4: // currentFrame
-        return tTarget.currentStep + 1;
+        return tTarget.getCurrentStep() + 1;
       case 5: // totalFrames
-        return tTarget.numberOfSteps;
+        return tTarget.getNumberOfSteps();
       case 6: // alpha
         if (tTarget.colorTransform !== null) {
           // TODO: Is alpha separate from color transform?
@@ -418,17 +430,17 @@
           return '/';
         }
 
-        var tNames = [tTarget.name];
+        var tNames = [tTarget.getName()];
         // TODO: This loop is a hack until we track roots.
         while ((tTarget = tTarget.parent) !== null && !tTarget.__isRoot) {
-          tNames.push(tTarget.name);
+          tNames.push(tTarget.getName());
         }
 
-        return '/' + tNames.reverse().join('/');
+        return '/' + tNames.reverse().join('/').toLowerCase();
       case 12: // framesLoaded
-        return tTarget.numberOfSteps;
+        return tTarget.getNumberOfSteps();
       case 13: // name
-        return tTarget.name;
+        return tTarget.getName();
       case 14: // dropTarget
         console.warn('Get property dropTarget encountered.');
         return '';
@@ -486,7 +498,7 @@
     tMatrix.e = tOriginalMatrix.e;
     tMatrix.f = tOriginalMatrix.f;
 
-    tNewActor.name = pNewName;
+    tNewActor.setName(pNewName);
 
     var tOldActor = tOriginal.parent.getActorAtLayer(pDepth);
 
@@ -494,7 +506,7 @@
       tOldActor.leave();
     }
 
-    tOriginal.parent.addActor(tNewActor, pDepth, true);
+    tOriginal.parent.addActor(tNewActor, pDepth);
     tNewActor.invalidate();
   };
 

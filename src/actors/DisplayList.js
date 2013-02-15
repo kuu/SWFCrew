@@ -92,6 +92,13 @@
       //    }
       //}
       this.accessors = {};
+
+      // When we enter the Stage, all DisplayList Actors invalidate themselves for rendering.
+      this.on('enter', onEnter);
+    }
+
+    function onEnter() {
+      this.invalidate();
     }
 
     DisplayListActor.prototype = Object.create(pSuper.prototype);

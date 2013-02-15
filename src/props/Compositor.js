@@ -39,6 +39,12 @@
       this.height = pPlayer.loader.swf.height;
 
       /**
+       * The bound of this SWF file in twips.
+       * @type {quickswf.structs.RECT}
+       */
+      this.bounds = pPlayer.loader.swf.bounds;
+
+      /**
        * The background colour to fill with every frame.
        * @type {benri.draw.Color}
        */
@@ -91,6 +97,8 @@
       this.context.clear();
       // Convert from twips to pixels.
       this.context.matrix.scale(0.05, 0.05);
+      // Translate by the global SWF file's bounds.
+      this.context.matrix.translate(-this.bounds.left, -this.bounds.top);
     };
 
     /**

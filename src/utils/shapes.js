@@ -324,6 +324,7 @@
 
       // Each style has it's own Canvas layer.
       pCanvas.enterLayer();
+      //pCanvas.save();
       // Convert to pixels from twips.
       pCanvas.matrix.scale(0.05, 0.05);
       // Correct the offset created by negative bounds.
@@ -441,6 +442,7 @@
       }
 
       pCanvas.leaveLayer();
+      //pCanvas.restore();
     }
   }
 

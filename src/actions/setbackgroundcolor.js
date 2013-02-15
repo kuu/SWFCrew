@@ -1,7 +1,7 @@
 /**
  * @author Jason Parrott
  *
- * Copyright (C) 2012 SWFCrew Project.
+ * Copyright (C) 2013 SWFCrew Project.
  * This code is licensed under the zlib license. See LICENSE for details.
  */
 (function(global) {

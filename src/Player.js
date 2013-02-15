@@ -132,7 +132,7 @@
    */
   Player.prototype.newRoot = function() {
     var tRoot = new this.loader.actorMap[0](this);
-    tRoot.name = 'root';
+    tRoot.setName('root');
     tRoot.__isRoot = true;
 
     return tRoot;
