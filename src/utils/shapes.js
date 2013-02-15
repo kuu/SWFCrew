@@ -9,6 +9,7 @@
   var theatre = global.theatre;
   var Path = global.benri.geometry.Path;
   var Point = global.benri.geometry.Point;
+  var Rect = global.benri.geometry.Rect;
   var Color = global.benri.draw.Color;
   var Matrix2D = global.benri.geometry.Matrix2D;
   var Style = global.benri.draw.Style;
@@ -18,6 +19,8 @@
   var RadialGradientShader = global.benri.draw.RadialGradientShader;
   var BitmapShader = global.benri.draw.BitmapShader;
   var mShape = theatre.crews.swf.utils.shape = {};
+
+  var mBoundingBox = null;
 
   /**
    * Creates a new Style for the given SWF style.
@@ -252,6 +255,7 @@
         } else {
           pCanvas.fillPath(pPath, pCanvasStyle);
         }
+        mBoundingBox.merge(pPath.getBoundingRect());
 
         // Clean things up as we have now used this edge.
         tIndex = pPoint.indexOf(tNextEdge);
@@ -356,6 +360,7 @@
               }
 
               pCanvas.strokePath(tPath, tCanvasStyle);
+              mBoundingBox.merge(tPath.getBoundingRect());
             } else {
               console.warn(k + ' does not have anything connecting to it!');
             }
@@ -429,6 +434,7 @@
               tPath.l(tFinalPointY, tFinalPointY);
               pCanvas.fillPath(tPath, tCanvasStyle);
             }
+            mBoundingBox.merge(tPath.getBoundingRect());
           }
 
         }
@@ -443,6 +449,7 @@
    * @param  {quickswf.structs.Shape} pShape The shape to draw.
    * @param  {benri.draw.Canvas} pCanvas The Canvas to draw on to.
    * @param  {quickswf.utils.MediaLoader} pResources Loaded resources to use.
+   * @return {benri.geometry.Rect} The bounding box that can contain every paths.
    */
   mShape.drawShape = function(pShape, pCanvas, pResources) {
     var tFillStyles = pShape.fillStyles;
@@ -454,7 +461,7 @@
     var tCurrentFillStyle0 = null;
     var tCurrentFillStyle1 = null;
     var tCurrentLineStyle = null;
-    var tBounds = pShape.bounds;
+    var tBounds = pShape.bounds || {top: 0, bottom: 0, left: 0, right: 0};
 
     var tRecords = pShape.records;
     var tRecord;
@@ -495,6 +502,9 @@
         pArray[pEdge.b].push(pEdge);
       }
     }
+
+    mBoundingBox = new Rect(new Point(~(1 << 31), ~(1 << 31)),
+                            1 << 31, 1 << 31);
 
     pCanvas.clear(new Color(0, 0, 0, 0));
 
@@ -591,6 +601,9 @@
 
     flush('fill', tFillEdges, tFillStyles, pCanvas, pResources, tBounds);
     flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
+
+    // Return the bounding box
+    return mBoundingBox;
   };
 
 }(this));

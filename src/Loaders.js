@@ -24,6 +24,7 @@
     this.actorMap = [];
     this.actorNameMap = {};
     this.actorRenderableCache = [];
+    this.fontCache = [];
     this.media = null;
   }
 
@@ -77,6 +78,18 @@
 
   Loader.prototype.clearActorRenderableCache = function() {
     this.actorRenderableCache.length = 0;
+  };
+
+  Loader.prototype.setFontCache = function(pId, pFont) {
+    this.fontCache[pId] = pFont;
+  };
+
+  Loader.prototype.getFontCache = function(pId) {
+    return this.fontCache[pId] || null;
+  };
+
+  Loader.prototype.clearFontCache = function() {
+    this.fontCache.length = 0;
   };
 
 

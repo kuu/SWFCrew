@@ -81,9 +81,20 @@
         var tRecord = tRecords[i];
         //console.log('** record=', tRecord);
         if (tRecord.state.up) { // Initial state is ButtonUp.
+          if (!tMatrix || tMatrix.join('') === '100100') {
+            tMatrix = tRecord.matrix;
+          } else {
+            if (tRecord.matrix && tRecord.matrix.join('') !== '100100') {
+              tMatrix = tRecord.matrix;
+            }
+          }
           var tActor = pPlayer.newFromId(tRecord.id);
           if (tActor instanceof mSWFCrew.actors.SpriteActor) {
-            tMatrix = tActor.buttonMatrix = tMatrix || tRecord.matrix;
+            tActor.buttonMatrix = tMatrix;
+          }
+          var tMatrix2d = tActor.matrix;
+          if (tMatrix) {
+            tMatrix2d.fill(tMatrix);
           }
         }
       }
