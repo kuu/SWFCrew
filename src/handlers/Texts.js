@@ -35,6 +35,10 @@
     var tRect = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
     tGlyph.data = tTempCanvas.getRecords(true);
+    tGlyph.data.filter('clearColor', function (_, j, pRecords) {
+        // Remove record.
+        pRecords.splice(j, 1);
+      }, null, true);
     tGlyph.advance = pAdvance;
     tGlyph.rect = tRect;
     return tGlyph;
@@ -127,7 +131,7 @@
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset);
       // Draw text.
-      tCanvas.drawText(tString, tStyle);
+      tCanvas.drawText(tString, tStyle, i === 0);
     } // [loop end] -- for each text line.
 
     /**

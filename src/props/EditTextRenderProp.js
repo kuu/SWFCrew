@@ -17,6 +17,10 @@
     var tRect = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
     tGlyph.data = tTempCanvas.getRecords(true);
+    tGlyph.data.filter('clearColor', function (_, j, pRecords) {
+        // Remove record.
+        pRecords.splice(j, 1);
+      }, null, true);
     tGlyph.advance = pAdvance;
     tGlyph.rect = tRect;
     return tGlyph;
@@ -83,7 +87,7 @@
         }
       }
       // Draw text.
-      tCanvas.drawText(tString, tStyle);
+      tCanvas.drawText(tString, tStyle, true);
 
       // Offset by the Texts bounds.
       // We do this because when boudns are negative they would be
