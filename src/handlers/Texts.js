@@ -70,9 +70,10 @@
       var tTextRecord = tTextRecords[i],
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
-          tFontScale, tXOffset = tTextRecord.xAdvance, tYOffset,
+          tFontScale = tTextRecord.height / 1024,
+          tXOffset = tTextRecord.xAdvance, tYOffset,
           tFont, tStyle, tGlyph, tCharCode, tString = '',
-          tShape, tGlyphIndex, tGlyphHeight;
+          tShape, tGlyphIndex, tGlyphHeight = 0;
 
       // Get benri.draw.Font object.
       if (tFontId === null) {
@@ -89,10 +90,6 @@
         tFont = createFont(tSwfFont);
         this.setFontCache(tFontId, tFont);
       }
-
-      tFontScale = tTextRecord.height / 1024;
-      tXOffset = tTextRecord.xAdvance;
-      tGlyphHeight = 0;
 
       // Iterate on each character.
       for (var j = 0, jl = tGlyphList.length; j < jl; j++) {
@@ -119,7 +116,14 @@
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
-      tYOffset = tGlyphHeight * tFontScale;
+      var tAscent = tFont.ascent || 880;
+      if (tAscent < tGlyphHeight) {
+        tYOffset = tTextRecord.y;
+      } else {
+        tYOffset = tTextRecord.y - tAscent * tFontScale;
+        tYOffset = tYOffset < 0 ? 0 : tYOffset;
+        tYOffset += tGlyphHeight * tFontScale;
+      }
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset);
       // Draw text.
