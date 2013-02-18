@@ -12,6 +12,7 @@
   var mShapeUtils = mSWFCrew.utils.shape;
   var TextActor = mSWFCrew.actors.TextActor;
   var TextRenderProp = mSWFCrew.props.TextRenderProp;
+  var Color = global.benri.draw.Color;
   var Canvas = global.benri.draw.Canvas;
   var Font = global.benri.draw.Font;
   var Glyph = global.benri.draw.Glyph;
@@ -44,11 +45,14 @@
     return tGlyph;
   }
 
-  function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset) {
+  function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset, pWidth) {
     var tTextStyle = new TextStyle(pFont);
+    var tSwfColor = pTextRecord.color;
+    tTextStyle.color = new Color(tSwfColor.red, tSwfColor.green, tSwfColor.blue, tSwfColor.alpha);
     tTextStyle.fontHeight = Math.floor(pTextRecord.height / 20);
     tTextStyle.leftMargin = Math.floor(pXOffset / 20);
     tTextStyle.topMargin = Math.floor(pYOffset / 20);
+    tTextStyle.maxWidth = Math.floor(pWidth / 20);
     return tTextStyle;
   }
 
@@ -129,7 +133,7 @@
         tYOffset += tGlyphHeight * tFontScale;
       }
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
       // Draw text.
       tCanvas.drawText(tString, tStyle, i === 0);
     } // [loop end] -- for each text line.

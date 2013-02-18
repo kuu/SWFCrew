@@ -10,6 +10,7 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
   var EditTextRenderProp = mSWFCrew.props.EditTextRenderProp;
+  var Color = global.benri.draw.Color;
   var Canvas = global.benri.draw.Canvas;
   var Font = global.benri.draw.Font;
   var TextStyle = global.benri.draw.TextStyle;
@@ -30,12 +31,17 @@
 
   function createTextStyle(pEditText, pFont) {
     var tTextStyle = new TextStyle(pFont);
+    var tSwfColor = pEditText.textcolor;
+    tTextStyle.color = new Color(tSwfColor.red, tSwfColor.green, tSwfColor.blue, tSwfColor.alpha);
     tTextStyle.fontHeight = Math.floor(pEditText.fontheight / 20);
     tTextStyle.leftMargin = Math.floor((pEditText.leftmargin || 0) / 20);
-    tTextStyle.rightMargin = Math.floor((pEditText.rightmargin || 0) / 20);
     tTextStyle.topMargin = Math.floor((pEditText.leading || 0) / 20);
     var tAscent = pFont.ascent ? pFont.ascent : 1024;
     tTextStyle.topMargin += Math.floor(tAscent * tTextStyle.fontHeight / 1024);
+    tTextStyle.maxWidth = Math.floor(
+        (pEditText.bounds.right - pEditText.bounds.left
+          - pEditText.leftmargin - pEditText.rightmargin) / 20
+      );
     tTextStyle.align = pEditText.align === 1 ? 'right' : (pEditText.align === 2 ? 'center' : 'left');
     tTextStyle.wrap = !!pEditText.wrap;
     tTextStyle.multiline = !!pEditText.multiline;
