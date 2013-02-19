@@ -48,7 +48,7 @@
        * The background colour to fill with every frame.
        * @type {benri.draw.Color}
        */
-      this.backgroundColor = new Color();
+      this.backgroundColor = new Color(0, 0, 0, 0);
 
       var tType = this.contextType = pPlayer.loader.options.spriteType || 'canvas';
       var tRenderContext;
