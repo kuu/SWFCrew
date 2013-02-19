@@ -32,7 +32,7 @@
   function createTextStyle(pEditText, pFont) {
     var tTextStyle = new TextStyle(pFont);
     var tSwfColor = pEditText.textcolor;
-    tTextStyle.color = new Color(tSwfColor.red, tSwfColor.green, tSwfColor.blue, tSwfColor.alpha);
+    tTextStyle.color = new Color(tSwfColor.red, tSwfColor.green, tSwfColor.blue, tSwfColor.alpha * 255);
     tTextStyle.fontHeight = Math.floor(pEditText.fontheight / 20);
     tTextStyle.leftMargin = Math.floor((pEditText.leftmargin || 0) / 20);
     tTextStyle.topMargin = Math.floor((pEditText.leading || 0) / 20);
