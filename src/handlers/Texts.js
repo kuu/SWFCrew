@@ -134,8 +134,12 @@
       }
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
+      // Clear canvas on the first draw.
+      if (i === 0) {
+        tCanvas.clear(new Color(0, 0, 0, 0));
+      }
       // Draw text.
-      tCanvas.drawText(tString, tStyle, i === 0);
+      tCanvas.drawText(tString, tStyle);
     } // [loop end] -- for each text line.
 
     /**

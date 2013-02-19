@@ -10,6 +10,7 @@
   var mProps = theatre.crews.swf.props;
   var mShapeUtils = theatre.crews.swf.utils.shape;
   var Canvas = global.benri.draw.Canvas;
+  var Color = global.benri.draw.Color;
   var Glyph = global.benri.draw.Glyph;
 
   function createGlyph(pCharCode, pSwfShape, pAdvance, pMediaLoader) {
@@ -86,8 +87,10 @@
           }
         }
       }
+      // Clear canvas.
+      tCanvas.clear(new Color(0, 0, 0, 0));
       // Draw text.
-      tCanvas.drawText(tString, tStyle, true);
+      tCanvas.drawText(tString, tStyle);
 
       // Offset by the Texts bounds.
       // We do this because when boudns are negative they would be
