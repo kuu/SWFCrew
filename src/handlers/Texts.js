@@ -12,6 +12,7 @@
   var mShapeUtils = mSWFCrew.utils.shape;
   var TextActor = mSWFCrew.actors.TextActor;
   var TextRenderProp = mSWFCrew.props.TextRenderProp;
+  var Color = global.benri.draw.Color;
   var Canvas = global.benri.draw.Canvas;
   var Font = global.benri.draw.Font;
   var Glyph = global.benri.draw.Glyph;
@@ -35,16 +36,23 @@
     var tRect = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
     tGlyph.data = tTempCanvas.getRecords(true);
+    tGlyph.data.filter('clearColor', function (_, j, pRecords) {
+        // Remove record.
+        pRecords.splice(j, 1);
+      }, null, true);
     tGlyph.advance = pAdvance;
     tGlyph.rect = tRect;
     return tGlyph;
   }
 
-  function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset) {
+  function createTextStyle(pTextRecord, pFont, pXOffset, pYOffset, pWidth) {
     var tTextStyle = new TextStyle(pFont);
+    var tSwfColor = pTextRecord.color;
+    tTextStyle.color = new Color(tSwfColor.red, tSwfColor.green, tSwfColor.blue, tSwfColor.alpha);
     tTextStyle.fontHeight = Math.floor(pTextRecord.height / 20);
     tTextStyle.leftMargin = Math.floor(pXOffset / 20);
     tTextStyle.topMargin = Math.floor(pYOffset / 20);
+    tTextStyle.maxWidth = Math.floor(pWidth / 20);
     return tTextStyle;
   }
 
@@ -70,9 +78,10 @@
       var tTextRecord = tTextRecords[i],
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
-          tFontScale, tXOffset = tTextRecord.xAdvance, tYOffset,
+          tFontScale = tTextRecord.height / 1024,
+          tXOffset = tTextRecord.xAdvance, tYOffset,
           tFont, tStyle, tGlyph, tCharCode, tString = '',
-          tShape, tGlyphIndex, tGlyphHeight;
+          tShape, tGlyphIndex, tGlyphHeight = 0;
 
       // Get benri.draw.Font object.
       if (tFontId === null) {
@@ -89,10 +98,6 @@
         tFont = createFont(tSwfFont);
         this.setFontCache(tFontId, tFont);
       }
-
-      tFontScale = tTextRecord.height / 1024;
-      tXOffset = tTextRecord.xAdvance;
-      tGlyphHeight = 0;
 
       // Iterate on each character.
       for (var j = 0, jl = tGlyphList.length; j < jl; j++) {
@@ -119,9 +124,20 @@
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
-      tYOffset = tGlyphHeight * tFontScale;
+      var tAscent = tFont.ascent || 880;
+      if (tAscent < tGlyphHeight) {
+        tYOffset = tTextRecord.y;
+      } else {
+        tYOffset = tTextRecord.y - tAscent * tFontScale;
+        tYOffset = tYOffset < 0 ? 0 : tYOffset;
+        tYOffset += tGlyphHeight * tFontScale;
+      }
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
+      // Clear canvas on the first draw.
+      if (i === 0) {
+        tCanvas.clear(new Color(0, 0, 0, 0));
+      }
       // Draw text.
       tCanvas.drawText(tString, tStyle);
     } // [loop end] -- for each text line.

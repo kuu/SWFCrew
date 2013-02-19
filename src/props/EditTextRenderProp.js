@@ -10,6 +10,7 @@
   var mProps = theatre.crews.swf.props;
   var mShapeUtils = theatre.crews.swf.utils.shape;
   var Canvas = global.benri.draw.Canvas;
+  var Color = global.benri.draw.Color;
   var Glyph = global.benri.draw.Glyph;
 
   function createGlyph(pCharCode, pSwfShape, pAdvance, pMediaLoader) {
@@ -17,6 +18,10 @@
     var tRect = mShapeUtils.drawShape(pSwfShape, tTempCanvas, pMediaLoader);
     var tGlyph = new Glyph(pCharCode);
     tGlyph.data = tTempCanvas.getRecords(true);
+    tGlyph.data.filter('clearColor', function (_, j, pRecords) {
+        // Remove record.
+        pRecords.splice(j, 1);
+      }, null, true);
     tGlyph.advance = pAdvance;
     tGlyph.rect = tRect;
     return tGlyph;
@@ -82,6 +87,8 @@
           }
         }
       }
+      // Clear canvas.
+      tCanvas.clear(new Color(0, 0, 0, 0));
       // Draw text.
       tCanvas.drawText(tString, tStyle);
 
