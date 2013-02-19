@@ -96,6 +96,7 @@
           if (tMatrix) {
             tMatrix2d.fill(tMatrix);
           }
+          this.addActor(tActor, tRecord.depth);
         }
       }
     }
