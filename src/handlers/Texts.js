@@ -124,13 +124,15 @@
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
-      var tAscent = tFont.ascent || 880;
-      if (tAscent < tGlyphHeight) {
-        tYOffset = tTextRecord.y;
+      var tActualShapeHeight = tGlyphHeight * tFontScale;
+      if (tTwipsHeight < tTextRecord.y) {
+        tYOffset = tActualShapeHeight;
       } else {
-        tYOffset = tTextRecord.y - tAscent * tFontScale;
-        tYOffset = tYOffset < 0 ? 0 : tYOffset;
-        tYOffset += tGlyphHeight * tFontScale;
+        if (tTwipsHeight < tActualShapeHeight) {
+          tYOffset = tTextRecord.y - Math.max(tActualShapeHeight - tTwipsHeight, 1);
+        } else {
+          tYOffset = tTextRecord.y;
+        }
       }
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
