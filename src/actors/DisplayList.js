@@ -73,25 +73,11 @@
        */
       this.ratio = 0;
 
-      // this.accessors holds the references to the functions for accessing child node's variables.
-      // It has the following structure:
-      //
-      // accessors = {
-      //    "variableName-1" : {
-      //        "getter" : [
-      //            function () { return v; },
-      //            function () { return v; }
-      //          ],
-      //        "setter" : [
-      //            function (v) { },
-      //            function (v) { }
-      //          ]
-      //    },
-      //    "variableName-2" : {
-      //        ...
-      //    }
-      //}
-      this.accessors = {};
+      /**
+       * Callback functions to be invoked when variable changes.
+       * @type {Object}
+       */
+      this.listeners = {};
 
       // When we enter the Stage, all DisplayList Actors invalidate themselves for rendering.
       this.on('enter', onEnter);
@@ -123,65 +109,42 @@
 
     };
 
-    /**
-     * Registers callback function to be invoked when the variable is accessed.
-     * @param {string} pVariableName The name of variable.
-     * @param {function} pGetter The callback function to be invoked when reading the variable.
-     *                    The function must take no argument and returns a value.
-     * @param {function} pSetter The callback function to be invoked when writing the variable.
-     *                    The function must take an argument and returns no value.
-     */
-    DisplayListActor.prototype.hookVariable = function (pVariableName, pGetter, pSetter) {
-      var tName = fixName(pVariableName);
-      var tAccessor = this.accessors[tName];
-      if (tAccessor === void 0) {
-        tAccessor = this.accessors[tName] = {};
+    function fixName(pName) {
+      var tName = pName.trim().toLowerCase();
+      var tColon = tName.lastIndexOf(':');
+      if (tColon !== -1) {
+        tName = tName.slice(tColon + 1);
       }
-      var tHook = function (pType, pFunc) {
-          var tFuncList = tAccessor[pType];
-          if (!tFuncList) {
-            tAccessor[pType] = [pFunc];
-          } else if (tFuncList.indexOf(pFunc) === -1) {
-            tFuncList.push(pFunc);
-          } else {
-            return false;
-          }
-          return true;
-        };
-      var tGetterHooked = pGetter && tHook('getter', pGetter);
-      var tSetterHooked = pSetter && tHook('setter', pSetter);
-      if (tGetterHooked != tSetterHooked) {
-        throw new Error('DisplayListActor#hookVariable: atempted to hook either of the getter/setter pair.');
+      return tName;
+    }
+
+    /**
+     * Registers callback function to be invoked when the variable changes.
+     * @param {string} pVariableName The name of variable.
+     * @param {function} pListener The callback function to be invoked when the variable changes.
+     */
+    DisplayListActor.prototype.addVariableListener = function (pVariableName, pListener) {
+      var tName = fixName(pVariableName);
+      var tListeners = this.listeners[tName];
+      if (tListeners === void 0) {
+        this.listeners[tName] = [pListener];
+      } else {
+        tListeners.push(pListener);
       }
     };
 
     /**
-     * Unregisters callback function to be invoked when the variable is accessed.
+     * Unregisters callback function to be invoked when the variable changes.
      * @param {string} pVariableName The name of variable.
-     * @param {function} pGetter The callback function registered via hookVariable.
-     * @param {function} pSetter The callback function registered via hookVariable.
+     * @param {function} pListener The callback function to be removed.
      */
-    DisplayListActor.prototype.unhookVariable = function (pVariableName, pGetter, pSetter) {
+    DisplayListActor.prototype.removeVariableListener = function (pVariableName, pListener) {
       var tName = fixName(pVariableName);
-      var tAccessor = this.accessors[tName];
-      var tUnhook = function (pType, pFunc) {
-          var tFuncList = tAccessor[pType], tIndex;
-          if (tFuncList && (tIndex = tFuncList.indexOf(pFunc)) !== -1) {
-            tFuncList.splice(tIndex, 1);
-            tFuncList.length === 0 && delete tAccessor[pType];
-            return true;
-          }
-          return false;
-        };
-
-      if (tAccessor) {
-        var tGetterUnhooked = tUnhook('getter', pGetter);
-        var tSetterUnhooked = tUnhook('setter', pSetter);
-        if (tGetterUnhooked != tSetterUnhooked) {
-          throw new Error('DisplayListActor#unhookVariable: atempted to unhook either of the getter/setter pair.');
-        }
-        if (Object.getOwnPropertyNames(tAccessor).length === 0) {
-          delete this.accessors[tName];
+      var tListeners = this.listeners[tName];
+      if (tListeners !== void 0) {
+        var tIndex = tListeners.indexOf(pListener);
+        if (tIndex !== -1) {
+          tListeners.splice(tIndex, 1);
         }
       }
     };
@@ -191,12 +154,7 @@
      * @param  {string} pName The name of the variable.
      */
     DisplayListActor.prototype.getVariable = function (pName) {
-      var tAccessor = this.accessors[pName.toLowerCase()];
-      if (tAccessor && tAccessor.getter[0]) {
-        return tAccessor.getter[0]();
-      } else {
-        return this.variables[pName];
-      }
+      return this.variables[pName];
     };
 
     /**
@@ -205,14 +163,15 @@
      * @param {object} pValue The value of the variable.
      */
     DisplayListActor.prototype.setVariable = function (pName, pValue) {
-      var tAccessor = this.accessors[pName.toLowerCase()];
-      if (tAccessor && tAccessor.setter) {
-        var tSetters = tAccessor.setter;
-        for (var i = 0, il = tSetters.length; i < il; i++) {
-          tSetters[i](pValue);
-        }
-      } else {
+      var tValue = this.variables[pName];
+      if (tValue !== pValue) {
         this.variables[pName] = pValue;
+        var tListeners = this.listeners[pName.toLowerCase()];
+        if (tListeners) {
+          for (var i = 0, il = tListeners.length; i < il; i++) {
+            tListeners[i](pValue);
+          }
+        }
       }
     };
 
