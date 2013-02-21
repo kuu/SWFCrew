@@ -62,6 +62,7 @@
 
     // Create a new Canvas to render to.
     var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
+    var tRenderable = new CanvasRenderable(tCanvas);
     var tSWF = this.swf;
     var tFontId = pEditText.font;
     var tSwfFont = tSWF.fonts[tFontId];
@@ -76,6 +77,7 @@
 
     // Create style.
     tStyle = createTextStyle(pEditText, tFont);
+
 
     /**
      * @class
@@ -103,8 +105,28 @@
 
         // Set up variable accessor methods.
         var tVarName = pEditText.variablename;
+        var tSelf = this;
+        var updateText = function (pValue) {
+                tSelf.text = pValue;
+                tRenderable.isPrepared = false;
+                tTextProp.rebuildGlyph = true;
+                tSelf.invalidate();
+          };
         if (tVarName) {
-          this.varName = tVarName;
+          this.on('enter', function () {
+            var tText = this.parent.getVariable(tVarName);
+            if (tText === void 0) {
+              this.parent.setVariable(tVarName, this.text);
+            } else {
+              updateText.call(this, tText);
+            }
+            var tSelf = this;
+            this.parent.addVariableListener(tVarName, updateText);
+          });
+          this.on('leave', function () {
+            this.parent.removeVariableListener(tVarName, updateText);
+          });
+/*
           var tThis = this;
           var tGetter = function () {
             return tThis.text;
@@ -112,7 +134,7 @@
           var tSetter = function (pValue) {
             // need some escape ?
             tThis.text = pValue;
-            //tTextProp.clearCache(); TODO:
+            tRenderable.isPrepared = false;
             tTextProp.rebuildGlyph = true;
             tThis.invalidate();
           };
@@ -126,6 +148,7 @@
               this.parent.unhookVariable(this.varName, tGetter, tSetter);
             }
           });
+*/
         }
       }
 
@@ -141,7 +164,7 @@
 
     BuiltinEditTextActor.prototype.displayListId = tId;
 
-    this.setActorRenderableCache(tId, new CanvasRenderable(tCanvas));
+    this.setActorRenderableCache(tId, tRenderable);
   };
 
 }(this));
