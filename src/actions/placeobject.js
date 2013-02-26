@@ -106,6 +106,11 @@
       return;
     }
 
+    // Device text cannot have colorTransform.
+    if (tActor instanceof swfcrew.actors.TextActor && tActor.device === true) {
+      return;
+    }
+
     tActor.colorTransform = pData.colorTransform;
 
     tActor.invalidate();
