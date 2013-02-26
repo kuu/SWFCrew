@@ -60,6 +60,9 @@
     }
 
     var tMatrix = tActor.matrix;
+    if (tMatrix) {
+      pData.matrix = tMatrix.getArray();
+    }
 
     tActor.leave();
 
