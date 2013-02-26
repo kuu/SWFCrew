@@ -70,9 +70,20 @@
     var tFont, tStyle;
 
     // Create font.
-    if (!(tFont = this.getFontCache(tFontId))) {
+    tFont = this.getFontCache(tFontId);
+    if (!tFont) {
       tFont = createFont(tSwfFont, tDeviceText);
       this.setFontCache(tFontId, tFont);
+    } else if (tFont.system !== tDeviceText) {
+      // This is the case:
+      //  - two texts share the same font.
+      //  - one wants to be rendered as a glyph text.
+      //  - the other as a device text.
+      tFont = createFont(tSwfFont, tDeviceText);
+      // We overwrite the cache only when the font has the glyph data.
+      if (tDeviceText === false) {
+        this.setFontCache(tFontId, tFont);
+      }
     }
 
     // Create style.
