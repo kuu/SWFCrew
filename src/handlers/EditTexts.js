@@ -118,7 +118,7 @@
         var tVarName = pEditText.variablename;
         var tSelf = this;
         var updateText = function (pValue) {
-                tSelf.text = pValue;
+                tSelf.text = pValue + '';
                 tRenderable.isPrepared = false;
                 tTextProp.rebuildGlyph = true;
                 tSelf.invalidate();
