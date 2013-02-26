@@ -428,7 +428,8 @@
         // TODO: Use getSize() when done.
         return tTarget.height || 0;
       case 10: // rotation
-        return tTarget.matrix.getRotationInDegrees();
+        //  The angle returned by Matrix2D.getRotationInDegrees() is counter-clockwise value.
+        return 360 - tTarget.matrix.getRotationInDegrees();
       case 11: // target
         if (tTarget.__isRoot === true) {
           return '/';
