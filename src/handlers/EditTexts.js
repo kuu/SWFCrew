@@ -112,6 +112,7 @@
         this.style = tStyle;
         this.color = pEditText.textcolor;
         var tTextProp = new EditTextRenderProp(this.pixelWidth, this.pixelHeight);
+        tTextProp.rebuildGlyph = !tDeviceText;
         this.addProp(tTextProp);
 
         // Set up variable accessor methods.
@@ -120,7 +121,7 @@
         var updateText = function (pValue) {
                 tSelf.text = pValue + '';
                 tRenderable.isPrepared = false;
-                tTextProp.rebuildGlyph = true;
+                tTextProp.rebuildGlyph = !tSelf.device;
                 tSelf.invalidate();
           };
         if (tVarName) {

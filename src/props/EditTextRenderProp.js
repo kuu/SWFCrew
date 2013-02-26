@@ -36,7 +36,7 @@
   var EditTextRenderProp = (function(pSuper) {
     function EditTextRenderProp(pWidth, pHeight) {
       pSuper.call(this);
-      this.rebuildGlyph = true;
+      this.rebuildGlyph = false;
     }
 
     EditTextRenderProp.prototype = Object.create(pSuper.prototype);
@@ -68,7 +68,7 @@
       var tCharCode, tFontInfo, tAdvance,
           tGlyph, tShape;
 
-      if (tActor.device === false && this.rebuildGlyph && tString) {
+      if (this.rebuildGlyph && tString) {
         // Create glyphs.
         for (var i = 0, il = tString.length; i < il; i++) {
           tCharCode = tString.charCodeAt(i);
@@ -87,6 +87,8 @@
           }
         }
       }
+      this.rebuildGlyph = false;
+
       // Clear canvas.
       tCanvas.clear(new Color(0, 0, 0, 0));
       // Draw text.
