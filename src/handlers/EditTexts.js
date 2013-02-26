@@ -137,29 +137,6 @@
           this.on('leave', function () {
             this.parent.removeVariableListener(tVarName, updateText);
           });
-/*
-          var tThis = this;
-          var tGetter = function () {
-            return tThis.text;
-          };
-          var tSetter = function (pValue) {
-            // need some escape ?
-            tThis.text = pValue;
-            tRenderable.isPrepared = false;
-            tTextProp.rebuildGlyph = true;
-            tThis.invalidate();
-          };
-          this.on('enter', function () {
-            // Registers the accessor methods.
-            this.parent.hookVariable(tVarName, tGetter, tSetter);
-          });
-          this.on('leave', function () {
-            // Unregisters the accessor methods.
-            if (this.varName && this.parent) {
-              this.parent.unhookVariable(this.varName, tGetter, tSetter);
-            }
-          });
-*/
         }
       }
 
