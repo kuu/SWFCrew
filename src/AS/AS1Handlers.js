@@ -341,8 +341,12 @@
         tTarget.isMatrixLocked = true;
         break;
       case 10: // rotation
+        // Note that:
+        //  - the angle specified in ActionScript is clockwise/absolute value.
+        //  - the angle returned by Matrix2D.getRotationInDegrees() is counter-clockwise/absolute value.
+        //  - the angle taken by Matrix2D.rotateInDegrees() is counter-clockwise/relative value.
         tMatrix = tTarget.matrix;
-        tMatrix.rotateInDegrees(tMatrix.getRotationInDegrees() - this.toFloat(pValue));
+        tMatrix.rotateInDegrees(360 - this.toFloat(pValue) - tMatrix.getRotationInDegrees());
         tTarget.isMatrixLocked = true;
         tTarget.invalidate();
         break;
