@@ -86,7 +86,9 @@
             tGlyph = createGlyph(tCharCode, tShape, tAdvance, tActor.mediaLoader);
             tFont.setGlyph(tCharCode, tGlyph);
           }
-          tTextWidth += tGlyph.advance;
+          if (tGlyph) {
+            tTextWidth += tGlyph.advance;
+          }
         }
         tStyle.textWidth = tTextWidth * tStyle.fontHeight / 1024;
       }
