@@ -22,7 +22,6 @@
   function createFont(pSwfFont) {
     var tFont = new Font();
     tFont.name = pSwfFont.name;
-    tFont.advance = pSwfFont.name;
     tFont.ascent = pSwfFont.ascent;
     tFont.descent = pSwfFont.descent;
     tFont.leading = pSwfFont.leading;
@@ -81,7 +80,7 @@
           tFontScale = tTextRecord.height / 1024,
           tXOffset = tTextRecord.xAdvance, tYOffset,
           tFont, tStyle, tGlyph, tCharCode, tString = '',
-          tShape, tGlyphIndex, tGlyphHeight = 0;
+          tShape, tGlyphIndex, tGlyphHeight = 0, tActualTwipsWidth = 0;
 
       // Get benri.draw.Font object.
       if (tFontId === null) {
@@ -120,9 +119,14 @@
           tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
         }
+        tActualTwipsWidth += Math.max(tSwfGlyph.advance, tGlyph.rect.width * tFontScale);
         tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.height);
         // Build text.
         tString += String.fromCharCode(tCharCode);
+      }
+      if (tTwipsWidth < tActualTwipsWidth) {
+        tTwipsWidth = tActualTwipsWidth;
+        tCanvas.width = tPixelWidth = Math.round(tTwipsWidth / 20);
       }
       var tActualShapeHeight = tGlyphHeight * tFontScale;
       if (tTwipsHeight < tTextRecord.y) {
