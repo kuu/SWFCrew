@@ -154,7 +154,7 @@
      * @param  {string} pName The name of the variable.
      */
     DisplayListActor.prototype.getVariable = function (pName) {
-      return this.variables[pName];
+      return this.variables[pName.toLowerCase()];
     };
 
     /**
@@ -163,10 +163,11 @@
      * @param {object} pValue The value of the variable.
      */
     DisplayListActor.prototype.setVariable = function (pName, pValue) {
-      var tValue = this.variables[pName];
+      var tName = pName.toLowerCase();
+      var tValue = this.variables[tName];
       if (tValue !== pValue) {
-        this.variables[pName] = pValue;
-        var tListeners = this.listeners[pName.toLowerCase()];
+        this.variables[tName] = pValue;
+        var tListeners = this.listeners[tName];
         if (tListeners) {
           for (var i = 0, il = tListeners.length; i < il; i++) {
             tListeners[i](pValue);
