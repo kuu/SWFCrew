@@ -105,7 +105,7 @@
         tSwfGlyph = tGlyphList[j];
         tGlyphIndex = tSwfGlyph.index;
 
-        if (tFont.codeTable && (tCharCode = tFont.codeTable[tGlyphIndex]) !== void 0) {
+        if (tSwfFont.codeTable && (tCharCode = tSwfFont.codeTable[tGlyphIndex]) !== void 0) {
           ;
         } else {
           tCharCode = tGlyphIndex;
