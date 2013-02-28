@@ -15,6 +15,7 @@
   var Font = global.benri.draw.Font;
   var TextStyle = global.benri.draw.TextStyle;
   var CanvasRenderable = global.benri.render.CanvasRenderable;
+  var ASHandlers = global.theatre.crews.swf.ASHandlers;
 
   function createFont(pSwfFont, pDeviceText) {
     var tFont = new Font();
@@ -117,7 +118,7 @@
 
         // Set up variable accessor methods.
         var tVarName = pEditText.variablename;
-        var tSelf = this;
+        var tSelf = this, tParent;
         var updateText = function (pValue) {
                 tSelf.text = pValue + '';
                 tRenderable.isPrepared = false;
@@ -125,18 +126,25 @@
                 tSelf.invalidate();
           };
         if (tVarName) {
+          var tHasColonSyntax = (tVarName.indexOf(':') !== -1);
           this.on('enter', function () {
-            var tText = this.parent.getVariable(tVarName);
+            if (tHasColonSyntax) {
+              var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
+              tParent = tTargetData.target;
+              tVarName = tTargetData.label;
+            } else {
+              tParent = this.parent;
+            }
+            var tText = tParent.getVariable(tVarName);
             if (tText === void 0) {
-              this.parent.setVariable(tVarName, this.text);
+              tParent.setVariable(tVarName, this.text);
             } else {
               updateText.call(this, tText);
             }
-            var tSelf = this;
-            this.parent.addVariableListener(tVarName, updateText);
+            tParent.addVariableListener(tVarName, updateText);
           });
           this.on('leave', function () {
-            this.parent.removeVariableListener(tVarName, updateText);
+            tParent.removeVariableListener(tVarName, updateText);
           });
         }
       }
