@@ -120,23 +120,35 @@
         var tSelf = this;
         var updateText = function (pValue) {
                 tSelf.text = pValue + '';
+console.log('@@@@ updateText: ', tSelf.text);
                 tRenderable.isPrepared = false;
                 tTextProp.rebuildGlyph = !tSelf.device;
                 tSelf.invalidate();
           };
         if (tVarName) {
+          var tColonIndex = tVarName.lastIndexOf(':');
+          var tParentIsRoot = false, tParent;
+          if (tColonIndex !== -1) {
+            // We assume that the variables with colons are associated with the root sprite.
+            tVarName = tVarName.substring(tColonIndex + 1);
+            tParentIsRoot = true;
+          }
           this.on('enter', function () {
-            var tText = this.parent.getVariable(tVarName);
+            if (tParentIsRoot) {
+              tParent = this.stage._actors[1];
+            } else {
+              tParent = this.parent;
+            }
+            var tText = tParent.getVariable(tVarName);
             if (tText === void 0) {
-              this.parent.setVariable(tVarName, this.text);
+              tParent.setVariable(tVarName, this.text);
             } else {
               updateText.call(this, tText);
             }
-            var tSelf = this;
-            this.parent.addVariableListener(tVarName, updateText);
+            tParent.addVariableListener(tVarName, updateText);
           });
           this.on('leave', function () {
-            this.parent.removeVariableListener(tVarName, updateText);
+            tParent.removeVariableListener(tVarName, updateText);
           });
         }
       }
