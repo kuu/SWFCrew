@@ -253,8 +253,8 @@
 
     tValue = tLastValidTarget.getVariable(tData.label);
 
-    if (tIsLength === true) {
-      return tValue.length;
+    if (tIsLength === true && tValue) {
+      return tValue.length || 0;
     }
 
     return tValue;

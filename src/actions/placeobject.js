@@ -60,7 +60,7 @@
     }
 
     var tMatrix = tActor.matrix;
-    if (tMatrix) {
+    if (tMatrix && (!pData.matrix || pData.matrix.join('') === '100100')) {
       pData.matrix = tMatrix.getArray();
     }
 
