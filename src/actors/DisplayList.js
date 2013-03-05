@@ -91,6 +91,13 @@
     DisplayListActor.prototype.constructor = DisplayListActor;
 
     /**
+     * The type of the display list.
+     * This holds the SWF tag name.
+     * @type {string}
+     */
+    DisplayListActor.prototype.displayListType = '';
+
+    /**
      * The Display List ID of the actor. This is like a class ID
      * and is not unique per Actor.
      * It is also used as the key in the player's actorMap.

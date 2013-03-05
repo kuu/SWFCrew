@@ -48,7 +48,7 @@
     this.media = pSWF.mediaLoader;
 
     var tDictionaryToActorMap = this.actorMap;
-    var k;
+    var k, tActorClass;
 
     var tHandlers = swfcrew.handlers;
 
@@ -59,6 +59,8 @@
         continue;
       }
       tHandlers[tDisplayListType].call(this, tDictionary[k]);
+      tActorClass = tDictionaryToActorMap[k];
+      tActorClass.prototype.displayListType = tDisplayListType;
     }
 
     tHandlers['DefineSprite'].call(this, pSWF.rootSprite);
