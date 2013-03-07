@@ -41,9 +41,15 @@
     var tStep = 0;
     var tLabel = '';
     var tParts = pPath.split(/:|\//);
+    // Remove any empty element.
+    for (i = tParts.length; i--;) {
+      if (!tParts[i] && i > 0) {
+        tParts.splice(i, 1);
+      }
+    }
     var tPartsLength = tParts.length;
 
-    if (pLastPartIsFrame === true) {
+    if (pLastPartIsFrame === true && tPartsLength > 0) {
       tFramePart = tParts[tPartsLength - 1];
       tPartsLength--;
     }
