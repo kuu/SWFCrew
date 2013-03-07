@@ -10,6 +10,9 @@
   var Matrix2D = global.benri.geometry.Matrix2D;
 
   mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
+if (pPath === '../AS:move') {
+console.log('####');
+}
     var i;
 
     if (!pPath) {
@@ -41,15 +44,9 @@
     var tStep = 0;
     var tLabel = '';
     var tParts = pPath.split(/:|\//);
-    // Remove any empty element.
-    for (i = tParts.length; i--;) {
-      if (!tParts[i] && i > 0) {
-        tParts.splice(i, 1);
-      }
-    }
     var tPartsLength = tParts.length;
 
-    if (pLastPartIsFrame === true && tPartsLength > 0) {
+    if (pLastPartIsFrame === true) {
       tFramePart = tParts[tPartsLength - 1];
       tPartsLength--;
     }
@@ -75,7 +72,7 @@
 
     for (i = 0; i < tPartsLength; i++) {
       var tPart = tParts[i].toLowerCase();
-      if (tPart === '.') {
+      if (tPart === '.' || (!tPart && i > 0)) {
         continue;
       } else if (tPart === '') {
         tNewTarget = tNewTarget.player.root; // Right?
