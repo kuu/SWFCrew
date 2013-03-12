@@ -69,7 +69,7 @@
 
     for (i = 0; i < tPartsLength; i++) {
       var tPart = tParts[i].toLowerCase();
-      if (tPart === '.') {
+      if (tPart === '.' || (!tPart && i > 0)) {
         continue;
       } else if (tPart === '') {
         tNewTarget = tNewTarget.player.root; // Right?
