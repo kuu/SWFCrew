@@ -10,9 +10,6 @@
   var Matrix2D = global.benri.geometry.Matrix2D;
 
   mHandlers.GetTargetAndData = function(pPath, pCurrentTarget, pLastPartIsFrame) {
-if (pPath === '../AS:move') {
-console.log('####');
-}
     var i;
 
     if (!pPath) {
