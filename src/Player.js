@@ -100,7 +100,7 @@
     // Let the Compositor be the first thing the render
     // in the rendering process. This allows it to control
     // many aspects of the rendering process.
-    tStage.stageManager.addProp(tCompositor);
+    tStage.getStageManager().addProp(tCompositor);
 
     // TODO: This is depending on the DOM... should fix it later...
     pAttachTo.appendChild(tCompositor.getSurface());
@@ -115,7 +115,7 @@
     tStage.open();
 
     // Do the initial render.
-    tStage.stageManager.invalidate();
+    tStage.getStageManager().invalidate();
   };
 
   /**
