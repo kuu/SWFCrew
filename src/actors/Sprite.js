@@ -179,19 +179,21 @@
       }
 
       tParent.addScript(tParentCurrentStep, function() {
-        tSelf.doScripts(tStep);
+        if (tSelf.parent !== null) {
+          tSelf.doScripts(tStep);
+        }
         return false;
       }, tNumOfScripts);
     }
 
     function onEnter() {
-      this.start();
 
       if (this.stage.state === STATE_SCRIPTING) {
         this.scheduleScripts();
       } else {
         this.scheduleScripts = redirectScripts;
       }
+      this.start();
     }
 
     /**
