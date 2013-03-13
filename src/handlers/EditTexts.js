@@ -54,6 +54,7 @@
    * @param {quickswf.structs.EditText} pText The EditText to handle.
    */
   mHandlers['DefineEditText'] = function(pEditText) {
+    var tLoader = this;
     var tId = pEditText.id;
     var tBounds = pEditText.bounds;
     var tTwipsWidth = tBounds.right  - tBounds.left;
@@ -61,9 +62,6 @@
     var tPixelWidth = Math.round(tTwipsWidth / 20);
     var tPixelHeight = Math.round(tTwipsHeight / 20);
 
-    // Create a new Canvas to render to.
-    var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
-    var tRenderable = new CanvasRenderable(tCanvas);
     var tSWF = this.swf;
     var tFontId = pEditText.font;
     var tSwfFont = tSWF.fonts[tFontId];
@@ -98,6 +96,10 @@
     var BuiltinEditTextActor = this.actorMap[tId] = (function(pSuper) {
       function BuiltinEditTextActor(pPlayer) {
         pSuper.call(this, pPlayer);
+
+        // Create a new Canvas to render to.
+        var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
+        var tRenderable = new CanvasRenderable(tCanvas);
 
         // Initialize text.
         if (pEditText.sjis && pEditText.initialtext) {
@@ -147,6 +149,14 @@
             tParent.removeVariableListener(tVarName, updateText);
           });
         }
+        var tRenderableList = tLoader.getActorRenderableCache(tId);
+        var tRenderableItem = {actor: this, renderable: tRenderable};
+        if (tRenderableList instanceof global.Array) {
+          tRenderableList.push(tRenderableItem);
+        } else {
+          tRenderableList = [tRenderableItem];
+        }
+        tLoader.setActorRenderableCache(tId, tRenderableList);
       }
 
       BuiltinEditTextActor.prototype = Object.create(pSuper.prototype);
@@ -160,8 +170,6 @@
     })(theatre.crews.swf.actors.TextActor);
 
     BuiltinEditTextActor.prototype.displayListId = tId;
-
-    this.setActorRenderableCache(tId, tRenderable);
   };
 
 }(this));
