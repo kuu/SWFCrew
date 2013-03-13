@@ -59,8 +59,15 @@
        * We created it in the Handler for Texts (DefineText/DefineEditText).
        * @type {benri.render.Renderable}
        */
-      var tRenderable = tActor.player.loader.getActorRenderableCache(tActor.displayListId);
-
+      var tRenderableList = tActor.player.loader.getActorRenderableCache(tActor.displayListId);
+      var tRenderableItem, tRenderable;
+      for (var i = 0, il = tRenderableList.length; i < il; i++) {
+        tRenderableItem = tRenderableList[i];
+        if (tRenderableItem.actor === tActor) {
+          tRenderable = tRenderableItem.renderable;
+          break;
+        }
+      }
       var tCanvas = tRenderable.canvas;
       var tString = tActor.text;
       var tFont = tActor.font;
