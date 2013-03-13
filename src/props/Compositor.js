@@ -211,7 +211,7 @@
      */
     Compositor.prototype.getSurface = function() {
       // TODO: support other types
-      return this.context.buffers[this.context.activeBuffer].data.getBitmap();
+      return this.context.buffers[this.context.activeBuffer].data.canvas.getBitmap();
     };
 
     return Compositor;
