@@ -137,16 +137,20 @@
             } else {
               tParent = this.parent;
             }
-            var tText = tParent.getVariable(tVarName);
-            if (tText === void 0) {
-              tParent.setVariable(tVarName, this.text);
-            } else {
-              updateText.call(this, tText);
+            if (tParent) {
+              var tText = tParent.getVariable(tVarName);
+              if (tText === void 0) {
+                tParent.setVariable(tVarName, this.text);
+              } else {
+                updateText.call(this, tText);
+              }
+              tParent.addVariableListener(tVarName, updateText);
             }
-            tParent.addVariableListener(tVarName, updateText);
           });
           this.on('leave', function () {
-            tParent.removeVariableListener(tVarName, updateText);
+            if (tParent) {
+              tParent.removeVariableListener(tVarName, updateText);
+            }
           });
         }
         var tRenderableList = tLoader.getActorRenderableCache(tId);
