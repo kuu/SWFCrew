@@ -58,7 +58,7 @@
     }
 
     if (tNewTarget === null) {
-      console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().getName() + '"');
+      console.warn('Target not found: Target="' + pPath + '"');
       return {
         target: null,
         step: tStep,
@@ -83,7 +83,7 @@
         tNewTarget = tNewTarget.getActorByName(tPart);
       }
       if (tNewTarget === null) {
-        console.warn('Target not found: Target="' + pPath + '" Base="' + this.getLastValidTarget().getName() + '"');
+        console.warn('Target not found: Target="' + pPath + '"');
         return {
           target: null,
           step: tStep,
