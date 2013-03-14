@@ -17,17 +17,21 @@
    */
   mActions.add = function(pSpriteActor, pData) {
     var tNewActor = pSpriteActor.player.newFromId(pData.id);
+    var tName = pData.name;
 
     if (tNewActor === null) {
       return;
     }
 
-    if (pData.name) {
-      tNewActor.setName(pData.name);
+    if (tName) {
+      tNewActor.setName(tName.toLowerCase());
+      tNewActor.swfName = tName;
     } else {
-      tNewActor.setName(tNewActor instanceof swfcrew.actors.SpriteActor ?
+      tName = tNewActor instanceof swfcrew.actors.SpriteActor ?
                         'instance' + (++pSpriteActor.stage.spriteInstanceCounter) :
-                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter));
+                        '__swfcrew_object__' + (++pSpriteActor.stage.notSpriteInstanceCounter);
+      tNewActor.setName(tName);
+      tNewActor.swfName = tName;
     }
 
     var tMatrix = tNewActor.matrix;

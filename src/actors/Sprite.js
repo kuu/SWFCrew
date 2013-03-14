@@ -74,18 +74,6 @@
       });
 
       for (i = 0, il = tActorsToAdd.length; i < il; i++) {
-        /*if (tActorsToAdd[i][0].stage === null) {
-          tCachedChildActor = tActorsToAdd[i][0];
-          tCurrentChildActor = pActor.player.newFromId(tCachedChildActor.displayListId);
-          tCurrentChildActor.name = tCachedChildActor.name;
-          tCurrentChildActor.matrix = tCachedChildActor.matrix;
-          tCurrentChildActor.colorTransform = tCachedChildActor.colorTransform;
-          tCurrentChildActor.clipDepth = tCachedChildActor.clipDepth;
-          tCurrentChildActor.ratio = tCachedChildActor.ratio;
-          pActor.addActor(tCurrentChildActor, tActorsToAdd[i][1]);
-        } else {
-          pActor.addActor(tActorsToAdd[i][0], tActorsToAdd[i][1]);
-        }*/
         pActor.addActor(tActorsToAdd[i][0], tActorsToAdd[i][1]);
       }
 
@@ -187,12 +175,12 @@
     }
 
     function onEnter() {
-
       if (this.stage.state === STATE_SCRIPTING) {
         this.scheduleScripts();
       } else {
         this.scheduleScripts = redirectScripts;
       }
+
       this.start();
     }
 
@@ -269,7 +257,7 @@
 
       var tLabels = this.labels;
       for (var tName in tLabels) {
-        this.setLabel(tName, tLabels[tName]);
+        this.setLabel(tName.toLowerCase(), tLabels[tName]);
       }
     }
 

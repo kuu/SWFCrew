@@ -79,6 +79,13 @@
        */
       this.listeners = {};
 
+      /**
+       * The name of the Actor as written in the SWF file.
+       * Normally this gets lower-cased by placeObject.
+       * @type {string}
+       */
+      this.swfName = null;
+
       // When we enter the Stage, all DisplayList Actors invalidate themselves for rendering.
       this.on('enter', onEnter);
     }

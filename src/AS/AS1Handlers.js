@@ -68,7 +68,7 @@
     }
 
     for (i = 0; i < tPartsLength; i++) {
-      var tPart = tParts[i].toLowerCase();
+      var tPart = tParts[i].trim().toLowerCase();
       if (tPart === '.' || (!tPart && i > 0)) {
         continue;
       } else if (tPart === '') {
@@ -140,7 +140,7 @@
     if (this.target === null) {
       return;
     }
-    this.target.gotoLabel(pLabel);
+    this.target.gotoLabel(pLabel.toLowerCase());
   };
 
   mHandlers.Trace = function(pMessage) {
@@ -153,14 +153,15 @@
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
     if (tData.target === null) {
-      console.warn('Target not found for Call: Target="' + pFrame + '" Base="' + this.getLastValidTarget().getName() + '"');
+      console.warn('Target not found for Call: Target="' + pFrame + '"');
       return;
     } else {
       tCurrentTarget = tData.target;
     }
 
     if (tData.label !== '') {
-      var tStep = tCurrentTarget.getLabelStep(tData.label);
+      var tStep = tCurrentTarget.getLabelStep(tData.label.toLowerCase());
+
       if (tStep !== null) {
         tCurrentTarget.doScripts(tStep, tCurrentTarget);
       } else {
@@ -192,14 +193,14 @@
     var tData = this.callMapped('GetTargetAndData', pFrame, tCurrentTarget, true);
 
     if (tData.target === null) {
-      console.warn('Target not found for GoToFrame2: Target="' + pFrame + '" Base="' + this.getLastValidTarget().getName() + '"');
+      console.warn('Target not found for GoToFrame2: Target="' + pFrame + '"');
       return;
     }
 
     tCurrentTarget = tData.target;
 
     if (tData.label !== '') {
-      tCurrentTarget.gotoLabel(tData.label); // TODO: Support bias?
+      tCurrentTarget.gotoLabel(tData.label.toLowerCase()); // TODO: Support bias?
 
       if (pPlayFlag === 1) {
         tCurrentTarget.startNextStep();
@@ -357,7 +358,9 @@
         console.warn('Set Property framesLoaded');
         break;
       case 13: // name
-        tTarget.setName(this.toString(pValue));
+        pValue = this.toString(pValue);
+        tTarget.setName(pValue.toLowerCase());
+        tTarget.swfName = pValue;
         break;
       case 14: // dropTarget
         console.warn('Set Property dropTarget');
@@ -435,17 +438,17 @@
           return '/';
         }
 
-        var tNames = [tTarget.getName()];
+        var tNames = [tTarget.swfName];
         // TODO: This loop is a hack until we track roots.
         while ((tTarget = tTarget.parent) !== null && !tTarget.__isRoot) {
-          tNames.push(tTarget.getName());
+          tNames.push(tTarget.swfName);
         }
 
-        return '/' + tNames.reverse().join('/').toLowerCase();
+        return '/' + tNames.reverse().join('/');
       case 12: // framesLoaded
         return tTarget.getNumberOfSteps();
       case 13: // name
-        return tTarget.getName();
+        return tTarget.swfName;
       case 14: // dropTarget
         console.warn('Get property dropTarget encountered.');
         return '';
@@ -503,7 +506,8 @@
     tMatrix.e = tOriginalMatrix.e;
     tMatrix.f = tOriginalMatrix.f;
 
-    tNewActor.setName(pNewName);
+    tNewActor.setName(pNewName.toLowerCase());
+    tNewActor.swfName = pNewName;
 
     var tOldActor = tOriginal.parent.getActorAtLayer(pDepth);
 
