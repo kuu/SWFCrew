@@ -201,7 +201,6 @@
 
       // Reset these.
       this.variables = {};
-      this.accessors = {};
       this.isMatrixLocked = false;
       this.isVisible = true;
 
@@ -269,21 +268,14 @@
      * @return {Object} An object containing all variable names and values.
      */
     SpriteActor.prototype.getAllVariables = function () {
-      var tAccessors = this.accessors,
-          tVariables = this.variables,
-          tKeyValueList = {}, k, tGetter;
+      var tVariables = this.variables,
+          tKeyValueList = {}, tData;
 
-      for (k in tAccessors) {
-        var v;
-        tGetter = tAccessors[k].getter;
-        if (typeof tGetter === 'function') {
-          v = tGetter();
+      for (var k in tVariables) {
+        tData = tVariables[k];
+        if (tData) {
+          tKeyValueList[tData.name] = tData.value;
         }
-        tKeyValueList[k] = v;
-      }
-
-      for (k in tVariables) {
-        tKeyValueList[k] = tVariables[k];
       }
 
       return tKeyValueList;
