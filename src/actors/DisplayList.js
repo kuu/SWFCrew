@@ -74,12 +74,6 @@
       this.ratio = 0;
 
       /**
-       * Callback functions to be invoked when variable changes.
-       * @type {Object}
-       */
-      this.listeners = {};
-
-      /**
        * The name of the Actor as written in the SWF file.
        * Normally this gets lower-cased by placeObject.
        * @type {string}
@@ -123,27 +117,27 @@
 
     };
 
-    function fixName(pName) {
-      var tName = pName.trim().toLowerCase();
-      var tColon = tName.lastIndexOf(':');
-      if (tColon !== -1) {
-        tName = tName.slice(tColon + 1);
-      }
-      return tName;
-    }
-
     /**
      * Registers callback function to be invoked when the variable changes.
      * @param {string} pVariableName The name of variable.
      * @param {function} pListener The callback function to be invoked when the variable changes.
      */
     DisplayListActor.prototype.addVariableListener = function (pVariableName, pListener) {
-      var tName = fixName(pVariableName);
-      var tListeners = this.listeners[tName];
-      if (tListeners === void 0) {
-        this.listeners[tName] = [pListener];
+      var tVarName = pVariableName.toLowerCase();
+      var tVarData = this.variables[tVarName];
+      if (tVarData) {
+        var tListeners = tVarData.listeners;
+        if (tListeners) {
+          tListeners.push(pListener);
+        } else {
+          tVarData.listeners = [pListener];
+        }
       } else {
-        tListeners.push(pListener);
+        tVarData = {
+            name: pVariableName,
+            listeners: [pListener]
+          };
+        this.variables[tVarName] = tVarData;
       }
     };
 
@@ -153,12 +147,14 @@
      * @param {function} pListener The callback function to be removed.
      */
     DisplayListActor.prototype.removeVariableListener = function (pVariableName, pListener) {
-      var tName = fixName(pVariableName);
-      var tListeners = this.listeners[tName];
-      if (tListeners !== void 0) {
-        var tIndex = tListeners.indexOf(pListener);
-        if (tIndex !== -1) {
-          tListeners.splice(tIndex, 1);
+      var tVarData = this.variables[pVariableName.toLowerCase()];
+      if (tVarData) {
+        var tListeners = tVarData.listeners;
+        if (tListeners) {
+          var tIndex = tListeners.indexOf(pListener);
+          if (tIndex !== -1) {
+            tListeners.splice(tIndex, 1);
+          }
         }
       }
     };
@@ -168,7 +164,8 @@
      * @param  {string} pName The name of the variable.
      */
     DisplayListActor.prototype.getVariable = function (pName) {
-      return this.variables[pName.toLowerCase()];
+      var tData = this.variables[pName.toLowerCase()];
+      return tData ? tData.value : undefined;
     };
 
     /**
@@ -178,15 +175,25 @@
      */
     DisplayListActor.prototype.setVariable = function (pName, pValue) {
       var tName = pName.toLowerCase();
-      var tValue = this.variables[tName];
-      if (tValue !== pValue) {
-        this.variables[tName] = pValue;
-        var tListeners = this.listeners[tName];
-        if (tListeners) {
-          for (var i = 0, il = tListeners.length; i < il; i++) {
-            tListeners[i](pValue);
+      var tData = this.variables[tName];
+
+      if (tData) {
+        if (tData.value !== pValue) {
+          tData.value = pValue;
+          // Notify the listeners.
+          var tListeners = tData.listeners;
+          if (tListeners) {
+            for (var i = 0, il = tListeners.length; i < il; i++) {
+              tListeners[i](pValue);
+            }
           }
         }
+      } else {
+        tData = {
+            name: pName,
+            value: pValue
+          };
+        this.variables[tName] = tData;
       }
     };
 
@@ -194,14 +201,5 @@
   })(theatre.Actor);
 
   theatre.crews.swf.actors.DisplayListActor = DisplayListActor;
-
-  function fixName(pName) {
-    var tName = pName.trim().toLowerCase();
-    var tColon = tName.lastIndexOf(':');
-    if (tColon !== -1) {
-      tName = tName.slice(tColon + 1);
-    }
-    return tName;
-  }
 
 }(this));
