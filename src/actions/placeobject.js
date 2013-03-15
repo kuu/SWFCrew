@@ -35,13 +35,7 @@
     }
 
     var tMatrix = tNewActor.matrix;
-    var tDataMatrix = null;
-
-    if (pSpriteActor.buttonMatrix) {
-      tDataMatrix = pSpriteActor.buttonMatrix;
-    } else if (pData.matrix !== null) {
-      tDataMatrix = pData.matrix;
-    }
+    var tDataMatrix = pData.matrix;
 
     if (tDataMatrix !== null) {
       tMatrix.a = tDataMatrix[0];
@@ -116,15 +110,6 @@
     // Device text cannot have colorTransform.
     if (tActor instanceof swfcrew.actors.TextActor && tActor.device === true) {
       return;
-    }
-
-    if (tActor instanceof swfcrew.actors.ButtonActor) {
-      // Apply for every button record.
-      var tMap = tActor._layerToActorMap;
-      for (var k in tMap) {
-        var tChild = tMap[k];
-        tChild.colorTransform = pData.colorTransform;
-      }
     }
 
     tActor.colorTransform = pData.colorTransform;
