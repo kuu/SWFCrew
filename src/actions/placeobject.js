@@ -35,13 +35,7 @@
     }
 
     var tMatrix = tNewActor.matrix;
-    var tDataMatrix = null;
-
-    if (pSpriteActor.buttonMatrix) {
-      tDataMatrix = pSpriteActor.buttonMatrix;
-    } else if (pData.matrix !== null) {
-      tDataMatrix = pData.matrix;
-    }
+    var tDataMatrix = pData.matrix;
 
     if (tDataMatrix !== null) {
       tMatrix.a = tDataMatrix[0];

@@ -10,6 +10,7 @@
   var mSWFCrew = theatre.crews.swf;
   var mHandlers = mSWFCrew.handlers;
   var ButtonActor = mSWFCrew.actors.ButtonActor;
+  var ButtonRenderProp = mSWFCrew.props.ButtonRenderProp;
 
   function createLoaderWrapper(pActionScriptLoader, pActionScriptProgram, pScripts, pSWFVersion) {
     var tId = pActionScriptLoader.load(
@@ -40,6 +41,7 @@
     var BuiltinButtonActor = this.actorMap[tId] = (function(pSuper) {
       function BuiltinButtonActor(pPlayer) {
         pSuper.call(this, pPlayer);
+        this.addProp(new ButtonRenderProp());
       }
 
       BuiltinButtonActor.prototype = Object.create(pSuper.prototype);
