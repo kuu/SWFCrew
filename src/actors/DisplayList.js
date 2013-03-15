@@ -7,6 +7,7 @@
 (function(global) {
 
   var theatre = global.theatre;
+  var Rect = global.benri.geometry.Rect;
 
   /**
    * A class for Actors that exist on the Display List of the SWF file.
@@ -107,14 +108,26 @@
     DisplayListActor.prototype.displayListId = -1;
 
     /**
-     * Gets a bounding Rect for this Actor relative to the Stage
-     * in absolute pixel coordinates.
-     * @return {[type]} [description]
+     * Gets a bounding Rect for this Actor relative to itself.
+     * @return {benri.geometry.Rect}
      */
     DisplayListActor.prototype.getBoundingRect = function() {
+      return new Rect(this.twipsWidth || 0, this.twipsHeight || 0).transform(this.matrix);
+    };
 
-      var tChildren = this.getActors();
+    /**
+     * Gets a bounding Rect for this Actor relative to the Stage
+     * in absolute pixel coordinates.
+     * @return {benri.geometry.Rect}
+     */
+    DisplayListActor.prototype.getAbsoluteBoundingRect = function() {
+      var tRect = this.getBoundingRect();
 
+      if (tRect === null) {
+        return new Rect(0, 0);
+      }
+
+      return tRect.transform(this.parent.getAbsoluteMatrix());
     };
 
     /**

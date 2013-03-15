@@ -169,6 +169,8 @@
       BuiltinEditTextActor.prototype.bounds = tBounds;
       BuiltinEditTextActor.prototype.pixelWidth = tPixelWidth;
       BuiltinEditTextActor.prototype.pixelHeight = tPixelHeight;
+      BuiltinEditTextActor.prototype.twipsWidth = tTwipsWidth;
+      BuiltinEditTextActor.prototype.twipsHeight = tTwipsHeight;
 
       return BuiltinEditTextActor;
     })(theatre.crews.swf.actors.TextActor);

@@ -163,8 +163,8 @@
 
       BuiltinTextActor.prototype.bounds = tBounds;
       BuiltinTextActor.prototype.matrix = pText.matrix;
-      BuiltinTextActor.prototype.twipsWidth = tTwipsWidth;
-      BuiltinTextActor.prototype.twipsHeight = tTwipsHeight;
+      BuiltinTextActor.prototype.twipsWidth = tBounds.right - tBounds.left;
+      BuiltinTextActor.prototype.twipsHeight = tBounds.bottom - tBounds.top;
       BuiltinTextActor.prototype.pixelWidth = tPixelWidth;
       BuiltinTextActor.prototype.pixelHeight = tPixelHeight;
 

@@ -8,6 +8,7 @@
 
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
+  var Rect = global.benri.geometry.Rect;
   var STATE_SCRIPTING = theatre.Stage.STATE_SCRIPTING;
 
   /**
@@ -279,6 +280,35 @@
       }
 
       return tKeyValueList;
+    };
+
+    /**
+     * Gets a bounding Rect for this Actor relative to itself.
+     * @return {benri.geometry.Rect}
+     */
+    SpriteActor.prototype.getBoundingRect = function() {
+      var tChildren = this.getActors();
+      var tRect = null;
+      var tRect2;
+      var i, il;
+
+      for (i = 0, il = tChildren.length; i < il; i++) {
+        if (tRect === null) {
+          tRect = tChildren[i].getBoundingRect();
+        } else {
+          tRect2 = tChildren[i].getBoundingRect();
+
+          if (tRect2 !== null) {
+            tRect.merge(tRect2);
+          }
+        }
+      }
+
+      if (tRect === null) {
+        return null;
+      }
+
+      return tRect.transform(this.matrix);
     };
 
     return SpriteActor;

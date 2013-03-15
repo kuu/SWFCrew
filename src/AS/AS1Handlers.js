@@ -425,11 +425,11 @@
       case 7: // visible
         return tTarget.isVisible === true ? 1 : 0;
       case 8: // width
-        // TODO: Use getSize() when done.
-        return tTarget.width || 0;
+        tResult = (tTarget.getAbsoluteBoundingRect().width / 20) || 0;
+        return ((tResult * 100) | 0) / 100;
       case 9: // height
-        // TODO: Use getSize() when done.
-        return tTarget.height || 0;
+        tResult = (tTarget.getAbsoluteBoundingRect().height / 20) || 0;
+        return ((tResult * 100) | 0) / 100;
       case 10: // rotation
         //  The angle returned by Matrix2D.getRotationInDegrees() is counter-clockwise value.
         return 360 - tTarget.matrix.getRotationInDegrees();
