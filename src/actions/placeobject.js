@@ -118,6 +118,15 @@
       return;
     }
 
+    if (tActor instanceof swfcrew.actors.ButtonActor) {
+      // Apply for every button record.
+      var tMap = tActor._layerToActorMap;
+      for (var k in tMap) {
+        var tChild = tMap[k];
+        tChild.colorTransform = pData.colorTransform;
+      }
+    }
+
     tActor.colorTransform = pData.colorTransform;
 
     tActor.invalidate();
