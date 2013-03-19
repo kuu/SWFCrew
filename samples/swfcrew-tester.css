@@ -156,3 +156,28 @@ p.error {
 
 .column {
 }
+
+@media screen and (device-width: 768px), screen and (max-width: 768px) {
+  /* For mobile */
+  h3, h4, #flash-player-section, #sps-section, #fps-section, #target-section {
+    display: none;
+  }
+  #tools {
+    width: auto;
+    height: auto;
+    position: static;
+  }
+}
+@media screen and (orientation: landscape) {
+  body {
+    display: -webkit-box;
+    display: -webkit-flexbox;
+    display: -moz-flexbox;
+    display: flexbox;
+  }
+
+  #tools, #container {
+    margin: 0;
+    padding: 0;
+  }
+}

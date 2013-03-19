@@ -223,8 +223,23 @@
     tURLLoader.load(mUrlInput.value);
   }
 
+  var mTime;
+
+  if (performance) {
+    if (performance.now) {
+      mTime = performance;
+    } else if (performance.webkitNow) {
+      mTime = performance;
+      mTime.now = performance.webkitNow;
+    } else {
+      mTime = Date;
+    }
+  } else {
+   mTime = Date;
+  }
+
   function updateSPS() {
-    var tNewTime = performance.now ? performance.now() : performance.webkitNow();
+    var tNewTime = mTime.now();
 
     if (mLastSPSTime !== -1) {
       var tDiff = ((1000 / (tNewTime - mLastSPSTime)) + .5) | 0;
@@ -244,7 +259,7 @@
       return;
     }
 
-    var tNewTime = performance.now ? performance.now() : performance.webkitNow();
+    var tNewTime = mTime.now();
 
     if (mLastFPSTime !== -1) {
       var tDiff = ((1000 / (tNewTime - mLastFPSTime)) + .5) | 0;
