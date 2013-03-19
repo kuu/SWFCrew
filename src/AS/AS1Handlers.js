@@ -676,7 +676,7 @@
     case 255: // Multibyte string
       var tLength = pReader.sl();;
       var tUint8Array = pReader.sub(pReader.tell(), tLength);
-      var tBase64String = global.btoa(global.String.fromCharCode.apply(null, tUint8Array));
+      var tBase64String = global.btoa(global.String.fromCharCode.apply(null, global.Array.prototype.slice.call(tUint8Array, 0)));
       pReader.seek(tLength + 1);
       tValue = tTable.get('text', tBase64String);
     }
