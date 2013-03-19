@@ -225,17 +225,16 @@
 
   var mTime;
 
-  if (performance) {
-    if (performance.now) {
-      mTime = performance;
-    } else if (performance.webkitNow) {
-      mTime = performance;
-      mTime.now = performance.webkitNow;
-    } else {
-      mTime = Date;
+  if ('performance' in global) {
+    if (global.performance.now) {
+      mTime = global.performance;
+    } else if (global.performance.webkitNow) {
+      mTime = global.performance;
+      mTime.now = global.performance.webkitNow;
     }
-  } else {
-   mTime = Date;
+  }
+  if (!mTime && ('Date' in global)) {
+      mTime = global.Date;
   }
 
   function updateSPS() {
