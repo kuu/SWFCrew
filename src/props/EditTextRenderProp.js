@@ -98,13 +98,12 @@
           }
         }
         tStyle.textWidth = tTextWidth * tStyle.fontHeight / 1024;
+        // Clear canvas.
+        tCanvas.clear(new Color(0, 0, 0, 0));
+        // Draw text.
+        tCanvas.drawText(tString, tStyle);
       }
       this.rebuildGlyph = false;
-
-      // Clear canvas.
-      tCanvas.clear(new Color(0, 0, 0, 0));
-      // Draw text.
-      tCanvas.drawText(tString, tStyle);
 
       // Offset by the Texts bounds.
       // We do this because when boudns are negative they would be
