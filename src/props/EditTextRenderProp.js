@@ -36,7 +36,7 @@
   var EditTextRenderProp = (function(pSuper) {
     function EditTextRenderProp(pWidth, pHeight) {
       pSuper.call(this);
-      this.rebuildGlyph = false;
+      this.needRender = true;
     }
 
     EditTextRenderProp.prototype = Object.create(pSuper.prototype);
@@ -75,35 +75,39 @@
       var tCharCode, tFontInfo, tAdvance,
           tGlyph, tShape;
 
-      if (this.rebuildGlyph && tString) {
-        var tTextWidth = 0;
-        // Create glyphs.
-        for (var i = 0, il = tString.length; i < il; i++) {
-          tCharCode = tString.charCodeAt(i);
+      if (this.needRender) {
 
-          // Get advance.
-          tFontInfo = tActor.lookupTable[tCharCode + ''];
-          tAdvance = tFontInfo ? tFontInfo.advance
-                : (tCharCode < 256 ? tActor.fontHeight / 2 : tActor.fontHeight);
-          // Get glyph data.
-          tGlyph = tFont.getGlyph(tCharCode);
-          if (!tGlyph && tFontInfo) {
-            tShape = tFontInfo.shape;
-            tShape.fillStyles[0].color = tActor.color;
-            tGlyph = createGlyph(tCharCode, tShape, tAdvance, tActor.mediaLoader);
-            tFont.setGlyph(tCharCode, tGlyph);
+        if (!tActor.device && tString) {
+          // Rebuild glyphs.
+          var tTextWidth = 0;
+          for (var i = 0, il = tString.length; i < il; i++) {
+            tCharCode = tString.charCodeAt(i);
+
+            // Get advance.
+            tFontInfo = tActor.lookupTable[tCharCode + ''];
+            tAdvance = tFontInfo ? tFontInfo.advance
+              : (tCharCode < 256 ? tActor.fontHeight / 2 : tActor.fontHeight);
+            // Get glyph data.
+            tGlyph = tFont.getGlyph(tCharCode);
+            if (!tGlyph && tFontInfo) {
+              tShape = tFontInfo.shape;
+              tShape.fillStyles[0].color = tActor.color;
+              tGlyph = createGlyph(tCharCode, tShape, tAdvance, tActor.mediaLoader);
+              tFont.setGlyph(tCharCode, tGlyph);
+            }
+            if (tGlyph) {
+              tTextWidth += tGlyph.advance;
+            }
           }
-          if (tGlyph) {
-            tTextWidth += tGlyph.advance;
-          }
+          tStyle.textWidth = tTextWidth * tStyle.fontHeight / 1024;
         }
-        tStyle.textWidth = tTextWidth * tStyle.fontHeight / 1024;
         // Clear canvas.
         tCanvas.clear(new Color(0, 0, 0, 0));
         // Draw text.
         tCanvas.drawText(tString, tStyle);
+
+        this.needRender = false;
       }
-      this.rebuildGlyph = false;
 
       // Offset by the Texts bounds.
       // We do this because when boudns are negative they would be
