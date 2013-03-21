@@ -57,10 +57,13 @@
       return;
     }
 
-    var tMatrix = tActor.matrix;
-    if (tMatrix && (!pData.matrix || pData.matrix.join('') === '100100')) {
-      pData.matrix = tMatrix.getArray();
+    var tMatrix;
+    if (pData.matrix) {
+      tMatrix = new global.benri.geometry.Matrix2D(pData.matrix);
+    } else {
+      tMatrix = tActor.matrix || new global.benri.geometry.Matrix2D();
     }
+    pData.matrix = tMatrix.getArray();
 
     tActor.leave();
 
