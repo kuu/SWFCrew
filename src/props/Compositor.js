@@ -92,13 +92,16 @@
      * @inheritDoc
      */
     Compositor.prototype.render = function(pData) {
-      this.context.backgroundColor = this.backgroundColor;
+      var tContext = this.context;
+
+      tContext.backgroundColor = this.backgroundColor;
+      tContext.save();
+      tContext.setTransform([1, 0, 0, 1, 0, 0]);
       // Clear the canvas and fill with the background colour.
-      this.context.clear();
-      // Convert from twips to pixels.
-      this.context.matrix.scale(0.05, 0.05);
+      tContext.clear();
+      tContext.restore();
       // Translate by the global SWF file's bounds.
-      this.context.matrix.translate(-this.bounds.left, -this.bounds.top);
+      tContext.translate(-this.bounds.left, -this.bounds.top);
     };
 
     /**

@@ -56,9 +56,9 @@
 
       // Register the event handlers.
       var tThis = this;
+
       function onKeyDown(pEvent) {
         var tKeyCode = translateKeyCode(pEvent.code, pEvent.shift);
-        console.log('KeyDown: code=', tKeyCode);
         var i, il, tCond, tScript;
         for (i = 0, il = tCondActions.length; i < il; i++) {
           tCond = tCondActions[i].cond;
@@ -68,11 +68,41 @@
           }
         }
       }
+
+      function onPointerDown(pEvent) {
+        var i, il, tCond, tScript;
+        for (i = 0, il = tCondActions.length; i < il; i++) {
+          tCond = tCondActions[i].cond;
+          tScript = tCondActions[i].script;
+          if (tCond.overUpToOverDown) {
+            tScript(tThis.parent);
+          }
+        }
+      }
+
+      function onPointerUp(pEvent) {
+        var i, il, tCond, tScript;
+        for (i = 0, il = tCondActions.length; i < il; i++) {
+          tCond = tCondActions[i].cond;
+          tScript = tCondActions[i].script;
+          if (tCond.overDownToOverUp) {
+            tScript(tThis.parent);
+          }
+        }
+      }
+
       this.on('enter', function () {
         tThis.stage.on('keydown', onKeyDown);
+        this.enableHitTest();
+        this.on('pointerdown', onPointerDown);
+        this.on('pointerup', onPointerUp);
       });
+
       this.on('leave', function () {
         tThis.stage.ignore('keydown', onKeyDown);
+        this.disableHitTest();
+        this.ignore('pointerdown', onPointerDown);
+        this.ignore('pointerup', onPointerUp);
       });
 
       // Add the button shapes.

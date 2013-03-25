@@ -115,12 +115,9 @@
   }
 
   function reset() {
-    if (mStage) {
-      mStage.close();
-    }
-
     if (mApp.player && mApp.player.loader.swf) {
       mApp.player.loader.swf.destroy();
+      mApp.player.destroy();
     }
 
     mContainer.innerHTML = '';

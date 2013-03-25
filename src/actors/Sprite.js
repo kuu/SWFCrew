@@ -305,7 +305,7 @@
       }
 
       if (tRect === null) {
-        return null;
+        tRect = new Rect(0, 0, 0, 0);
       }
 
       return tRect.transform(this.matrix);

@@ -83,10 +83,25 @@
 
       // When we enter the Stage, all DisplayList Actors invalidate themselves for rendering.
       this.on('enter', onEnter);
+
+      // Privates
+
+      /**
+       * Function for handling hit tests.
+       * If null, it means we are not doing hit tests.
+       * @private
+       * @type {function}
+       */
+      this._onHitTest = null;
     }
 
     function onEnter() {
       this.invalidate();
+
+      /*this.enableHitTest();
+      this.on('pointerdown', function(pData){console.log("DOWN", pData.target.getName(), pData.x, pData.y)});
+      this.on('pointermove', function(pData){console.log("MOVE", pData.target.getName(), pData.x, pData.y)});
+      this.on('pointerup', function(pData){console.log("UP", pData.target.getName(), pData.x, pData.y)});*/
     }
 
     DisplayListActor.prototype = Object.create(pSuper.prototype);
@@ -107,12 +122,39 @@
      */
     DisplayListActor.prototype.displayListId = -1;
 
+    function onHitTest(pData) {
+      var tMatrix = this.getAbsoluteMatrix();
+      if (this.getBoundingRect().getPolygon().transform(tMatrix).isPointInside(pData.x, pData.y)) {
+        pData.add(this);
+      }
+    }
+
+    DisplayListActor.prototype.enableHitTest = function() {
+      if (this._onHitTest !== null) {
+        return;
+      }
+
+      this._onHitTest = onHitTest;
+
+      this.on('hittest', onHitTest);
+    };
+
+    DisplayListActor.prototype.disableHitTest = function() {
+      if (this._onHitTest === null) {
+        return;
+      }
+
+      this._onHitTest = null;
+
+      this.ignore('hittest', this._onHitTest);
+    };
+
     /**
      * Gets a bounding Rect for this Actor relative to itself.
      * @return {benri.geometry.Rect}
      */
     DisplayListActor.prototype.getBoundingRect = function() {
-      return new Rect(this.twipsWidth || 0, this.twipsHeight || 0).transform(this.matrix);
+      return new Rect(0, 0, this.twipsWidth || 0, this.twipsHeight || 0).transform(this.matrix);
     };
 
     /**
@@ -124,7 +166,7 @@
       var tRect = this.getBoundingRect();
 
       if (tRect === null) {
-        return new Rect(0, 0);
+        return new Rect(0, 0, 0, 0);
       }
 
       return tRect.transform(this.parent.getAbsoluteMatrix());

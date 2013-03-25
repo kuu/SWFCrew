@@ -33,6 +33,12 @@
     this.loader = pLoader;
 
     /**
+     * The container holding this Player.
+     * @type {Object}
+     */
+    this.container = null;
+
+    /**
      * The compositor that sets up the rendering system
      * and manages various rendering effects such as
      * masks.
@@ -77,9 +83,6 @@
      * @type {number}
      */
     tStage.notSpriteInstanceCounter = 0;
-
-    theatre.crews.dom.enableKeyInput(tStage);
-    theatre.crews.dom.enableMotionInput(tStage);
   }
 
   /**
@@ -90,6 +93,13 @@
   Player.prototype.takeCentreStage = function(pAttachTo) {
     var tStage = this.stage;
     var tLoader = this.loader;
+
+    this.container = pAttachTo;
+
+    if (!pAttachTo.hasAttribute('tabindex')) {
+      // Need to allow this to receive keyboard events.
+      pAttachTo.setAttribute('tabindex', '0');
+    }
 
     // Set up the step rate to match the SWF file frame rate.
     tStage.stepRate = 1000 / tLoader.swf.frameRate;
@@ -102,8 +112,13 @@
     // many aspects of the rendering process.
     tStage.getStageManager().addProp(tCompositor);
 
+    tStage.getStageManager().scale(0.05, 0.05);
+
     // TODO: This is depending on the DOM... should fix it later...
     pAttachTo.appendChild(tCompositor.getSurface());
+
+    theatre.crews.dom.enableKeyInput(tStage, pAttachTo);
+    theatre.crews.dom.enablePointerInput(tStage, pAttachTo);
 
     // Create the root Sprite.
     var tRoot = this.root = this.newRoot();
@@ -111,11 +126,43 @@
     // Add the root Sprite to the stage.
     tStage.addActor(tRoot, 0);
 
+    this.play();
+  };
+
+  // This get's rid of the outline ring for focused elements.
+  function onContainerFocus() {
+    this.style.outline = 'none';
+  }
+
+  /**
+   * Play the current SWF file.
+   */
+  Player.prototype.play = function() {
+    var tStage = this.stage;
+
+    // TODO: Should we make this overridable?
+    this.container.addEventListener('focus', onContainerFocus, false);
+
     // Start playing.
     tStage.open();
 
     // Do the initial render.
     tStage.getStageManager().invalidate();
+  };
+
+  /**
+   * Pauses the current SWF file.
+   */
+  Player.prototype.pause = function() {
+    var tStage = this.stage;
+    var tContainer = this.container;
+
+    tContainer.removeEventListener('focus', onContainerFocus, false);
+
+    tStage.close();
+
+    theatre.crews.dom.disableKeyInput(tStage, tContainer);
+    theatre.crews.dom.disablePointerInput(tStage, tContainer);
   };
 
   /**

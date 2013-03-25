@@ -125,7 +125,7 @@
         tShader.matrix = tMatrix;
 
         tCanvasStyle.shader = tShader;
-      } else if (tType === 0x40 || tType === 0x41) {
+      } else if (tType >= 0x40 && tType <= 0x43) {
         // Repeating Bitmap or Clipped Bitmap
         tBitmap = pResources.get('image', pStyle.bitmapId);
 
@@ -505,7 +505,7 @@
       }
     }
 
-    mBoundingBox = new Rect(new Point(~(1 << 31), ~(1 << 31)),
+    mBoundingBox = new Rect(~(1 << 31), ~(1 << 31),
                             1 << 31, 1 << 31);
 
     pCanvas.clear(new Color(0, 0, 0, 0));
