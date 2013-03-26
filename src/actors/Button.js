@@ -55,8 +55,44 @@
       var tCondActions = this.condActions;
       var tRecords = this.records;
 
-      // Register the event handlers.
+      this.buttonChildren = [];
+      this.buttonState = 'up';
+
       var tThis = this;
+
+      // Updates button records.
+      var doUpdateButtonRecords = function () {
+        var tChildren = tThis.getActors();
+
+        // Remove button records.
+        for (var i = 0, il = tChildren.length; i < il; i++) {
+          tChildren[i].leave();
+        }
+
+        // Add button records.
+        for (var i = 0, il = tRecords.length; i < il; i++) {
+
+          var tRecord = tRecords[i], tActor,
+              tButtonState = tThis.buttonState;
+
+          if (tButtonState === 'up' && tRecord.state.up
+            || tButtonState === 'down' && tRecord.state.down
+            || tButtonState === 'move' && tRecord.state.over) {
+
+            tActor = tThis.buttonChildren[tRecord.id + ''];
+            if (!tActor) {
+              tActor = pPlayer.newFromId(tRecord.id);
+              tThis.buttonChildren[tRecord.id + ''] = tActor;
+              if (tRecord.matrix) {
+                tActor.matrix.fill(tRecord.matrix);
+              }
+            }
+            tThis.addActor(tActor, tRecord.depth);
+          }
+        }
+      };
+
+      // Register the event handlers.
 
       function onKeyDown(pEvent) {
         var tKeyCode = translateKeyCode(pEvent.code, pEvent.shift);
@@ -71,6 +107,9 @@
       }
 
       function onPointerDown(pEvent) {
+        if (tThis.buttonState === 'down') {
+          return;
+        }
         var i, il, tCond, tScript;
         for (i = 0, il = tCondActions.length; i < il; i++) {
           tCond = tCondActions[i].cond;
@@ -79,9 +118,14 @@
             tScript(tThis.parent);
           }
         }
+        tThis.buttonState = 'down';
+        doUpdateButtonRecords();
       }
 
       function onPointerUp(pEvent) {
+        if (tThis.buttonState === 'up') {
+          return;
+        }
         var i, il, tCond, tScript;
         for (i = 0, il = tCondActions.length; i < il; i++) {
           tCond = tCondActions[i].cond;
@@ -90,6 +134,16 @@
             tScript(tThis.parent);
           }
         }
+        tThis.buttonState = 'up';
+        doUpdateButtonRecords();
+      }
+
+      function onPointerMove(pEvent) {
+        if (tThis.buttonState === 'move') {
+          return;
+        }
+        tThis.buttonState = 'move';
+        doUpdateButtonRecords();
       }
 
       this.on('enter', function () {
@@ -97,6 +151,7 @@
         this.enableHitTest();
         this.on('pointerdown', onPointerDown);
         this.on('pointerup', onPointerUp);
+        this.on('pointermove', onPointerMove);
       });
 
       this.on('leave', function () {
@@ -104,21 +159,11 @@
         this.disableHitTest();
         this.ignore('pointerdown', onPointerDown);
         this.ignore('pointerup', onPointerUp);
+        this.ignore('pointermove', onPointerMove);
       });
 
-      // Add the button shapes.
-      for (var i = 0, il = tRecords.length; i < il; i++) {
-        var tRecord = tRecords[i];
-        var tMatrix = tRecord.matrix;
-        if (tRecord.state.up) { // Initial state is ButtonUp.
-          var tActor = pPlayer.newFromId(tRecord.id);
-          var tMatrix2d = tActor.matrix;
-          if (tMatrix) {
-            tMatrix2d.fill(tMatrix);
-          }
-          this.addActor(tActor, tRecord.depth);
-        }
-      }
+      // Update the button records. (initial state is 'up')
+      doUpdateButtonRecords();
     }
 
     ButtonActor.prototype = Object.create(pSuper.prototype);
