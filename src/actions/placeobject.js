@@ -34,7 +34,9 @@
       tNewActor.swfName = tName;
     }
 
-    tNewActor.matrix.fill(pData.matrix);
+    if (pData.matrix) {
+      tNewActor.matrix.fill(pData.matrix);
+    }
 
     pSpriteActor.addActor(tNewActor, pData.depth);
   };
