@@ -57,13 +57,10 @@
       return;
     }
 
-    var tMatrix;
-    if (pData.matrix) {
-      tMatrix = new global.benri.geometry.Matrix2D(pData.matrix);
-    } else {
-      tMatrix = tActor.matrix || new global.benri.geometry.Matrix2D();
+    if (!pData.matrix) {
+      var tMatrix = tActor.matrix || new global.benri.geometry.Matrix2D();
+      pData.matrix = tMatrix.getArray();
     }
-    pData.matrix = tMatrix.getArray();
 
     tActor.leave();
 
