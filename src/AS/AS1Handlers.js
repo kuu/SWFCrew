@@ -33,19 +33,31 @@
 
     var tFramePartIndex = pPath.indexOf(':');
     var tFramePart;
-    if (tFramePartIndex !== -1) {
-      pLastPartIsFrame = true;
+    if (tFramePartIndex === 0) {
+      return {
+        target: pCurrentTarget,
+        step: 0,
+        label: pPath,
+        targetDepth: 0
+      };
+    } else if (tFramePartIndex > 0) {
+      tFramePart = pPath.substring(tFramePartIndex + 1);
+      pPath = pPath.substring(0, tFramePartIndex);
     }
 
     var tNewTarget = pCurrentTarget;
     var tStep = 0;
     var tLabel = '';
-    var tParts = pPath.split(/:|\//);
+    var tParts = pPath.split(/\//);
     var tPartsLength = tParts.length;
 
-    if (pLastPartIsFrame === true) {
-      tFramePart = tParts[tPartsLength - 1];
-      tPartsLength--;
+    if (pLastPartIsFrame && tFramePart === void 0) {
+      return {
+        target: pCurrentTarget,
+        step: 0,
+        label: pPath,
+        targetDepth: 0
+      };
     }
 
     if (tFramePart !== void 0) {
@@ -68,7 +80,7 @@
     }
 
     for (i = 0; i < tPartsLength; i++) {
-      var tPart = tParts[i].trim().toLowerCase();
+      var tPart = tParts[i].toLowerCase();
       if (tPart === '.' || (!tPart && i > 0)) {
         continue;
       } else if (tPart === '') {
@@ -425,10 +437,10 @@
       case 7: // visible
         return tTarget.isVisible === true ? 1 : 0;
       case 8: // width
-        tResult = (tTarget.getAbsoluteBoundingRect().getWidth() / 20) || 0;
+        tResult = tTarget.getAbsoluteBoundingRect().getWidth() || 0;
         return ((tResult * 100) | 0) / 100;
       case 9: // height
-        tResult = (tTarget.getAbsoluteBoundingRect().getHeight() / 20) || 0;
+        tResult = tTarget.getAbsoluteBoundingRect().getHeight() || 0;
         return ((tResult * 100) | 0) / 100;
       case 10: // rotation
         //  The angle returned by Matrix2D.getRotationInDegrees() is counter-clockwise value.

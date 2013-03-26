@@ -255,7 +255,12 @@
         } else {
           pCanvas.fillPath(pPath, pCanvasStyle);
         }
-        mBoundingBox.merge(pPath.getBoundingRect());
+
+        if (mBoundingBox === null) {
+          mBoundingBox = pPath.getBoundingRect();
+        } else {
+          mBoundingBox.merge(pPath.getBoundingRect());
+        }
 
         // Clean things up as we have now used this edge.
         tIndex = pPoint.indexOf(tNextEdge);
@@ -361,7 +366,11 @@
               }
 
               pCanvas.strokePath(tPath, tCanvasStyle);
-              mBoundingBox.merge(tPath.getBoundingRect());
+              if (mBoundingBox === null) {
+                mBoundingBox = tPath.getBoundingRect();
+              } else {
+                mBoundingBox.merge(tPath.getBoundingRect());
+              }
             } else {
               console.warn(k + ' does not have anything connecting to it!');
             }
@@ -435,7 +444,11 @@
               tPath.l(tFinalPointY, tFinalPointY);
               pCanvas.fillPath(tPath, tCanvasStyle);
             }
-            mBoundingBox.merge(tPath.getBoundingRect());
+            if (mBoundingBox === null) {
+              mBoundingBox = tPath.getBoundingRect();
+            } else {
+              mBoundingBox.merge(tPath.getBoundingRect());
+            }
           }
 
         }
@@ -505,8 +518,7 @@
       }
     }
 
-    mBoundingBox = new Rect(~(1 << 31), ~(1 << 31),
-                            1 << 31, 1 << 31);
+    mBoundingBox = null;
 
     pCanvas.clear(new Color(0, 0, 0, 0));
 
@@ -605,7 +617,7 @@
     flush('line', tLineEdges, tLineStyles, pCanvas, pResources, tBounds);
 
     // Return the bounding box
-    return mBoundingBox;
+    return mBoundingBox || new Rect(0, 0, 0, 0);
   };
 
 }(this));

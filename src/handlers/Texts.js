@@ -119,8 +119,8 @@
           tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
         }
-        tActualTwipsWidth += Math.max(tSwfGlyph.advance, tGlyph.rect.width * tFontScale);
-        tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.height);
+        tActualTwipsWidth += Math.max(tSwfGlyph.advance, tGlyph.rect.getWidth() * tFontScale);
+        tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.getHeight());
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }

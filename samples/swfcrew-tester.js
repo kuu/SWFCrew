@@ -116,8 +116,8 @@
 
   function reset() {
     if (mApp.player && mApp.player.loader.swf) {
+      mApp.player.pause();
       mApp.player.loader.swf.destroy();
-      mApp.player.destroy();
     }
 
     mContainer.innerHTML = '';
@@ -125,7 +125,11 @@
     mApp.player = null;
     mApp.data = null;
     mApp.root = null;
-    mApp.flash = null;
+
+    if (mApp.flash !== null && mApp.flash.parentNode !== null) {
+      mApp.flash.parentNode.removeChild(mApp.flash);
+      mApp.flash = null;
+    }
   }
 
   function error(pError) {
