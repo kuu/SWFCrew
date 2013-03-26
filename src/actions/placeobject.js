@@ -34,17 +34,7 @@
       tNewActor.swfName = tName;
     }
 
-    var tMatrix = tNewActor.matrix;
-    var tDataMatrix = pData.matrix;
-
-    if (tDataMatrix !== null) {
-      tMatrix.a = tDataMatrix[0];
-      tMatrix.b = tDataMatrix[1];
-      tMatrix.c = tDataMatrix[2];
-      tMatrix.d = tDataMatrix[3];
-      tMatrix.e = tDataMatrix[4];
-      tMatrix.f = tDataMatrix[5];
-    }
+    tNewActor.matrix.fill(pData.matrix);
 
     pSpriteActor.addActor(tNewActor, pData.depth);
   };
@@ -57,8 +47,8 @@
       return;
     }
 
-    var tMatrix = tActor.matrix;
-    if (tMatrix && (!pData.matrix || pData.matrix.join('') === '100100')) {
+    if (!pData.matrix) {
+      var tMatrix = tActor.matrix || new global.benri.geometry.Matrix2D();
       pData.matrix = tMatrix.getArray();
     }
 

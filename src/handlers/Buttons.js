@@ -57,13 +57,31 @@
     var i, il, tRawCondActions = pButton.condActions || [],
         tRawRecords = pButton.records || [];
 
-    // Decompile ActionScript
+    // Set button actions.
+    var tKeyEnterPress = null;
+    var tMouseClick = null;
+
     for (i = 0, il = tRawCondActions.length; i < il; i++) {
       var tRawCondAction = tRawCondActions[i];
-      tCondActions.push({
-          cond: tRawCondAction.cond,
+      var tCond = tRawCondAction.cond;
+      var tCondAction = {
+          cond: tCond,
           script: createLoaderWrapper(this.actionScriptLoader, this.actionScriptProgram, tRawCondAction.action, this.swf.version)
-      });
+        };
+      if (tCond.keyPress === 13) {
+        tKeyEnterPress = tCondAction;
+      }
+      if (tCond.overUpToOverDown) {
+        tMouseClick = tCondAction;
+      }
+      if (tCond.overDownToOverUp) {
+        tMouseClick = tCondAction;
+      }
+      tCondActions.push(tCondAction);
+    }
+    // For mobile, treat a mouse click as an enter key.
+    if (tMouseClick === null && tKeyEnterPress !== null) {
+      tKeyEnterPress.cond.overDownToOverUp = 1;
     }
     // Map the button shapes' Actor class.
     for (i = 0, il = tRawRecords.length; i < il; i++) {
