@@ -123,7 +123,7 @@
     DisplayListActor.prototype.displayListId = -1;
 
     function onHitTest(pData) {
-      var tMatrix = this.getAbsoluteMatrix();
+      var tMatrix = this.parent.getAbsoluteMatrix();
       if (this.getBoundingRect().getPolygon().transform(tMatrix).isPointInside(pData.x, pData.y)) {
         pData.add(this);
       }
@@ -154,7 +154,7 @@
      * @return {benri.geometry.Rect}
      */
     DisplayListActor.prototype.getBoundingRect = function() {
-      return new Rect(0, 0, this.twipsWidth || 0, this.twipsHeight || 0).transform(this.matrix);
+      return new Rect(this.bounds.left, this.bounds.top, this.twipsWidth || 0, this.twipsHeight || 0).transform(this.matrix);
     };
 
     /**
