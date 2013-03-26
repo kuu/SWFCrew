@@ -8,6 +8,7 @@
 
   var theatre = global.theatre;
   var mSWFCrew = theatre.crews.swf;
+  var Rect = global.benri.geometry.Rect;
 
   function translateKeyCode(pKeyCode, pShift) {
     var tKeyCode = pKeyCode;
@@ -122,6 +123,31 @@
 
     ButtonActor.prototype = Object.create(pSuper.prototype);
     ButtonActor.prototype.constructor = ButtonActor;
+
+    // @override
+    ButtonActor.prototype.getBoundingRect = function() {
+      var tChildren = this.getActors();
+      var tRect = null;
+      var tRect2;
+      var i, il;
+
+      for (i = 0, il = tChildren.length; i < il; i++) {
+        if (tRect === null) {
+          tRect = tChildren[i].getBoundingRect();
+        } else {
+          tRect2 = tChildren[i].getBoundingRect();
+
+          if (tRect2 !== null) {
+            tRect.merge(tRect2);
+          }
+        }
+      }
+
+      if (tRect === null) {
+        tRect = new Rect(0, 0, 0, 0);
+      }
+      return tRect.transform(this.matrix);
+    };
 
     return ButtonActor;
   })(mSWFCrew.actors.DisplayListActor);
