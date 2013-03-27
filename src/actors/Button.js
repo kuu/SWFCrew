@@ -160,6 +160,9 @@
 
     // @override
     ButtonActor.prototype.getBoundingRect = function() {
+      if (this.hitRect) {
+        return this.hitRect.transform(this.matrix);
+      }
       var tChildren = this.getActors();
       var tRect = null;
       var tRect2;
