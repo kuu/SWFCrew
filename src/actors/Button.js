@@ -76,8 +76,7 @@
               tButtonState = tThis.buttonState;
 
           if (tButtonState === 'up' && tRecord.state.up
-            || tButtonState === 'down' && tRecord.state.down
-            || tButtonState === 'move' && tRecord.state.over) {
+            || tButtonState === 'down' && tRecord.state.down) {
 
             tActor = tThis.buttonChildren[tRecord.id + ''];
             if (!tActor) {
@@ -138,20 +137,11 @@
         doUpdateButtonRecords();
       }
 
-      function onPointerMove(pEvent) {
-        if (tThis.buttonState === 'move') {
-          return;
-        }
-        tThis.buttonState = 'move';
-        doUpdateButtonRecords();
-      }
-
       this.on('enter', function () {
         tThis.stage.on('keydown', onKeyDown);
         this.enableHitTest();
         this.on('pointerdown', onPointerDown);
         this.on('pointerup', onPointerUp);
-        this.on('pointermove', onPointerMove);
       });
 
       this.on('leave', function () {
@@ -159,7 +149,6 @@
         this.disableHitTest();
         this.ignore('pointerdown', onPointerDown);
         this.ignore('pointerup', onPointerUp);
-        this.ignore('pointermove', onPointerMove);
       });
 
       // Update the button records. (initial state is 'up')
