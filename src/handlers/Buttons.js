@@ -87,6 +87,17 @@
     for (i = 0, il = tRawRecords.length; i < il; i++) {
       var tRawRecord = tRawRecords[i],
           tRecord = {};
+      if (tRawRecord.state.hitTest) {
+        var tHitShapeClass = this.actorMap[tRawRecord.id];
+        if (tHitShapeClass) {
+          var tRawBounds = tHitShapeClass.prototype.bounds;
+          if (tRawBounds) {
+            var Rect = global.benri.geometry.Rect;
+            BuiltinButtonActor.prototype.hitRect = new Rect(tRawBounds.left, tRawBounds.top,
+                  tRawBounds.right - tRawBounds.left, tRawBounds.bottom - tRawBounds.top);
+          }
+        }
+      }
       for (var k in tRawRecord) {
         tRecord[k] = tRawRecord[k];
       }
