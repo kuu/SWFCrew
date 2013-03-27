@@ -529,6 +529,10 @@
   }
 
   function onFileChange() {
+    if (mFileInput.files.length === 0) {
+      return;
+    }
+
     mUrlInput.disabled = true;
     mUrlInput.value = mFileInput.files[0].name;
     mApp.mode = 'file';
