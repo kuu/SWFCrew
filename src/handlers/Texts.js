@@ -124,20 +124,31 @@
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
-      if (tTwipsWidth < tActualTwipsWidth) {
-        tTwipsWidth = tActualTwipsWidth;
-        tCanvas.width = tPixelWidth = Math.round(tTwipsWidth / 20);
+
+/*
+      if (tTwipsWidth < tXOffset + tActualTwipsWidth) {
+        tXOffset -= Math.ceil((tXOffset + tActualTwipsWidth - tTwipsWidth) / 2);
       }
-      var tActualShapeHeight = tGlyphHeight * tFontScale;
-      if (tTwipsHeight < tTextRecord.y) {
-        tYOffset = tActualShapeHeight;
-      } else {
-        if (tTwipsHeight < tActualShapeHeight) {
-          tYOffset = tTextRecord.y - Math.max(tActualShapeHeight - tTwipsHeight, 1);
-        } else {
-          tYOffset = tTextRecord.y;
-        }
+*/
+
+      var tDescent = Math.floor(tSwfFont.descent * tFontScale);
+      var tBottomOffset = tTextRecord.y + tDescent;
+      var tActualShapeHeight = Math.floor(tGlyphHeight * tFontScale);
+      var tRequiredHeight = Math.max(tBottomOffset, tActualShapeHeight);
+      //var tUseShapesHeight = (tActualShapeHeight < tTwipsHeight);
+      if (tTwipsHeight < tRequiredHeight) {
+        var tMargin = Math.ceil((tRequiredHeight - tTwipsHeight) / 2);
+        tBounds.top -= tMargin;
+        tBounds.bottom += tMargin;
+        tTwipsHeight = tBounds.bottom - tBounds.top;
+        tCanvas.height = tPixelHeight = Math.round(tTwipsHeight / 20);
       }
+      if (tBottomOffset < tActualShapeHeight) {
+        tTextRecord.y -= (tActualShapeHeight - tBottomOffset);
+        tBottomOffset = tTextRecord.y + tDescent;
+      }
+      //tYOffset = (tUseShapesHeight ? tActualShapeHeight : tTextRecord.y);
+      tYOffset = tTextRecord.y;
       // Create style.
       tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
       // Clear canvas on the first draw.
