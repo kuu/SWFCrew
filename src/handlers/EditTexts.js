@@ -49,6 +49,14 @@
     return tTextStyle;
   }
 
+  function doPreprocessVariableName(pVarName) {
+    // Replace the last dot with a colon.
+    var tVarName = pVarName.replace(/([^\.\/])\.([^\.\/]*)$/, '$1:$2');
+    // Replace any other dot with a slash.
+    var tVarName = tVarName.replace(/([^\.\/])\.([^\.\/])/g, '$1/$2');
+    return tVarName;
+  }
+
   /**
    * Handles SWF EditTexts.
    * @param {quickswf.structs.EditText} pText The EditText to handle.
@@ -127,21 +135,15 @@
                 tSelf.invalidate();
           };
         if (tVarName) {
-          var tParentIndex = tVarName.indexOf('_parent.');
-          if (tParentIndex !== -1) {
-            tVarName = tVarName.slice(tParentIndex + 8);
-          }
+          // Replace dots.
+          tVarName = doPreprocessVariableName(tVarName);
           this.on('enter', function () {
-            if (tParentIndex !== -1) {
-              tParent = this.parent.parent;
+            var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
+            if (tTargetData.target === null) {
+              tParent = this.parent;
             } else {
-              var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
-              if (tTargetData.target === null) {
-                tParent = this.parent;
-              } else {
-                tParent = tTargetData.target;
-                tVarName = tTargetData.label;
-              }
+              tParent = tTargetData.target;
+              tVarName = tTargetData.label;
             }
             if (tParent) {
               var tText = tParent.getVariable(tVarName);
