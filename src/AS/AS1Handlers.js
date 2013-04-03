@@ -48,6 +48,10 @@
     } else if (tFramePartIndex > 0) {
       tFramePart = pPath.substring(tFramePartIndex + 1);
       pPath = pPath.substring(0, tFramePartIndex);
+      // Remove any leading collon.
+      while (tFramePart[0] === ':') {
+        tFramePart = tFramePart.slice(1);
+      }
     }
 
     var tNewTarget = pCurrentTarget;
