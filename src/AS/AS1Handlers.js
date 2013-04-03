@@ -31,6 +31,11 @@
       };
     }
 
+    // Replace a period with a colon to allow syntax like '_parent.var1'
+    if (pPath.indexOf('.')) {
+      pPath = pPath.replace(/(_[^\.]+)\.([^\.]+)/, '$1:$2');
+    }
+
     var tFramePartIndex = pPath.indexOf(':');
     var tFramePart;
     if (tFramePartIndex === 0) {
@@ -85,7 +90,7 @@
         continue;
       } else if (tPart === '') {
         tNewTarget = tNewTarget.player.root; // Right?
-      } else if (tPart === '..') {
+      } else if (tPart === '..' || tPart === '_parent') {
         tNewTarget = tNewTarget.parent;
       } else if (tPart === '_root') {
         tNewTarget = tNewTarget.player.root; // Right?
