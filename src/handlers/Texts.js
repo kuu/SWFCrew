@@ -18,6 +18,7 @@
   var Glyph = global.benri.draw.Glyph;
   var TextStyle = global.benri.draw.TextStyle;
   var CanvasRenderable = global.benri.render.CanvasRenderable;
+  var Matrix2D = global.benri.geometry.Matrix2D;
 
   function createFont(pSwfFont) {
     var tFont = new Font();
@@ -66,6 +67,9 @@
     var tTwipsHeight = tBounds.bottom - tBounds.top;
     var tPixelWidth = Math.round(tTwipsWidth / 20);
     var tPixelHeight = Math.round(tTwipsHeight / 20);
+    var tXPadding = pText.matrix[4] - tBounds.left;
+    var tXScale = pText.xAdvance <= tTwipsWidth ? 1.0 : pText.xAdvance / tTwipsWidth;
+    var tYOffsetChanged = false;
 
     // Create a new Canvas to render to.
     var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
@@ -78,9 +82,10 @@
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
           tFontScale = tTextRecord.height / 1024,
-          tXOffset = tTextRecord.xAdvance, tYOffset,
+          //tXOffset = Math.floor((tTextRecord.xAdvance + tXPadding + tTextRecord.x) * tXScale),
+          tXOffset = Math.floor(tTextRecord.xAdvance * tXScale),
           tFont, tStyle, tGlyph, tCharCode, tString = '',
-          tShape, tGlyphIndex, tGlyphHeight = 0, tActualTwipsWidth = 0;
+          tShape, tGlyphIndex, tGlyphHeight = 0, tTotalAdvance = 0;
 
       // Get benri.draw.Font object.
       if (tFontId === null) {
@@ -97,7 +102,6 @@
         tFont = createFont(tSwfFont);
         this.setFontCache(tFontId, tFont);
       }
-
       // Iterate on each character.
       for (var j = 0, jl = tGlyphList.length; j < jl; j++) {
 
@@ -116,26 +120,34 @@
         if (!tGlyph) {
           tShape = tSwfFont.shapes[tGlyphIndex];
           tShape.fillStyles[0].color = tTextRecord.color;
-          tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance / tFontScale), tSWF.mediaLoader);
+          tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance * tXScale / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
         }
-        tActualTwipsWidth += Math.max(tSwfGlyph.advance, tGlyph.rect.getWidth() * tFontScale);
+        tTotalAdvance += tSwfGlyph.advance;
         tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.getHeight());
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
 
-/*
-      if (tTwipsWidth < tXOffset + tActualTwipsWidth) {
-        tXOffset -= Math.ceil((tXOffset + tActualTwipsWidth - tTwipsWidth) / 2);
+      if (tTwipsWidth < tXOffset + tTotalAdvance) {
+        var tMargin = Math.ceil((tXOffset + tTotalAdvance - tTwipsWidth) / 2);
+        tBounds.left -= tMargin;
+        tBounds.right += tMargin;
+        tTwipsWidth = tBounds.right - tBounds.left;
+        tCanvas.width = tPixelWidth = Math.round(tTwipsWidth / 20);
       }
-*/
 
       var tDescent = Math.floor(tSwfFont.descent * tFontScale);
       var tBottomOffset = tTextRecord.y + tDescent;
-      var tActualShapeHeight = Math.floor(tGlyphHeight * tFontScale);
-      var tRequiredHeight = Math.max(tBottomOffset, tActualShapeHeight);
-      //var tUseShapesHeight = (tActualShapeHeight < tTwipsHeight);
+      var tRequiredHeight = Math.max(tBottomOffset, tTextRecord.height);
+
+      if ((tYOffsetChanged || tTwipsHeight < tTextRecord.height) && tTextRecord.height < tTextRecord.y) {
+        // Ugly but needed for some contents.
+        tTextRecord.y = tTextRecord.height;
+        tBottomOffset = tTextRecord.y + tDescent;
+        tYOffsetChanged = true;
+      }
+
       if (tTwipsHeight < tRequiredHeight) {
         var tMargin = Math.ceil((tRequiredHeight - tTwipsHeight) / 2);
         tBounds.top -= tMargin;
@@ -143,20 +155,16 @@
         tTwipsHeight = tBounds.bottom - tBounds.top;
         tCanvas.height = tPixelHeight = Math.round(tTwipsHeight / 20);
       }
-      if (tBottomOffset < tActualShapeHeight) {
-        tTextRecord.y -= (tActualShapeHeight - tBottomOffset);
-        tBottomOffset = tTextRecord.y + tDescent;
-      }
-      //tYOffset = (tUseShapesHeight ? tActualShapeHeight : tTextRecord.y);
-      tYOffset = tTextRecord.y;
+
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tTextRecord.y, tTwipsWidth - tXOffset);
       // Clear canvas on the first draw.
       if (i === 0) {
         tCanvas.clear(new Color(0, 0, 0, 0));
       }
       // Draw text.
       tCanvas.drawText(tString, tStyle);
+
     } // [loop end] -- for each text line.
 
     /**
@@ -173,7 +181,6 @@
       BuiltinTextActor.prototype.constructor = BuiltinTextActor;
 
       BuiltinTextActor.prototype.bounds = tBounds;
-      BuiltinTextActor.prototype.matrix = pText.matrix;
       BuiltinTextActor.prototype.twipsWidth = tBounds.right - tBounds.left;
       BuiltinTextActor.prototype.twipsHeight = tBounds.bottom - tBounds.top;
       BuiltinTextActor.prototype.pixelWidth = tPixelWidth;
