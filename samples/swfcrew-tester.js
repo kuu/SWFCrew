@@ -11,7 +11,7 @@
     play: true,
     targets: [],
     flash: null,
-    mediaLoader : new quickswf.utils.MediaLoader()
+    mediaLoader: null
   };
 
   function $(pId, pContext) {
@@ -125,6 +125,7 @@
     mApp.player = null;
     mApp.data = null;
     mApp.root = null;
+    mApp.mediaLoader = null;
 
     if (mApp.flash !== null && mApp.flash.parentNode !== null) {
       mApp.flash.parentNode.removeChild(mApp.flash);
@@ -136,12 +137,20 @@
     console.error(pError);
 
     reset();
-    mContainer.classList.add('error');
+    if (mContainer.classList) {
+      mContainer.classList.add('error');
+    } else {
+      mContainer.className += 'error';
+    }
     mContainer.innerHTML = pError;
   }
 
   function removeError() {
-    mContainer.classList.remove('error');
+    if (mContainer.classList) {
+      mContainer.classList.remove('error');
+    } else {
+      mContainer.className = mContainer.className.replace('/error/g', '');
+    }
     mContainer.innerHTML = '';
   }
 
@@ -150,6 +159,7 @@
       mApp.data = this.data;
 
       if (mFlashPlayerCheck.checked) {
+        mApp.mediaLoader = new quickswf.utils.MediaLoader();
         mApp.mediaLoader.load('', mApp.data, 'application/x-shockwave-flash');
         mApp.flash = mApp.mediaLoader.get('application', '');
         mContainer.insertBefore(mApp.flash, mContainer.firstChild);
