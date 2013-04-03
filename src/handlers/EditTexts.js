@@ -127,14 +127,21 @@
                 tSelf.invalidate();
           };
         if (tVarName) {
-          var tHasColonSyntax = (tVarName.indexOf(':') !== -1);
+          var tParentIndex = tVarName.indexOf('_parent.');
+          if (tParentIndex !== -1) {
+            tVarName = tVarName.slice(tParentIndex + 8);
+          }
           this.on('enter', function () {
-            if (tHasColonSyntax) {
-              var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
-              tParent = tTargetData.target;
-              tVarName = tTargetData.label;
+            if (tParentIndex !== -1) {
+              tParent = this.parent.parent;
             } else {
-              tParent = this.parent;
+              var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
+              if (tTargetData.target === null) {
+                tParent = this.parent;
+              } else {
+                tParent = tTargetData.target;
+                tVarName = tTargetData.label;
+              }
             }
             if (tParent) {
               var tText = tParent.getVariable(tVarName);
