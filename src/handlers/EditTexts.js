@@ -127,13 +127,14 @@
                 tSelf.invalidate();
           };
         if (tVarName) {
+          var tHasColonSyntax = (tVarName.indexOf(':') !== -1);
           this.on('enter', function () {
-            var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
-            if (tTargetData.target === null) {
-              tParent = this.parent;
-            } else {
+            if (tHasColonSyntax) {
+              var tTargetData = ASHandlers.GetTargetAndData(tVarName, this.parent);
               tParent = tTargetData.target;
               tVarName = tTargetData.label;
+            } else {
+              tParent = this.parent;
             }
             if (tParent) {
               var tText = tParent.getVariable(tVarName);
