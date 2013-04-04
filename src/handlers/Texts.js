@@ -18,7 +18,6 @@
   var Glyph = global.benri.draw.Glyph;
   var TextStyle = global.benri.draw.TextStyle;
   var CanvasRenderable = global.benri.render.CanvasRenderable;
-  var Matrix2D = global.benri.geometry.Matrix2D;
 
   function createFont(pSwfFont) {
     var tFont = new Font();
@@ -56,47 +55,85 @@
     return tTextStyle;
   }
 
+  function adjustBounds(pSWF, pText) {
+    var tBounds = {
+      top: pText.bounds.top,
+      bottom: pText.bounds.bottom,
+      left: pText.bounds.left,
+      right: pText.bounds.right
+    };
+    var tTwipsWidth = tBounds.right  - tBounds.left;
+    var tTwipsHeight = tBounds.bottom - tBounds.top;
+    var tTextRecords = pText.textrecords;
+    var tMaxTextHeight = tTwipsHeight;
+
+    if (tTwipsWidth < pText.xAdvance) {
+      var tMargin = Math.floor((pText.xAdvance - tTwipsWidth) / 2);
+      tBounds.left -= tMargin;
+      tBounds.right += tMargin;
+    }
+
+    for (var i = 0, il = tTextRecords.length; i < il; i++) {
+      var tTextRecord = tTextRecords[i],
+          tFontId = tTextRecord.id, tPrevFontId = null,
+          tFontScale = tTextRecord.height / 1024;
+
+      if (tFontId === null) {
+        if (tPrevFontId === null) {
+          console.error('Font id is not defined.');
+          return;
+        } else {
+          tFontId = tTextRecord.id = tPrevFontId;
+        }
+      } else {
+        tPrevFontId = tFontId;
+      }
+
+      var tSwfFont = pSWF.fonts[tFontId];
+      var tDescent = Math.floor(tSwfFont.descent * tFontScale);
+      var tBottomOffset = tTextRecord.y + tDescent;
+      tMaxTextHeight = Math.max(tMaxTextHeight, tBottomOffset, tTextRecord.height);
+    }
+    if (tTwipsHeight < tMaxTextHeight) {
+      var tMargin = Math.floor((tMaxTextHeight - tTwipsHeight) / 2);
+      tBounds.top -= tMargin;
+      tBounds.bottom += tMargin;
+    }
+    return tBounds;
+  }
+
   /**
    * Handles SWF Texts.
    * @param {quickswf.structs.Text} pText The Text to handle.
    */
   mHandlers['DefineText'] = function(pText) {
     var tId = pText.id;
-    var tBounds = pText.bounds;
+    var tSWF = this.swf;
+    var tBounds = adjustBounds(tSWF, pText);
     var tTwipsWidth = tBounds.right  - tBounds.left;
     var tTwipsHeight = tBounds.bottom - tBounds.top;
     var tPixelWidth = Math.round(tTwipsWidth / 20);
     var tPixelHeight = Math.round(tTwipsHeight / 20);
-    //var tXScale = (pText.xAdvance <= tTwipsWidth ? 1.0 : pText.xAdvance / tTwipsWidth);
-    var tXScale = pText.xAdvance / tTwipsWidth;
-    var tYOffsetChanged = false;
+    var tOrigTwipsHeight = pText.bounds.bottom - pText.bounds.top;
 
     // Create a new Canvas to render to.
     var tCanvas = new Canvas(tPixelWidth, tPixelHeight);
     var tTextRecords = pText.textrecords;
-    var tSWF = this.swf;
+
 
     // Iterate on each text line.
     for (var i = 0, il = tTextRecords.length; i < il; i++) {
       var tTextRecord = tTextRecords[i],
-          tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
+          tFontId = tTextRecord.id,
+          tSwfFont = tSWF.fonts[tFontId],
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
           tFontScale = tTextRecord.height / 1024,
-          tXOffset = Math.floor(tTextRecord.xAdvance * tXScale),
+          tXOffset = tTextRecord.xAdvance,
+          tYOffset = tTextRecord.y,
           tFont, tStyle, tGlyph, tCharCode, tString = '',
-          tShape, tGlyphIndex, tGlyphHeight = 0, tTotalAdvance = 0;
+          tShape, tGlyphIndex;
 
       // Get benri.draw.Font object.
-      if (tFontId === null) {
-        if (tPrevFontId === null) {
-          return;
-        } else {
-          tFontId = tPrevFontId;
-        }
-      } else {
-        tPrevFontId = tFontId;
-      }
-      tSwfFont = tSWF.fonts[tFontId];
       if (!(tFont = this.getFontCache(tFontId))) {
         tFont = createFont(tSwfFont);
         this.setFontCache(tFontId, tFont);
@@ -119,44 +156,20 @@
         if (!tGlyph) {
           tShape = tSwfFont.shapes[tGlyphIndex];
           tShape.fillStyles[0].color = tTextRecord.color;
-          tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance * tXScale / tFontScale), tSWF.mediaLoader);
+          tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
         }
-        tTotalAdvance += Math.floor(tGlyph.advance * tFontScale);
-        tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.getHeight());
         // Build text.
         tString += String.fromCharCode(tCharCode);
       }
 
-      if (tTwipsWidth < tXOffset + tTotalAdvance) {
-        var tMargin = Math.ceil((tXOffset + tTotalAdvance - tTwipsWidth) / 2);
-        tBounds.left -= tMargin;
-        tBounds.right += tMargin;
-        tTwipsWidth = tBounds.right - tBounds.left;
-        tCanvas.width = tPixelWidth = Math.round(tTwipsWidth / 20);
-      }
-
-      var tDescent = Math.floor(tSwfFont.descent * tFontScale);
-      var tBottomOffset = tTextRecord.y + tDescent;
-      var tRequiredHeight = Math.max(tBottomOffset, tTextRecord.height);
-
-      if ((tYOffsetChanged || tTwipsHeight < tTextRecord.height) && tTextRecord.height < tTextRecord.y) {
+      if ((tOrigTwipsHeight < tTextRecord.height) && tTextRecord.height < tYOffset) {
         // Ugly but needed for some contents.
-        tTextRecord.y = tTextRecord.height;
-        tBottomOffset = tTextRecord.y + tDescent;
-        tYOffsetChanged = true;
-      }
-
-      if (tTwipsHeight < tRequiredHeight) {
-        var tMargin = Math.ceil((tRequiredHeight - tTwipsHeight) / 2);
-        tBounds.top -= tMargin;
-        tBounds.bottom += tMargin;
-        tTwipsHeight = tBounds.bottom - tBounds.top;
-        tCanvas.height = tPixelHeight = Math.round(tTwipsHeight / 20);
+        tYOffset = (tYOffset + Math.floor((tTwipsHeight - tOrigTwipsHeight) / 2)) * tOrigTwipsHeight / tTwipsHeight;
       }
 
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tTextRecord.y, tTwipsWidth - tXOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
       // Clear canvas on the first draw.
       if (i === 0) {
         tCanvas.clear(new Color(0, 0, 0, 0));
