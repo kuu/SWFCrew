@@ -67,8 +67,8 @@
     var tTwipsHeight = tBounds.bottom - tBounds.top;
     var tPixelWidth = Math.round(tTwipsWidth / 20);
     var tPixelHeight = Math.round(tTwipsHeight / 20);
-    var tXPadding = pText.matrix[4] - tBounds.left;
-    var tXScale = pText.xAdvance <= tTwipsWidth ? 1.0 : pText.xAdvance / tTwipsWidth;
+    //var tXScale = (pText.xAdvance <= tTwipsWidth ? 1.0 : pText.xAdvance / tTwipsWidth);
+    var tXScale = pText.xAdvance / tTwipsWidth;
     var tYOffsetChanged = false;
 
     // Create a new Canvas to render to.
@@ -82,7 +82,6 @@
           tFontId = tTextRecord.id, tPrevFontId, tSwfFont,
           tGlyphList = tTextRecord.glyphs, tSwfGlyph,
           tFontScale = tTextRecord.height / 1024,
-          //tXOffset = Math.floor((tTextRecord.xAdvance + tXPadding + tTextRecord.x) * tXScale),
           tXOffset = Math.floor(tTextRecord.xAdvance * tXScale),
           tFont, tStyle, tGlyph, tCharCode, tString = '',
           tShape, tGlyphIndex, tGlyphHeight = 0, tTotalAdvance = 0;
@@ -123,7 +122,7 @@
           tGlyph = createGlyph(tCharCode, tShape, Math.floor(tSwfGlyph.advance * tXScale / tFontScale), tSWF.mediaLoader);
           tFont.setGlyph(tCharCode, tGlyph);
         }
-        tTotalAdvance += tSwfGlyph.advance;
+        tTotalAdvance += Math.floor(tGlyph.advance * tFontScale);
         tGlyphHeight = Math.max(tGlyphHeight, tGlyph.rect.getHeight());
         // Build text.
         tString += String.fromCharCode(tCharCode);
