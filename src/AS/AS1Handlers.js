@@ -89,7 +89,7 @@
         continue;
       } else if (tPart === '') {
         tNewTarget = tNewTarget.player.root; // Right?
-      } else if (tPart === '..') {
+      } else if (tPart === '..' || tPart === '_parent') {
         tNewTarget = tNewTarget.parent;
       } else if (tPart === '_root') {
         tNewTarget = tNewTarget.player.root; // Right?

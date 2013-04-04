@@ -18,6 +18,7 @@
   var Glyph = global.benri.draw.Glyph;
   var TextStyle = global.benri.draw.TextStyle;
   var CanvasRenderable = global.benri.render.CanvasRenderable;
+  var Matrix2D = global.benri.geometry.Matrix2D;
 
   function createFont(pSwfFont) {
     var tFont = new Font();
@@ -169,7 +170,7 @@
       }
 
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tTextRecord.y, tTwipsWidth - tXOffset);
       // Clear canvas on the first draw.
       if (i === 0) {
         tCanvas.clear(new Color(0, 0, 0, 0));
