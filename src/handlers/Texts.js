@@ -170,7 +170,7 @@
       }
 
       // Create style.
-      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tTextRecord.y, tTwipsWidth - tXOffset);
+      tStyle = createTextStyle(tTextRecord, tFont, tXOffset, tYOffset, tTwipsWidth - tXOffset);
       // Clear canvas on the first draw.
       if (i === 0) {
         tCanvas.clear(new Color(0, 0, 0, 0));
