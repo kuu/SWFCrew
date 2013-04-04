@@ -53,8 +53,9 @@
     // Replace the last dot with a colon.
     var tVarName = pVarName.replace(/([^\.\/])\.([^\.\/]*)$/, '$1:$2');
     // Replace any other dot with a slash.
-    var tVarName = tVarName.replace(/([^\.\/])\.([^\.\/])/g, '$1/$2');
-    return tVarName;
+    tVarName = tVarName.replace(/([^\.\/])\.([^\.\/])/g, '$1/$2');
+    // Replace '_parent' with '..'
+    return tVarName.replace(/_parent/, '..');
   }
 
   /**
