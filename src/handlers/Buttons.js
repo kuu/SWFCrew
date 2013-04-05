@@ -93,8 +93,16 @@
           var tRawBounds = tHitShapeClass.prototype.bounds;
           if (tRawBounds) {
             var Rect = global.benri.geometry.Rect;
-            BuiltinButtonActor.prototype.hitRect = new Rect(tRawBounds.left, tRawBounds.top,
+            var tHitRect = new Rect(tRawBounds.left, tRawBounds.top,
                   tRawBounds.right - tRawBounds.left, tRawBounds.bottom - tRawBounds.top);
+            if (tRawRecord.matrix) {
+              var Matrix2D = global.benri.geometry.Matrix2D;
+              var t2DMatrix = new Matrix2D();
+              t2DMatrix.fill(tRawRecord.matrix);
+              BuiltinButtonActor.prototype.hitRect = tHitRect.transform(t2DMatrix);
+            } else {
+              BuiltinButtonActor.prototype.hitRect = tHitRect;
+            }
           }
         }
       }

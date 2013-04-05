@@ -55,7 +55,7 @@
       var tCondActions = this.condActions;
       var tRecords = this.records;
 
-      this.buttonChildren = [];
+      this.buttonChildren = {};
       this.buttonState = 'up';
 
       var tThis = this;
@@ -161,7 +161,7 @@
     // @override
     ButtonActor.prototype.getBoundingRect = function() {
       if (this.hitRect) {
-        return this.hitRect.transform(this.matrix);
+        return this.hitRect.clone().transform(this.matrix);
       }
       var tChildren = this.getActors();
       var tRect = null;
